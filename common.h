@@ -39,3 +39,16 @@ cl::Program make_program_from_file(cl::Context &ctx,
   auto kernel_code = read_kernel_from_file(filename);
   return {ctx, kernel_code};
 }
+
+template <class Collection>
+void dump_collection(const Collection &c, std::ostream &os = std::cout) {
+  bool first = true;
+  for (const auto &e : c) {
+    if (!first) {
+      os << " ";
+    }
+    os << e;
+    first = false;
+  }
+  os << "\n";
+}

@@ -24,13 +24,6 @@ std::vector<int> populate_poison(size_t sz) {
   return res;
 }
 
-template <class Collection>
-void dump_collection(const Collection &c, std::ostream &os = std::cout) {
-  for (const auto &e : c) {
-    os << e << " ";
-  }
-  os << "\n";
-}
 } // namespace
 
 int main() {
