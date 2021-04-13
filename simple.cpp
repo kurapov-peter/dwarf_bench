@@ -1,58 +1,25 @@
+#include "common.h"
+#include <CL/cl.hpp>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <CL/cl.hpp>
 
 #define LOG(what)                                                              \
   { std::cout << (what) << std::endl; }
 
 namespace {
 
-cl::Platform get_default_platform() {
-  std::vector<cl::Platform> platforms;
-  cl::Platform::get(&platforms);
-  if (!platforms.size()) {
-    std::cerr << "No platform found, exiting...\n";
-    exit(1);
-  }
-  return platforms[0];
-}
-
-std::vector<cl::Device> get_gpus(const cl::Platform &p) {
-  std::vector<cl::Device> devices;
-  p.getDevices(CL_DEVICE_TYPE_GPU, &devices);
-  if (!devices.size()) {
-    std::cerr << "No gpus found, exiting...\n";
-    exit(1);
-  }
-  return devices;
-}
-
-cl::Device get_default_device(const cl::Platform &p) { return get_gpus(p)[0]; }
-
-std::string read_kernel_from_file(const std::string &filename) {
-  std::ifstream is(filename);
-  return std::string(std::istreambuf_iterator<char>(is),
-                     std::istreambuf_iterator<char>());
-}
-
-cl::Program make_program_from_file(cl::Context &ctx, const std::string &filename) {
-  cl::Program::Sources sources;
-  auto kernel_code = read_kernel_from_file(filename);
-  return {ctx, kernel_code};
-}
-
-std::vector<cl_int> populate_data(size_t sz) {
-  std::vector<cl_int> res(sz);
+std::vector<int> populate_data(size_t sz) {
+  std::vector<int> res(sz);
   for (size_t i = 0; i < sz; ++i) {
     res[i] = i;
   }
   return res;
 }
 
-std::vector<cl_int> populate_poison(size_t sz) {
-  std::vector<cl_int> res;
+std::vector<int> populate_poison(size_t sz) {
+  std::vector<int> res;
   res.assign(sz, -1);
   return res;
 }
@@ -64,7 +31,7 @@ void dump_collection(const Collection &c, std::ostream &os = std::cout) {
   }
   os << "\n";
 }
-}
+} // namespace
 
 int main() {
   auto platform = get_default_platform();
@@ -95,8 +62,10 @@ int main() {
 
   cl::CommandQueue queue(ctx, device);
 
-  queue.enqueueWriteBuffer(src1, CL_TRUE, 0, sizeof(int) * buffer_size, host_src1.data());
-  queue.enqueueWriteBuffer(src2, CL_TRUE, 0, sizeof(int) * buffer_size, host_src2.data());
+  queue.enqueueWriteBuffer(src1, CL_TRUE, 0, sizeof(int) * buffer_size,
+                           host_src1.data());
+  queue.enqueueWriteBuffer(src2, CL_TRUE, 0, sizeof(int) * buffer_size,
+                           host_src2.data());
 
   cl::Kernel vadd_kernel = cl::Kernel(program, "vadd");
   vadd_kernel.setArg(0, src1);
