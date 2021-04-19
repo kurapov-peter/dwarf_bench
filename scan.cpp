@@ -39,13 +39,13 @@ int main() {
 
   cl::Buffer src(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
   cl::Buffer out(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
-  cl::Buffer prefix(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
+  cl::Buffer prefix(ctx, CL_MEM_READ_WRITE, sizeof(int) * (buffer_size + 1));
   cl::Buffer debug(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
   cl::Buffer out_size(ctx, CL_MEM_READ_WRITE, sizeof(int));
 
   cl::CommandQueue queue(ctx, device);
 
-  std::vector<int> host_src = {1, 2, 3, 4, 5, 6, 7, 8};
+  std::vector<int> host_src = helpers::make_random(8);
   std::vector<int> host_out(buffer_size, -1);
   std::vector<int> host_debug(buffer_size, -1);
   std::vector<int> expected_out = expected_out_lt(host_src, filter_value);

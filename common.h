@@ -1,7 +1,9 @@
 #pragma once
 #include <CL/cl.hpp>
+#include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -52,3 +54,14 @@ void dump_collection(const Collection &c, std::ostream &os = std::cout) {
   }
   os << "\n";
 }
+
+namespace helpers {
+std::vector<int> make_random(size_t size) {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::vector<int> out(size);
+  std::uniform_int_distribution<int> dist(0, 10);
+  std::generate(out.begin(), out.end(), [&]() { return dist(gen); });
+  return out;
+}
+} // namespace helpers

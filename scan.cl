@@ -16,22 +16,17 @@ void kernel simple_two_pass_scan(global const int *src, int src_size,
       sz++;
     }
   }
-  if (id != tnum - 1) {
-    prefix[id + 1] = sz;
-  }
+  prefix[id + 1] = sz;
 
   // prefix sum todo
   if (id == 0) {
     prefix[0] = 0;
     debug[0] = prefix[0];
-    for (int i = 1; i < tnum; i++) {
+    for (int i = 1; i <= tnum; i++) {
       prefix[i] += prefix[i - 1];
       debug[i] = prefix[i];
     }
-  }
-
-  if (id == tnum - 1) {
-    *out_size = prefix[id];
+    *out_size = prefix[tnum];
   }
 
   int idx = 0;
