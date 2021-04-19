@@ -1,6 +1,8 @@
 #include "common.h"
 #include <CL/cl.hpp>
 #include <algorithm>
+#include <chrono>
+#include <memory>
 #include <vector>
 
 namespace {
@@ -59,8 +61,21 @@ int main() {
   scan_kernel.setArg(5, prefix);
   scan_kernel.setArg(6, debug);
 
+  auto host_start = std::chrono::steady_clock::now();
+  auto event = std::make_unique<cl::Event>();
   queue.enqueueNDRangeKernel(scan_kernel, cl::NullRange,
-                             cl::NDRange(buffer_size));
+                             cl::NDRange(buffer_size), cl::NullRange, {},
+                             event.get());
+
+  event->wait();
+  auto host_end = std::chrono::steady_clock::now();
+  auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
+                           host_end - host_start)
+                           .count();
+  auto exe_time = event->getProfilingInfo<CL_PROFILING_COMMAND_END>() -
+                  event->getProfilingInfo<CL_PROFILING_COMMAND_START>();
+  std::cout << "Kernel execution time: " << exe_time << std::endl;
+  std::cout << "Host execution time:   " << host_exe_time << std::endl;
 
   queue.finish();
   queue.enqueueReadBuffer(out, CL_TRUE, 0, buffer_size_bytes, host_out.data());
