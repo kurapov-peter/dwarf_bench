@@ -1,4 +1,4 @@
-#include "common.h"
+#include "scan.hpp"
 #include <CL/cl.hpp>
 #include <algorithm>
 #include <chrono>
@@ -14,24 +14,18 @@ std::vector<int> expected_out_lt(std::vector<int> &v, int filter_value) {
 }
 } // namespace
 
-int main() {
-  auto platform = get_default_platform();
+TwoPassScan::TwoPassScan() : Dwarf("TwoPassScan") {}
+
+void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
+  std::cout << "Running, buffer size = " << buf_size << std::endl;
+  using namespace oclhelpers;
+  auto [platform, device, ctx, program] =
+      compile_file_with_defaults(kernel_path_);
   std::cout << "Using platform: " << platform.getInfo<CL_PLATFORM_NAME>()
-            << std::endl;
-  auto device = get_default_device(platform);
-  std::cout << "Device: " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
+            << std::endl
+            << "Device: " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
 
-  cl::Context ctx({device});
-
-  auto program = make_program_from_file(ctx, "scan.cl");
-  if (program.build({device}) != CL_SUCCESS) {
-    std::cerr << "Building failed: "
-              << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device)
-              << std::endl;
-    return 1;
-  }
-
-  const int buffer_size = 8;
+  const int buffer_size = buf_size;
   const int buffer_size_bytes = sizeof(int) * buffer_size;
   const int filter_value = 5;
 
@@ -45,44 +39,45 @@ int main() {
 
   cl::CommandQueue queue(ctx, device);
 
-  std::vector<int> host_src = helpers::make_random(8);
+  std::vector<int> host_src = helpers::make_random(buffer_size);
   std::vector<int> host_out(buffer_size, -1);
   std::vector<int> host_debug(buffer_size, -1);
   std::vector<int> expected_out = expected_out_lt(host_src, filter_value);
 
-  queue.enqueueWriteBuffer(src, CL_TRUE, 0, buffer_size_bytes, host_src.data());
+  OCL_SAFE_CALL(queue.enqueueWriteBuffer(src, CL_TRUE, 0, buffer_size_bytes,
+                                         host_src.data()));
 
   cl::Kernel scan_kernel = cl::Kernel(program, "simple_two_pass_scan");
-  scan_kernel.setArg(0, src);
-  scan_kernel.setArg(1, buffer_size);
-  scan_kernel.setArg(2, out);
-  scan_kernel.setArg(3, out_size);
-  scan_kernel.setArg(4, filter_value);
-  scan_kernel.setArg(5, prefix);
-  scan_kernel.setArg(6, debug);
+  set_args(scan_kernel, src, buffer_size, out, out_size, filter_value, prefix,
+           debug);
 
   auto host_start = std::chrono::steady_clock::now();
   auto event = std::make_unique<cl::Event>();
-  queue.enqueueNDRangeKernel(scan_kernel, cl::NullRange,
-                             cl::NDRange(buffer_size), cl::NullRange, {},
-                             event.get());
+  OCL_SAFE_CALL(queue.enqueueNDRangeKernel(scan_kernel, cl::NullRange,
+                                           cl::NDRange(buffer_size),
+                                           cl::NullRange, {}, event.get()));
 
   event->wait();
+
+  OCL_SAFE_CALL(queue.finish());
+  OCL_SAFE_CALL(queue.enqueueReadBuffer(out, CL_TRUE, 0, buffer_size_bytes,
+                                        host_out.data()));
+  OCL_SAFE_CALL(queue.enqueueReadBuffer(out_size, CL_TRUE, 0, sizeof(int),
+                                        host_out_size.data()));
+  OCL_SAFE_CALL(queue.enqueueReadBuffer(debug, CL_TRUE, 0, buffer_size_bytes,
+                                        host_debug.data()));
+
   auto host_end = std::chrono::steady_clock::now();
   auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
                            host_end - host_start)
                            .count();
   auto exe_time = event->getProfilingInfo<CL_PROFILING_COMMAND_END>() -
                   event->getProfilingInfo<CL_PROFILING_COMMAND_START>();
-  std::cout << "Kernel execution time: " << exe_time << std::endl;
-  std::cout << "Host execution time:   " << host_exe_time << std::endl;
 
-  queue.finish();
-  queue.enqueueReadBuffer(out, CL_TRUE, 0, buffer_size_bytes, host_out.data());
-  queue.enqueueReadBuffer(out_size, CL_TRUE, 0, sizeof(int),
-                          host_out_size.data());
-  queue.enqueueReadBuffer(debug, CL_TRUE, 0, buffer_size_bytes,
-                          host_debug.data());
+  Result result;
+  result.host_time = host_end - host_start;
+  result.kernel_time = exe_time;
+  meter.add_result(std::move(result));
 
   std::cout << "Result size: ";
   dump_collection(host_out_size);
@@ -93,4 +88,14 @@ int main() {
   dump_collection(expected_out);
   std::cout << "Debug: ";
   dump_collection(host_debug);
+}
+
+void TwoPassScan::run(const RunOptions &opts) {
+  for (auto size : opts.input_size) {
+    run_two_pass_scan(size, meter());
+  }
+}
+
+void TwoPassScan::init(const RunOptions &opts) {
+  kernel_path_ = opts.root_path + "/scan/scan.cl";
 }

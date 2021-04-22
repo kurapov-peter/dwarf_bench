@@ -18,6 +18,7 @@ void kernel simple_two_pass_scan(global const int *src, int src_size,
   }
   prefix[id + 1] = sz;
 
+  barrier(CLK_LOCAL_MEM_FENCE);
   // prefix sum todo
   if (id == 0) {
     prefix[0] = 0;
@@ -29,6 +30,7 @@ void kernel simple_two_pass_scan(global const int *src, int src_size,
     *out_size = prefix[tnum];
   }
 
+  barrier(CLK_LOCAL_MEM_FENCE);
   int idx = 0;
   for (int i = id * work_per_thread; i < (id + 1) * work_per_thread;
        i++, idx++) {

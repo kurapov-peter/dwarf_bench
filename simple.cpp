@@ -1,4 +1,4 @@
-#include "common.h"
+#include "common/common.hpp"
 #include <CL/cl.hpp>
 #include <fstream>
 #include <iostream>
@@ -27,6 +27,7 @@ std::vector<int> populate_poison(size_t sz) {
 } // namespace
 
 int main() {
+  using namespace oclhelpers;
   auto platform = get_default_platform();
   std::cout << "Using platform: " << platform.getInfo<CL_PLATFORM_NAME>()
             << std::endl;
