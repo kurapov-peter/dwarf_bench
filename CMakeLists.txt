@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.2)
 project(dwarf_bench)
 
 find_package(OpenCL REQUIRED)
-find_package(oclhelpers 0.1.0 REQUIRED)
+find_package(oclhelpers 0.1.1 REQUIRED)
 
 find_package(Boost 1.61 COMPONENTS program_options filesystem REQUIRED)
 
