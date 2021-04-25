@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.2)
 project(dwarf_bench)
 
 find_package(OpenCL REQUIRED)
-message(STATUS "OpenCL includes: ${OpenCL_INCLUDE_DIR}")
+find_package(oclhelpers 0.1.0 REQUIRED)
 
 find_package(Boost 1.61 COMPONENTS program_options filesystem REQUIRED)
 
@@ -31,7 +31,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Boost::program_options ${bench_lib
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR})
 
 add_kernel(vadd)
-message(STATUS "common lib name is ${COMMON_LIB}")
 add_executable(simple simple.cpp)
-target_link_libraries(simple PRIVATE common OpenCL::OpenCL)
+target_link_libraries(simple PRIVATE common OpenCL::OpenCL oclhelpers::oclhelpers)
 target_include_directories(simple PRIVATE ${PROJECT_SOURCE_DIR})

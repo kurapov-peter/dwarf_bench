@@ -32,11 +32,11 @@ void kernel simple_two_pass_scan(global const int *src, int src_size,
 
   barrier(CLK_LOCAL_MEM_FENCE);
   int idx = 0;
-  for (int i = id * work_per_thread; i < (id + 1) * work_per_thread;
-       i++, idx++) {
+  for (int i = id * work_per_thread; i < (id + 1) * work_per_thread; i++) {
     int out_idx = prefix[id];
     if (lt_filter(src[i], filter_value)) {
       out[out_idx + idx] = src[i];
+      idx++;
     }
   }
 }

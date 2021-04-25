@@ -8,9 +8,10 @@
 #include <string>
 #include <vector>
 
+#include <oclhelpers.hpp>
+
 #include "dwarf.hpp"
 #include "meter.hpp"
-#include "oclhelpers.hpp"
 #include "options.hpp"
 
 template <class Collection>

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <memory>
+#include <sstream>
 #include <vector>
 
 namespace {
@@ -26,38 +27,42 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
             << "Device: " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
 
   const int buffer_size = buf_size;
+  const int threadnum = buffer_size > 256 ? 256 : buffer_size;
   const int buffer_size_bytes = sizeof(int) * buffer_size;
+  const int prefix_size_bytes = sizeof(int) * (threadnum + 1);
   const int filter_value = 5;
 
   std::vector<int> host_out_size = {-1};
 
   cl::Buffer src(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
   cl::Buffer out(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
-  cl::Buffer prefix(ctx, CL_MEM_READ_WRITE, sizeof(int) * (buffer_size + 1));
+  cl::Buffer prefix(ctx, CL_MEM_READ_WRITE, prefix_size_bytes);
   cl::Buffer debug(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
   cl::Buffer out_size(ctx, CL_MEM_READ_WRITE, sizeof(int));
 
-  cl::CommandQueue queue(ctx, device);
+  const cl_queue_properties props = CL_QUEUE_PROFILING_ENABLE;
+  cl_int queue_init_err;
+  cl::CommandQueue queue(ctx, device, &props, &queue_init_err);
+  if (queue_init_err != CL_SUCCESS) {
+    std::cerr << "queue init error!" << std::endl;
+  }
 
   std::vector<int> host_src = helpers::make_random(buffer_size);
   std::vector<int> host_out(buffer_size, -1);
   std::vector<int> host_debug(buffer_size, -1);
-  std::vector<int> expected_out = expected_out_lt(host_src, filter_value);
 
   OCL_SAFE_CALL(queue.enqueueWriteBuffer(src, CL_TRUE, 0, buffer_size_bytes,
                                          host_src.data()));
 
   cl::Kernel scan_kernel = cl::Kernel(program, "simple_two_pass_scan");
-  set_args(scan_kernel, src, buffer_size, out, out_size, filter_value, prefix,
-           debug);
+  oclhelpers::set_args(scan_kernel, src, buffer_size, out, out_size,
+                       filter_value, prefix, debug);
 
   auto host_start = std::chrono::steady_clock::now();
   auto event = std::make_unique<cl::Event>();
   OCL_SAFE_CALL(queue.enqueueNDRangeKernel(scan_kernel, cl::NullRange,
-                                           cl::NDRange(buffer_size),
+                                           cl::NDRange(threadnum),
                                            cl::NullRange, {}, event.get()));
-
-  event->wait();
 
   OCL_SAFE_CALL(queue.finish());
   OCL_SAFE_CALL(queue.enqueueReadBuffer(out, CL_TRUE, 0, buffer_size_bytes,
@@ -67,27 +72,69 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
   OCL_SAFE_CALL(queue.enqueueReadBuffer(debug, CL_TRUE, 0, buffer_size_bytes,
                                         host_debug.data()));
 
+  event->wait();
   auto host_end = std::chrono::steady_clock::now();
   auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
                            host_end - host_start)
                            .count();
-  auto exe_time = event->getProfilingInfo<CL_PROFILING_COMMAND_END>() -
-                  event->getProfilingInfo<CL_PROFILING_COMMAND_START>();
+
+  auto status = event->getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>();
+  std::cout << "Status is " << status;
+  if (status == CL_COMPLETE) {
+    std::cout << "complete!\n";
+  }
+  cl_int profiling_error1;
+  cl_int profiling_error2;
+  auto exe_time =
+      event->getProfilingInfo<CL_PROFILING_COMMAND_END>(&profiling_error1) -
+      event->getProfilingInfo<CL_PROFILING_COMMAND_START>(&profiling_error2);
+  if (profiling_error1 != CL_SUCCESS || profiling_error2 != CL_SUCCESS) {
+    std::cerr << "Got profiling error!" << std::endl;
+    switch (profiling_error1) {
+    case CL_PROFILING_INFO_NOT_AVAILABLE:
+      std::cerr << "CL_PROFILING_INFO_NOT_AVAILABLE\n";
+      break;
+    case CL_INVALID_VALUE:
+      std::cerr << "CL_INVALID_VALUE\n";
+      break;
+    case CL_INVALID_EVENT:
+      std::cerr << "CL_INVALID_EVENT\n";
+      break;
+    case CL_OUT_OF_RESOURCES:
+      std::cerr << "CL_OUT_OF_RESOURCES\n";
+      break;
+    case CL_OUT_OF_HOST_MEMORY:
+      std::cerr << "CL_OUT_OF_HOST_MEMORY\n";
+      break;
+
+    default:
+      break;
+    }
+  }
 
   Result result;
   result.host_time = host_end - host_start;
   result.kernel_time = exe_time;
   meter.add_result(std::move(result));
 
+  std::vector<int> expected_out = expected_out_lt(host_src, filter_value);
+  host_out.resize(host_out_size[0]);
+  if (expected_out != host_out) {
+    std::cerr << "incorrect results" << std::endl;
+  }
+#ifndef NDEBUG
+  std::cout << "Input:    ";
+  dump_collection(host_src);
   std::cout << "Result size: ";
   dump_collection(host_out_size);
-  host_out.resize(host_out_size[0]);
   std::cout << "Result:   ";
   dump_collection(host_out);
+  std::cout << "Expected result size: " << expected_out.size() << "\n";
   std::cout << "Expected: ";
   dump_collection(expected_out);
   std::cout << "Debug: ";
   dump_collection(host_debug);
+#endif
 }
 
 void TwoPassScan::run(const RunOptions &opts) {
