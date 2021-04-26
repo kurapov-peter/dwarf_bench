@@ -40,9 +40,10 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
   cl::Buffer debug(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
   cl::Buffer out_size(ctx, CL_MEM_READ_WRITE, sizeof(int));
 
-  const cl_queue_properties props = CL_QUEUE_PROFILING_ENABLE;
+  const cl_queue_properties props[] = {CL_QUEUE_PROPERTIES,
+                                       CL_QUEUE_PROFILING_ENABLE, 0};
   cl_int queue_init_err;
-  cl::CommandQueue queue(ctx, device, &props, &queue_init_err);
+  cl::CommandQueue queue(ctx, device, props, &queue_init_err);
   if (queue_init_err != CL_SUCCESS) {
     std::cerr << "queue init error!" << std::endl;
   }
