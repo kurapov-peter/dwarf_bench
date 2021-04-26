@@ -45,7 +45,8 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
   cl_int queue_init_err;
   cl::CommandQueue queue(ctx, device, props, &queue_init_err);
   if (queue_init_err != CL_SUCCESS) {
-    std::cerr << "queue init error!" << std::endl;
+    std::cerr << "Queue init error: ";
+    std::cerr << get_error_string(queue_init_err) << std::endl;
   }
 
   std::vector<int> host_src = helpers::make_random(buffer_size);
@@ -80,37 +81,20 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
                            .count();
 
   auto status = event->getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>();
-  std::cout << "Status is " << status;
-  if (status == CL_COMPLETE) {
-    std::cout << "complete!\n";
+  if (status != CL_COMPLETE) {
+    std::cout << "Status is " << status << " " << get_error_string(status)
+              << " (should be CL_COMPLETE)";
   }
+
   cl_int profiling_error1;
   cl_int profiling_error2;
   auto exe_time =
       event->getProfilingInfo<CL_PROFILING_COMMAND_END>(&profiling_error1) -
       event->getProfilingInfo<CL_PROFILING_COMMAND_START>(&profiling_error2);
   if (profiling_error1 != CL_SUCCESS || profiling_error2 != CL_SUCCESS) {
-    std::cerr << "Got profiling error!" << std::endl;
-    switch (profiling_error1) {
-    case CL_PROFILING_INFO_NOT_AVAILABLE:
-      std::cerr << "CL_PROFILING_INFO_NOT_AVAILABLE\n";
-      break;
-    case CL_INVALID_VALUE:
-      std::cerr << "CL_INVALID_VALUE\n";
-      break;
-    case CL_INVALID_EVENT:
-      std::cerr << "CL_INVALID_EVENT\n";
-      break;
-    case CL_OUT_OF_RESOURCES:
-      std::cerr << "CL_OUT_OF_RESOURCES\n";
-      break;
-    case CL_OUT_OF_HOST_MEMORY:
-      std::cerr << "CL_OUT_OF_HOST_MEMORY\n";
-      break;
-
-    default:
-      break;
-    }
+    std::cerr << "Got profiling error: ";
+    std::cerr << get_error_string(profiling_error1) << " & "
+              << get_error_string(profiling_error2) << std::endl;
   }
 
   Result result;
