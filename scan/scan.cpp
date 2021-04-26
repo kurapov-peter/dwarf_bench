@@ -60,66 +60,69 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
   oclhelpers::set_args(scan_kernel, src, buffer_size, out, out_size,
                        filter_value, prefix, debug);
 
-  auto host_start = std::chrono::steady_clock::now();
-  auto event = std::make_unique<cl::Event>();
-  OCL_SAFE_CALL(queue.enqueueNDRangeKernel(scan_kernel, cl::NullRange,
-                                           cl::NDRange(threadnum),
-                                           cl::NullRange, {}, event.get()));
+  auto opts = meter.opts();
+  for (auto it = 0; it < opts.iterations; ++it) {
+    auto host_start = std::chrono::steady_clock::now();
+    auto event = std::make_unique<cl::Event>();
+    OCL_SAFE_CALL(queue.enqueueNDRangeKernel(scan_kernel, cl::NullRange,
+                                             cl::NDRange(threadnum),
+                                             cl::NullRange, {}, event.get()));
 
-  OCL_SAFE_CALL(queue.finish());
-  OCL_SAFE_CALL(queue.enqueueReadBuffer(out, CL_TRUE, 0, buffer_size_bytes,
-                                        host_out.data()));
-  OCL_SAFE_CALL(queue.enqueueReadBuffer(out_size, CL_TRUE, 0, sizeof(int),
-                                        host_out_size.data()));
-  OCL_SAFE_CALL(queue.enqueueReadBuffer(debug, CL_TRUE, 0, buffer_size_bytes,
-                                        host_debug.data()));
+    OCL_SAFE_CALL(queue.finish());
+    OCL_SAFE_CALL(queue.enqueueReadBuffer(out, CL_TRUE, 0, buffer_size_bytes,
+                                          host_out.data()));
+    OCL_SAFE_CALL(queue.enqueueReadBuffer(out_size, CL_TRUE, 0, sizeof(int),
+                                          host_out_size.data()));
+    OCL_SAFE_CALL(queue.enqueueReadBuffer(debug, CL_TRUE, 0, buffer_size_bytes,
+                                          host_debug.data()));
 
-  event->wait();
-  auto host_end = std::chrono::steady_clock::now();
-  auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
-                           host_end - host_start)
-                           .count();
+    event->wait();
+    auto host_end = std::chrono::steady_clock::now();
+    auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
+                             host_end - host_start)
+                             .count();
 
-  auto status = event->getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>();
-  if (status != CL_COMPLETE) {
-    std::cout << "Status is " << status << " " << get_error_string(status)
-              << " (should be CL_COMPLETE)";
-  }
+    auto status = event->getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>();
+    if (status != CL_COMPLETE) {
+      std::cout << "Status is " << status << " " << get_error_string(status)
+                << " (should be CL_COMPLETE)";
+    }
 
-  cl_int profiling_error1;
-  cl_int profiling_error2;
-  auto exe_time =
-      event->getProfilingInfo<CL_PROFILING_COMMAND_END>(&profiling_error1) -
-      event->getProfilingInfo<CL_PROFILING_COMMAND_START>(&profiling_error2);
-  if (profiling_error1 != CL_SUCCESS || profiling_error2 != CL_SUCCESS) {
-    std::cerr << "Got profiling error: ";
-    std::cerr << get_error_string(profiling_error1) << " & "
-              << get_error_string(profiling_error2) << std::endl;
-  }
+    cl_int profiling_error1;
+    cl_int profiling_error2;
+    auto exe_time =
+        event->getProfilingInfo<CL_PROFILING_COMMAND_END>(&profiling_error1) -
+        event->getProfilingInfo<CL_PROFILING_COMMAND_START>(&profiling_error2);
+    if (profiling_error1 != CL_SUCCESS || profiling_error2 != CL_SUCCESS) {
+      std::cerr << "Got profiling error: ";
+      std::cerr << get_error_string(profiling_error1) << " & "
+                << get_error_string(profiling_error2) << std::endl;
+    }
 
-  Result result;
-  result.host_time = host_end - host_start;
-  result.kernel_time = exe_time;
-  meter.add_result(std::move(result));
+    Result result;
+    result.host_time = host_end - host_start;
+    result.kernel_time = exe_time;
+    meter.add_result(std::move(result));
 
-  std::vector<int> expected_out = expected_out_lt(host_src, filter_value);
-  host_out.resize(host_out_size[0]);
-  if (expected_out != host_out) {
-    std::cerr << "incorrect results" << std::endl;
-  }
+    std::vector<int> expected_out = expected_out_lt(host_src, filter_value);
+    host_out.resize(host_out_size[0]);
+    if (expected_out != host_out) {
+      std::cerr << "incorrect results" << std::endl;
+    }
 #ifndef NDEBUG
-  std::cout << "Input:    ";
-  dump_collection(host_src);
-  std::cout << "Result size: ";
-  dump_collection(host_out_size);
-  std::cout << "Result:   ";
-  dump_collection(host_out);
-  std::cout << "Expected result size: " << expected_out.size() << "\n";
-  std::cout << "Expected: ";
-  dump_collection(expected_out);
-  std::cout << "Debug: ";
-  dump_collection(host_debug);
+    std::cout << "Input:    ";
+    dump_collection(host_src);
+    std::cout << "Result size: ";
+    dump_collection(host_out_size);
+    std::cout << "Result:   ";
+    dump_collection(host_out);
+    std::cout << "Expected result size: " << expected_out.size() << "\n";
+    std::cout << "Expected: ";
+    dump_collection(expected_out);
+    std::cout << "Debug: ";
+    dump_collection(host_debug);
 #endif
+  }
 }
 
 void TwoPassScan::run(const RunOptions &opts) {
@@ -130,4 +133,5 @@ void TwoPassScan::run(const RunOptions &opts) {
 
 void TwoPassScan::init(const RunOptions &opts) {
   kernel_path_ = opts.root_path + "/scan/scan.cl";
+  meter().set_opts(opts);
 }

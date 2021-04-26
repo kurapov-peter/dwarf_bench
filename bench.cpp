@@ -21,9 +21,12 @@ int main(int argc, char *argv[]) {
   desc.add_options()("help", "Show help message");
   desc.add_options()("dwarf", po::value<std::string>(&dwarf_name),
                      "Dwarf to run. List all with 'list' option.");
-  desc.add_options()("input_size",
-                     po::value<std::vector<size_t>>(&opts.input_size),
-                     "Data array size, ususally a column size in elements");
+  desc.add_options()(
+      "input_size",
+      po::value<std::vector<size_t>>(&opts.input_size)->multitoken(),
+      "Data array size, ususally a column size in elements");
+  desc.add_options()("iterations", po::value<size_t>(&opts.iterations),
+                     "Number of iterations to run a bmark.");
   po::positional_options_description pos_opts;
   pos_opts.add("dwarf", 1);
 

@@ -14,4 +14,6 @@ MeasureResults::const_iterator MeasureResults::end() const {
   return results_.end();
 }
 
-void MeasureResults::add_result(Result &&result) { results_.push_back(result); }
+void MeasureResults::add_result(DwarfParams params, Result &&result) {
+  results_.push_back({params, std::move(result)});
+}

@@ -15,8 +15,7 @@ public:
   virtual void init(const RunOptions &opts) = 0;
   void report(const RunOptions &opts) {
     for (const auto &res : results_) {
-      // std::cout << res;
-      opts.os << res;
+      std::cout << res.result;
     }
   }
 

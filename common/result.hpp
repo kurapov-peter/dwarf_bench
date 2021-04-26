@@ -1,8 +1,11 @@
 #pragma once
 #include <chrono>
+#include <map>
 #include <ostream>
 #include <string>
 #include <vector>
+
+using DwarfParams = std::map<std::string, std::string>;
 
 using Duration = std::chrono::duration<double, std::micro>;
 struct Result {
@@ -17,13 +20,18 @@ struct Result {
 
 std::ostream &operator<<(std::ostream &os, const Result &res);
 
-using SingleRunResults = std::vector<Result>;
+struct DwarfRunResult {
+  DwarfParams params;
+  Result result;
+};
+
+using SingleRunResults = std::vector<DwarfRunResult>;
 class MeasureResults {
 public:
   using const_iterator = SingleRunResults::const_iterator;
   MeasureResults(const std::string &name) : name_(name) {}
 
-  void add_result(Result &&result);
+  void add_result(DwarfParams params, Result &&result);
 
   const_iterator begin() const;
   const_iterator end() const;

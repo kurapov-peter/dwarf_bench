@@ -7,6 +7,5 @@ struct RunOptions {
   DeviceType device_ty = DeviceType::Default;
   std::vector<size_t> input_size;
   size_t iterations = 1;
-  std::ostream &os = std::cout;
   std::string root_path;
 };
