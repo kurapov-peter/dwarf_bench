@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
       << "You can change that with 'export DWARF_BENCH_ROOT=/your/path'\n";
 
   Dwarf *dwarf;
-  std::string dwarf_name;
+  std::string dwarf_name, device_type;
   po::options_description desc("Dwarf bench");
   desc.add_options()("help", "Show help message");
   desc.add_options()("dwarf", po::value<std::string>(&dwarf_name),
@@ -27,6 +27,9 @@ int main(int argc, char *argv[]) {
       "Data array size, ususally a column size in elements");
   desc.add_options()("iterations", po::value<size_t>(&opts.iterations),
                      "Number of iterations to run a bmark.");
+  desc.add_options()("device",
+                     po::value<RunOptions::DeviceType>(&opts.device_ty),
+                     "Device to run on.");
   po::positional_options_description pos_opts;
   pos_opts.add("dwarf", 1);
 

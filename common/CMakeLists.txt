@@ -3,6 +3,7 @@ set(common_sources
     result.cpp
     common.cpp
     meter.cpp
+    options.cpp
 
     common.hpp
     meter.hpp

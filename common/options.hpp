@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <iostream>
 #include <vector>
 
@@ -9,3 +10,5 @@ struct RunOptions {
   size_t iterations = 1;
   std::string root_path;
 };
+
+std::istream &operator>>(std::istream &in, RunOptions::DeviceType &dt);

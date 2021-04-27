@@ -18,10 +18,14 @@ std::vector<int> expected_out_lt(std::vector<int> &v, int filter_value) {
 TwoPassScan::TwoPassScan() : Dwarf("TwoPassScan") {}
 
 void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
+  auto opts = meter.opts();
   std::cout << "Running, buffer size = " << buf_size << std::endl;
   using namespace oclhelpers;
+  std::cout << "# of platforms: " << get_platforms().size() << std::endl;
   auto [platform, device, ctx, program] =
-      compile_file_with_defaults(kernel_path_);
+      (opts.device_ty == RunOptions::CPU)
+          ? compile_file_with_default_cpu(kernel_path_)
+          : compile_file_with_default_gpu(kernel_path_);
   std::cout << "Using platform: " << platform.getInfo<CL_PLATFORM_NAME>()
             << std::endl
             << "Device: " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
@@ -60,7 +64,6 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
   oclhelpers::set_args(scan_kernel, src, buffer_size, out, out_size,
                        filter_value, prefix, debug);
 
-  auto opts = meter.opts();
   for (auto it = 0; it < opts.iterations; ++it) {
     auto host_start = std::chrono::steady_clock::now();
     auto event = std::make_unique<cl::Event>();
@@ -68,15 +71,15 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
                                              cl::NDRange(threadnum),
                                              cl::NullRange, {}, event.get()));
 
-    OCL_SAFE_CALL(queue.finish());
+    event->wait();
     OCL_SAFE_CALL(queue.enqueueReadBuffer(out, CL_TRUE, 0, buffer_size_bytes,
                                           host_out.data()));
     OCL_SAFE_CALL(queue.enqueueReadBuffer(out_size, CL_TRUE, 0, sizeof(int),
                                           host_out_size.data()));
     OCL_SAFE_CALL(queue.enqueueReadBuffer(debug, CL_TRUE, 0, buffer_size_bytes,
                                           host_debug.data()));
+    OCL_SAFE_CALL(queue.finish());
 
-    event->wait();
     auto host_end = std::chrono::steady_clock::now();
     auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
                              host_end - host_start)
@@ -105,7 +108,11 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
     meter.add_result(std::move(result));
 
     std::vector<int> expected_out = expected_out_lt(host_src, filter_value);
-    host_out.resize(host_out_size[0]);
+    // todo: remove
+    size_t out_sz = host_out_size[0];
+    if (out_sz > 512)
+      out_sz = 512;
+    host_out.resize(out_sz);
     if (expected_out != host_out) {
       std::cerr << "incorrect results" << std::endl;
     }
