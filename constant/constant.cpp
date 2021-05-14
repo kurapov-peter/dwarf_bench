@@ -5,7 +5,7 @@
 ConstantExample::ConstantExample() : Dwarf("ConstantExample") {}
 
 namespace ocl = oclhelpers;
-void ConstantExample::run_constant(const size_t buffer_size, Meter &meter) {
+void ConstantExample::run_constant(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
   auto [platform, device, ctx, program] =
       (opts.device_ty == RunOptions::CPU)
@@ -15,10 +15,11 @@ void ConstantExample::run_constant(const size_t buffer_size, Meter &meter) {
             << std::endl
             << "Device: " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
 
+  const int buffer_size = buf_size;
   cl::Buffer src(ctx, CL_MEM_READ_WRITE, sizeof(int) * buffer_size);
   cl::Buffer dst(ctx, CL_MEM_READ_WRITE, sizeof(int) * buffer_size);
-  std::vector<int> src_data = {11};
-  std::vector<int> dst_data = {-1};
+  std::vector<int> src_data(buffer_size, 11);
+  std::vector<int> dst_data(buffer_size, -1);
 
   cl::CommandQueue queue(ctx, device);
   OCL_SAFE_CALL(queue.enqueueWriteBuffer(
