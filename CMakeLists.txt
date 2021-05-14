@@ -27,6 +27,8 @@ set(bench_libs
   constant
 )
 
+set(${CMAKE_CXX_FLAGS_DEBUG} "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+
 set(bench_sources bench.cpp register_dwarfs.cpp register_dwarfs.hpp)
 add_executable(${PROJECT_NAME} ${bench_sources})
 target_link_libraries(${PROJECT_NAME} PRIVATE Boost::program_options ${bench_libs})

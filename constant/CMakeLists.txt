@@ -2,6 +2,7 @@ add_kernel(constant)
 
 set(sources
     constant.cpp
+    constant_capi.cpp
     constant.hpp
 )
 

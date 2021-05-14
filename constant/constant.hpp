@@ -11,3 +11,14 @@ private:
   void run_constant(const size_t buffer_size, Meter &meter);
   std::string kernel_path_;
 };
+
+class ConstantExampleCAPI : public Dwarf {
+public:
+  ConstantExampleCAPI();
+  void run(const RunOptions &) override;
+  void init(const RunOptions &) override;
+
+private:
+  void run_constant(const size_t buffer_size, Meter &meter);
+  std::string kernel_path_;
+};
