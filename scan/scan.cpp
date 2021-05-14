@@ -1,6 +1,7 @@
 #include "scan.hpp"
 #include <CL/cl.hpp>
 #include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <memory>
 #include <sstream>
@@ -19,7 +20,6 @@ TwoPassScan::TwoPassScan() : Dwarf("TwoPassScan") {}
 
 void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
-  std::cout << "Running, buffer size = " << buf_size << std::endl;
   using namespace oclhelpers;
   std::cout << "# of platforms: " << get_platforms().size() << std::endl;
   auto [platform, device, ctx, program] =
@@ -29,9 +29,23 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
   std::cout << "Using platform: " << platform.getInfo<CL_PLATFORM_NAME>()
             << std::endl
             << "Device: " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
+  std::cout << "Device max WG size: "
+            << device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>() << std::endl;
+  std::cout << "Device max compute units : "
+            << device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << std::endl;
+  std::cout << "Device max WI sizes: ";
+  for (auto &x : device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()) {
+    std::cout << x << " ";
+  }
+  std::cout << std::endl;
+
+  constexpr int GPU_MAX_THREADS = 256;
+  constexpr int CPU_MAX_THREADS = 8;
 
   const int buffer_size = buf_size;
-  const int threadnum = buffer_size > 256 ? 256 : buffer_size;
+  const int threadnum =
+      (opts.device_ty == RunOptions::CPU) ? CPU_MAX_THREADS : GPU_MAX_THREADS;
+  std::cout << "Running, buffer size = " << buffer_size << std::endl;
   const int buffer_size_bytes = sizeof(int) * buffer_size;
   const int prefix_size_bytes = sizeof(int) * (threadnum + 1);
   const int filter_value = 5;
@@ -110,8 +124,6 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
     std::vector<int> expected_out = expected_out_lt(host_src, filter_value);
     // todo: remove
     size_t out_sz = host_out_size[0];
-    if (out_sz > 512)
-      out_sz = 512;
     host_out.resize(out_sz);
     if (expected_out != host_out) {
       std::cerr << "incorrect results" << std::endl;
