@@ -28,8 +28,10 @@ void ConstantExample::run_constant(const size_t buffer_size, Meter &meter) {
   cl::Kernel kernel = cl::Kernel(program, "constant_kernel");
   ocl::set_args(kernel, src, dst);
 
-  OCL_SAFE_CALL(queue.enqueueNDRangeKernel(kernel, cl::NullRange,
-                                           cl::NDRange(1), cl::NullRange));
+  cl::Event event;
+  OCL_SAFE_CALL(queue.enqueueNDRangeKernel(
+      kernel, cl::NullRange, cl::NDRange(1), cl::NullRange, {}, &event));
+  event.wait();
   OCL_SAFE_CALL(queue.enqueueReadBuffer(
       src, CL_TRUE, 0, sizeof(int) * buffer_size, src_data.data()));
   OCL_SAFE_CALL(queue.enqueueReadBuffer(
