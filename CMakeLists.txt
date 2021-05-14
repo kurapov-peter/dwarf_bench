@@ -19,10 +19,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(common)
 add_subdirectory(scan)
+add_subdirectory(constant)
 
 set(bench_libs 
   common
   scan
+  constant
 )
 
 set(bench_sources bench.cpp register_dwarfs.cpp register_dwarfs.hpp)

@@ -1,0 +1,1 @@
+void kernel constant_kernel(global int *input, global int *out) { out[0] = 42; }
