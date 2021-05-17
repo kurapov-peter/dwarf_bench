@@ -20,14 +20,16 @@ void MeasureResults::add_result(DwarfParams params, Result &&result) {
 }
 
 void MeasureResults::write_csv(const std::string &filename) const {
-  std::ofstream of(filename);
+  bool exists = std::ifstream(filename).good();
+  std::ofstream of(filename, std::ios::app);
   if (of.is_open()) {
-    of << "device_type,buf_size,host_time,kernel_time\n";
+    if (!exists)
+      of << "device_type,buf_size_bytes,host_time_ms,kernel_time_ms\n";
     for (const auto &res : results_) {
-      of << res.params.at("device_type") << "," << res.params.at("buf_size")
-         << ",";
-      of << res.result.host_time.count() << "," << res.result.kernel_time
-         << "\n";
+      of << res.params.at("device_type") << ","
+         << std::stoi(res.params.at("buf_size")) / 4 << ",";
+      of << res.result.host_time.count() / 1000.0 << ","
+         << ((double)res.result.kernel_time) / (1000.0 * 1000.0) << "\n";
     }
   } else {
     throw std::runtime_error("Could not open the file at " + filename);

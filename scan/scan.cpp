@@ -94,14 +94,14 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
     std::vector<int> host_out(buffer_size, -1);
     std::vector<int> host_debug(buffer_size, -1);
 
-    OCL_SAFE_CALL(queue.enqueueWriteBuffer(src, CL_TRUE, 0, buffer_size_bytes,
-                                           host_src.data()));
-
     cl::Kernel scan_kernel = cl::Kernel(program, "simple_two_pass_scan");
     oclhelpers::set_args(scan_kernel, src, buffer_size, out, out_size,
                          filter_value, prefix, debug);
 
     auto host_start = std::chrono::steady_clock::now();
+    OCL_SAFE_CALL(queue.enqueueWriteBuffer(src, CL_TRUE, 0, buffer_size_bytes,
+                                           host_src.data()));
+
     auto event = std::make_unique<cl::Event>();
     OCL_SAFE_CALL(queue.enqueueNDRangeKernel(scan_kernel, cl::NullRange,
                                              cl::NDRange(threadnum),
@@ -112,8 +112,10 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
                                           host_out.data()));
     OCL_SAFE_CALL(queue.enqueueReadBuffer(out_size, CL_TRUE, 0, sizeof(int),
                                           host_out_size.data()));
+#ifndef NDEBUG
     OCL_SAFE_CALL(queue.enqueueReadBuffer(debug, CL_TRUE, 0, buffer_size_bytes,
                                           host_debug.data()));
+#endif
     OCL_SAFE_CALL(queue.finish());
     OCL_SAFE_CALL(queue.flush());
 
