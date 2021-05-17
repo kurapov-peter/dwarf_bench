@@ -9,6 +9,8 @@ std::istream &operator>>(std::istream &in, RunOptions::DeviceType &dt) {
     dt = RunOptions::DeviceType::CPU;
   else if (type == "gpu")
     dt = RunOptions::DeviceType::GPU;
+  else if (type == "igpu")
+    dt = RunOptions::DeviceType::iGPU;
   else
     dt = RunOptions::DeviceType::Default;
 

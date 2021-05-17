@@ -4,7 +4,7 @@
 #include <vector>
 
 struct RunOptions {
-  enum DeviceType { CPU, GPU, Default };
+  enum DeviceType { CPU, GPU, iGPU, Default };
   DeviceType device_ty = DeviceType::Default;
   std::vector<size_t> input_size;
   size_t iterations = 1;
