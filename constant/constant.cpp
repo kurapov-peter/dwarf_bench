@@ -7,10 +7,32 @@ ConstantExample::ConstantExample() : Dwarf("ConstantExample") {}
 namespace ocl = oclhelpers;
 void ConstantExample::run_constant(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
-  auto [platform, device, ctx, program] =
-      (opts.device_ty == RunOptions::CPU)
-          ? ocl::compile_file_with_default_cpu(kernel_path_)
-          : ocl::compile_file_with_default_gpu(kernel_path_);
+
+  cl::Platform platform;
+  cl::Device device;
+  cl::Context ctx;
+  cl::Program program;
+
+  switch (opts.device_ty) {
+  case RunOptions::CPU:
+    std::tie(platform, device, ctx, program) =
+        ocl::compile_file_with_default_cpu(kernel_path_);
+    break;
+  case RunOptions::GPU:
+    std::tie(platform, device, ctx, program) =
+        ocl::compile_file_with_default_gpu(kernel_path_);
+    break;
+  case RunOptions::iGPU:
+    platform = ocl::get_platform_matching("HD Graphics");
+    std::tie(platform, device, ctx, program) =
+        ocl::compile_file_with_default_gpu(platform, kernel_path_);
+    break;
+
+  default:
+    throw std::logic_error("Unsupported device type");
+    break;
+  }
+
   std::cout << "Using platform: " << platform.getInfo<CL_PLATFORM_NAME>()
             << std::endl
             << "Device: " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
