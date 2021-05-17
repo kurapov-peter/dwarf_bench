@@ -20,12 +20,34 @@ TwoPassScan::TwoPassScan() : Dwarf("TwoPassScan") {}
 
 void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
+
+  cl::Platform platform;
+  cl::Device device;
+  cl::Context ctx;
+  cl::Program program;
+
   using namespace oclhelpers;
   std::cout << "# of platforms: " << get_platforms().size() << std::endl;
-  auto [platform, device, ctx, program] =
-      (opts.device_ty == RunOptions::CPU)
-          ? compile_file_with_default_cpu(kernel_path_)
-          : compile_file_with_default_gpu(kernel_path_);
+  switch (opts.device_ty) {
+  case RunOptions::CPU:
+    std::tie(platform, device, ctx, program) =
+        compile_file_with_default_cpu(kernel_path_);
+    break;
+  case RunOptions::GPU:
+    std::tie(platform, device, ctx, program) =
+        compile_file_with_default_gpu(kernel_path_);
+    break;
+  case RunOptions::iGPU:
+    platform = get_platform_matching("HD Graphics");
+    std::tie(platform, device, ctx, program) =
+        compile_file_with_default_gpu(platform, kernel_path_);
+    break;
+
+  default:
+    throw std::logic_error("Unsupported device type");
+    break;
+  }
+
   std::cout << "Using platform: " << platform.getInfo<CL_PLATFORM_NAME>()
             << std::endl
             << "Device: " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
@@ -122,9 +144,9 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
     meter.add_result(std::move(result));
 
     std::vector<int> expected_out = expected_out_lt(host_src, filter_value);
-    // todo: remove
     size_t out_sz = host_out_size[0];
     host_out.resize(out_sz);
+
     if (expected_out != host_out) {
       std::cerr << "incorrect results" << std::endl;
     }
