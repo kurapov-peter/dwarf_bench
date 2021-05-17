@@ -14,8 +14,12 @@ public:
   virtual void run(const RunOptions &opts) = 0;
   virtual void init(const RunOptions &opts) = 0;
   void report(const RunOptions &opts) {
-    for (const auto &res : results_) {
-      std::cout << res.result;
+    if (opts.report_path.empty()) {
+      for (const auto &res : results_) {
+        std::cout << res.result;
+      }
+    } else {
+      results_.write_csv(opts.report_path);
     }
   }
 

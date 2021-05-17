@@ -67,18 +67,11 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
   const int buffer_size = buf_size;
   const int threadnum =
       (opts.device_ty == RunOptions::CPU) ? CPU_MAX_THREADS : GPU_MAX_THREADS;
-  std::cout << "Running, buffer size = " << buffer_size << std::endl;
   const int buffer_size_bytes = sizeof(int) * buffer_size;
   const int prefix_size_bytes = sizeof(int) * (threadnum + 1);
   const int filter_value = 5;
 
   std::vector<int> host_out_size = {-1};
-
-  cl::Buffer src(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
-  cl::Buffer out(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
-  cl::Buffer prefix(ctx, CL_MEM_READ_WRITE, prefix_size_bytes);
-  cl::Buffer debug(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
-  cl::Buffer out_size(ctx, CL_MEM_READ_WRITE, sizeof(int));
 
   const cl_queue_properties props[] = {CL_QUEUE_PROPERTIES,
                                        CL_QUEUE_PROFILING_ENABLE, 0};
@@ -90,17 +83,24 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
   }
 
   std::vector<int> host_src = helpers::make_random(buffer_size);
-  std::vector<int> host_out(buffer_size, -1);
-  std::vector<int> host_debug(buffer_size, -1);
-
-  OCL_SAFE_CALL(queue.enqueueWriteBuffer(src, CL_TRUE, 0, buffer_size_bytes,
-                                         host_src.data()));
-
-  cl::Kernel scan_kernel = cl::Kernel(program, "simple_two_pass_scan");
-  oclhelpers::set_args(scan_kernel, src, buffer_size, out, out_size,
-                       filter_value, prefix, debug);
 
   for (auto it = 0; it < opts.iterations; ++it) {
+    cl::Buffer src(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
+    cl::Buffer out(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
+    cl::Buffer prefix(ctx, CL_MEM_READ_WRITE, prefix_size_bytes);
+    cl::Buffer debug(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
+    cl::Buffer out_size(ctx, CL_MEM_READ_WRITE, sizeof(int));
+
+    std::vector<int> host_out(buffer_size, -1);
+    std::vector<int> host_debug(buffer_size, -1);
+
+    OCL_SAFE_CALL(queue.enqueueWriteBuffer(src, CL_TRUE, 0, buffer_size_bytes,
+                                           host_src.data()));
+
+    cl::Kernel scan_kernel = cl::Kernel(program, "simple_two_pass_scan");
+    oclhelpers::set_args(scan_kernel, src, buffer_size, out, out_size,
+                         filter_value, prefix, debug);
+
     auto host_start = std::chrono::steady_clock::now();
     auto event = std::make_unique<cl::Event>();
     OCL_SAFE_CALL(queue.enqueueNDRangeKernel(scan_kernel, cl::NullRange,
@@ -115,6 +115,7 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
     OCL_SAFE_CALL(queue.enqueueReadBuffer(debug, CL_TRUE, 0, buffer_size_bytes,
                                           host_debug.data()));
     OCL_SAFE_CALL(queue.finish());
+    OCL_SAFE_CALL(queue.flush());
 
     auto host_end = std::chrono::steady_clock::now();
     auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -144,6 +145,7 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
 
     result.kernel_time = exe_time;
 
+    // todo: move out
     std::vector<int> expected_out = expected_out_lt(host_src, filter_value);
     size_t out_sz = host_out_size[0];
     host_out.resize(out_sz);
@@ -152,7 +154,8 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
       std::cerr << "incorrect results" << std::endl;
       result.valid = false;
     }
-    meter.add_result(std::move(result));
+    DwarfParams params{{"buf_size", std::to_string(buffer_size)}};
+    meter.add_result(std::move(params), std::move(result));
 
 #ifndef NDEBUG
     std::cout << "Input:    ";
@@ -179,4 +182,6 @@ void TwoPassScan::run(const RunOptions &opts) {
 void TwoPassScan::init(const RunOptions &opts) {
   kernel_path_ = opts.root_path + "/scan/scan.cl";
   meter().set_opts(opts);
+  DwarfParams params = {{"device_type", to_string(opts.device_ty)}};
+  meter().set_params(params);
 }

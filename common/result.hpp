@@ -37,6 +37,8 @@ public:
   const_iterator begin() const;
   const_iterator end() const;
 
+  void write_csv(const std::string &filename) const;
+
 private:
   SingleRunResults results_;
   const std::string name_;

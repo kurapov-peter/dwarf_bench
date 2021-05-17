@@ -16,3 +16,18 @@ std::istream &operator>>(std::istream &in, RunOptions::DeviceType &dt) {
 
   return in;
 }
+
+std::string to_string(const RunOptions::DeviceType &dt) {
+  switch (dt) {
+  case RunOptions::DeviceType::CPU:
+    return "CPU";
+  case RunOptions::DeviceType::iGPU:
+    return "iGPU";
+  case RunOptions::DeviceType::GPU:
+  case RunOptions::DeviceType::Default:
+    return "GPU";
+
+  default:
+    throw std::logic_error("Unsupported device type!");
+  }
+}

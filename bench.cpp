@@ -30,6 +30,8 @@ int main(int argc, char *argv[]) {
   desc.add_options()("device",
                      po::value<RunOptions::DeviceType>(&opts.device_ty),
                      "Device to run on.");
+  desc.add_options()("report_path", po::value<std::string>(&opts.report_path),
+                     "Full/Relative path to a report file.");
   po::positional_options_description pos_opts;
   pos_opts.add("dwarf", 1);
 
@@ -51,12 +53,6 @@ int main(int argc, char *argv[]) {
       return 0;
     } else {
       dwarf = registry->find(dwarf_name);
-      if (!dwarf) {
-        std::cerr << "Wrong dwarf name: '" << dwarf_name << "'" << std::endl;
-        std::cerr << "To list all available dwarfs, run '" << argv[0]
-                  << " list'" << std::endl;
-        return 1;
-      }
     }
     if (vm.count("help")) {
       std::cout << desc;
