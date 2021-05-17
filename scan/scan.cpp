@@ -127,6 +127,9 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
                 << " (should be CL_COMPLETE)";
     }
 
+    Result result;
+    result.host_time = host_end - host_start;
+
     cl_int profiling_error1;
     cl_int profiling_error2;
     auto exe_time =
@@ -136,12 +139,10 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
       std::cerr << "Got profiling error: ";
       std::cerr << get_error_string(profiling_error1) << " & "
                 << get_error_string(profiling_error2) << std::endl;
+      result.valid = false;
     }
 
-    Result result;
-    result.host_time = host_end - host_start;
     result.kernel_time = exe_time;
-    meter.add_result(std::move(result));
 
     std::vector<int> expected_out = expected_out_lt(host_src, filter_value);
     size_t out_sz = host_out_size[0];
@@ -149,7 +150,10 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
 
     if (expected_out != host_out) {
       std::cerr << "incorrect results" << std::endl;
+      result.valid = false;
     }
+    meter.add_result(std::move(result));
+
 #ifndef NDEBUG
     std::cout << "Input:    ";
     dump_collection(host_src);
