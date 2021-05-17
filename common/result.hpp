@@ -16,6 +16,7 @@ struct Result {
   size_t bytes_per_iteration = 0;
   unsigned long kernel_time = 0;
   Duration host_time;
+  bool valid = true;
 };
 
 std::ostream &operator<<(std::ostream &os, const Result &res);
