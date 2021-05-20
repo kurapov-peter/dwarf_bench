@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.14)
 project(dwarf_bench)
 
 find_package(OpenCL REQUIRED)
@@ -11,11 +11,12 @@ list(APPEND CMAKE_MODULE_PATH
 )
 
 include(KernelFunctions)
+include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-#include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(common)
 add_subdirectory(scan)
@@ -38,3 +39,16 @@ add_kernel(vadd)
 add_executable(simple simple.cpp)
 target_link_libraries(simple PRIVATE common OpenCL::OpenCL oclhelpers::oclhelpers)
 target_include_directories(simple PRIVATE ${PROJECT_SOURCE_DIR})
+
+option(ENABLE_TESTS ON)
+if(ENABLE_TESTS)
+  FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.10.x
+  )
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(googletest)
+  
+  add_subdirectory(tests)
+endif()

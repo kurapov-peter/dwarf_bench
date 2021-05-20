@@ -29,5 +29,6 @@ void dump_collection(const Collection &c, std::ostream &os = std::cout) {
 
 namespace helpers {
 std::vector<int> make_random(size_t size);
+std::vector<int> make_random_uniform_binary(size_t size);
 std::string get_kernels_root_env(const char *argv0);
 } // namespace helpers

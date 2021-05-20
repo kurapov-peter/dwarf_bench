@@ -40,3 +40,27 @@ void kernel simple_two_pass_scan(global const int *src, int src_size,
     }
   }
 }
+
+void kernel prefix_local_test(global const int *src, global int *dst, int sz) {
+  int id = get_global_id(0);
+
+  local int prefix[32];
+
+  int lidx = get_local_id(0);
+  int lidy = get_local_id(1);
+  int index = lidx + lidy * get_local_size(0);
+  prefix[index] = src[index];
+
+  barrier(CLK_LOCAL_MEM_FENCE);
+
+  for (int i = 0; i < 5; ++i) {
+    if (index >= (1 << i)) {
+      prefix[index] += prefix[index - (1 << i)];
+    }
+    // barrier(CLK_GLOBAL_MEM_FENCE);
+  }
+  barrier(CLK_LOCAL_MEM_FENCE);
+
+  dst[0] = 0;
+  dst[index + 1] = prefix[index];
+}
