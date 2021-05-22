@@ -8,4 +8,5 @@ void populate_registry() {
   registry->registerd(new TwoPassScan());
   registry->registerd(new ConstantExample());
   registry->registerd(new ConstantExampleCAPI());
+  registry->registerd(new ConstantExampleDPCPP());
 }

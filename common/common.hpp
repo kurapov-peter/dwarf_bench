@@ -1,5 +1,4 @@
 #pragma once
-#include <CL/cl.hpp>
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
@@ -7,8 +6,6 @@
 #include <random>
 #include <string>
 #include <vector>
-
-#include <oclhelpers.hpp>
 
 #include "dwarf.hpp"
 #include "meter.hpp"
@@ -31,4 +28,6 @@ namespace helpers {
 std::vector<int> make_random(size_t size);
 std::vector<int> make_random_uniform_binary(size_t size);
 std::string get_kernels_root_env(const char *argv0);
+void set_dpcpp_filter_env_no_overwrite(const char *filter);
+void set_dpcpp_filter_env(const RunOptions &opts);
 } // namespace helpers

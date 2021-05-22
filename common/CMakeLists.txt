@@ -16,6 +16,6 @@ set(COMMON_LIB common)
 
 add_library(${COMMON_LIB} ${common_sources})
 target_link_libraries(${COMMON_LIB} 
-    PUBLIC OpenCL::OpenCL oclhelpers::oclhelpers
+    #PUBLIC OpenCL::OpenCL oclhelpers::oclhelpers
     PRIVATE Boost::filesystem ${CMAKE_DL_LIBS}
 )

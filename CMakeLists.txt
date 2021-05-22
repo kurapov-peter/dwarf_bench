@@ -3,6 +3,14 @@ project(dwarf_bench)
 
 find_package(OpenCL REQUIRED)
 find_package(oclhelpers 0.1.1 REQUIRED)
+find_package(CUDA)
+
+if(CUDA_FOUND)
+  message(STATUS "Using ${CUDA_VERSION} headers")
+  if (${CUDA_VERSION_MAJOR} GREATER_EQUAL 11)
+    add_definitions(-DCUDA_OCL_API_CHANGED)
+  endif()
+endif()
 
 find_package(Boost 1.61 COMPONENTS program_options filesystem REQUIRED)
 
@@ -10,13 +18,15 @@ list(APPEND CMAKE_MODULE_PATH
   ${PROJECT_SOURCE_DIR}/cmake
 )
 
+option(ENABLE_DPCPP ON)
+
 include(KernelFunctions)
 include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+#include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(common)
 add_subdirectory(scan)
@@ -27,6 +37,13 @@ set(bench_libs
   scan
   constant
 )
+
+if(ENABLE_DPCPP)
+  list(APPEND bench_libs
+    dpcpp_constant)
+    
+  find_package(oneDPL REQUIRED)
+endif()
 
 set(${CMAKE_CXX_FLAGS_DEBUG} "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 

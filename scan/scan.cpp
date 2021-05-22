@@ -4,6 +4,7 @@
 #include <cassert>
 #include <chrono>
 #include <memory>
+#include <oclhelpers.hpp>
 #include <sstream>
 #include <vector>
 
@@ -73,8 +74,13 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
 
   std::vector<int> host_out_size = {-1};
 
+#ifdef CUDA_OCL_API_CHANGED
   const cl_queue_properties props[] = {CL_QUEUE_PROPERTIES,
                                        CL_QUEUE_PROFILING_ENABLE, 0};
+#else
+  const auto props = CL_QUEUE_PROFILING_ENABLE;
+#endif
+
   cl_int queue_init_err;
   cl::CommandQueue queue(ctx, device, props, &queue_init_err);
   if (queue_init_err != CL_SUCCESS) {

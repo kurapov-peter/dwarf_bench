@@ -2,6 +2,7 @@
 #include <CL/cl.hpp>
 #include <fstream>
 #include <iostream>
+#include <oclhelpers.hpp>
 #include <string>
 #include <vector>
 

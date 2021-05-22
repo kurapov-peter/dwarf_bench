@@ -1,5 +1,6 @@
 #include "constant.hpp"
 #include <CL/cl.hpp>
+#include <oclhelpers.hpp>
 #include <sstream>
 
 ConstantExample::ConstantExample() : Dwarf("ConstantExample") {}

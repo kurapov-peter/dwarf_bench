@@ -1,5 +1,6 @@
 #include "constant.hpp"
 #include <CL/cl.h>
+#include <oclhelpers.hpp>
 #include <sstream>
 
 ConstantExampleCAPI::ConstantExampleCAPI() : Dwarf("ConstantExampleCAPI") {}

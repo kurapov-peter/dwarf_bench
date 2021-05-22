@@ -67,6 +67,8 @@ int main(int argc, char *argv[]) {
       opts.input_size.push_back(1);
     }
 
+    helpers::set_dpcpp_filter_env(opts);
+
     dwarf->init(opts);
     dwarf->run(opts);
     dwarf->report(opts);

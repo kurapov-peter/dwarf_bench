@@ -6,6 +6,7 @@
 #include <gtest/gtest.h>
 #include <iterator>
 #include <numeric>
+#include <oclhelpers.hpp>
 
 namespace {
 static int buffer_size;
