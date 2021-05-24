@@ -3,7 +3,8 @@
 #include <CL/sycl.hpp>
 #include <sstream>
 
-ConstantExampleDPCPP::ConstantExampleDPCPP() : Dwarf("ConstantExampleDPCPP") {}
+ConstantExampleDPCPPCuda::ConstantExampleDPCPPCuda()
+    : Dwarf("ConstantExampleDPCPPCuda") {}
 
 namespace {
 void _run_constant(const size_t buf_size, Meter &meter) {
@@ -34,16 +35,17 @@ void _run_constant(const size_t buf_size, Meter &meter) {
 }
 } // namespace
 
-void ConstantExampleDPCPP::run_constant(const size_t buf_size, Meter &meter) {
+void ConstantExampleDPCPPCuda::run_constant(const size_t buf_size,
+                                            Meter &meter) {
   _run_constant(buf_size, meter);
 }
 
-void ConstantExampleDPCPP::run(const RunOptions &opts) {
+void ConstantExampleDPCPPCuda::run(const RunOptions &opts) {
   for (auto size : opts.input_size) {
     run_constant(size, meter());
   }
 }
 
-void ConstantExampleDPCPP::init(const RunOptions &opts) {
+void ConstantExampleDPCPPCuda::init(const RunOptions &opts) {
   meter().set_opts(opts);
 }

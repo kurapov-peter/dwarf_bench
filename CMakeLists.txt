@@ -26,9 +26,11 @@ include(FetchContent)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 #include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(common)
+add_subdirectory(common/dpcpp)
 add_subdirectory(scan)
 add_subdirectory(constant)
 
@@ -40,8 +42,9 @@ set(bench_libs
 
 if(ENABLE_DPCPP)
   list(APPEND bench_libs
-    dpcpp_constant)
-    
+    dpcpp_constant
+    dpcpp_constant_cuda)
+  add_definitions(-DDPCPP_ENABLED)  
   find_package(oneDPL REQUIRED)
 endif()
 

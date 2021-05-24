@@ -7,4 +7,7 @@
 3. Install [CUDA](https://developer.nvidia.com/cuda-downloads?target_os=Linux)
 4. Install [CPU runtime](https://software.intel.com/content/www/us/en/develop/documentation/installation-guide-for-intel-oneapi-toolkits-linux/top/installation/install-using-package-managers/apt.html) (You'll only need the runtime: `sudo apt install intel-oneapi-runtime-opencl`)
 5. Install [Intel gfx drivers](https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal.html)
-5. mkdir build && cd build && cmake .. && make -j`nproc`
+6. In order to run dpcpp tests with cpu, gpu and cuda follow these steps:
+    - [Build dpcpp compiler with cuda support](https://intel.github.io/llvm-docs/GetStartedGuide.html#build-dpc-toolchain-with-support-for-nvidia-cuda)
+    - Install [onedpl](https://github.com/oneapi-src/oneDPL/) (i.e. along with the [basekit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/base-toolkit.html#gs.24lvfe))
+7. mkdir build && cd build && CXX=clang++ oclhelpers_DIR=/path/to/helpers cmake -DENABLE_DPCPP=ON .. && make -j`nproc`
