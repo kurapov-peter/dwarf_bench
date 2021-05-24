@@ -12,5 +12,7 @@ void populate_registry() {
 #ifdef DPCPP_ENABLED
   registry->registerd(new ConstantExampleDPCPP());
   registry->registerd(new ConstantExampleDPCPPCuda());
+  registry->registerd(new DPLScan());
+  registry->registerd(new DPLScanCuda());
 #endif
 }

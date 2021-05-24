@@ -5,6 +5,14 @@ find_package(OpenCL REQUIRED)
 find_package(oclhelpers 0.1.1 REQUIRED)
 find_package(CUDA)
 
+option(ENABLE_DPCPP ON)
+
+if(ENABLE_DPCPP)
+  find_package(oneDPL REQUIRED)
+  find_package(TBB REQUIRED)
+  add_definitions(-DDPCPP_ENABLED)  
+endif()
+
 if(CUDA_FOUND)
   message(STATUS "Using ${CUDA_VERSION} headers")
   if (${CUDA_VERSION_MAJOR} GREATER_EQUAL 11)
@@ -18,8 +26,6 @@ list(APPEND CMAKE_MODULE_PATH
   ${PROJECT_SOURCE_DIR}/cmake
 )
 
-option(ENABLE_DPCPP ON)
-
 include(KernelFunctions)
 include(FetchContent)
 
@@ -30,7 +36,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 #include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(common)
-add_subdirectory(common/dpcpp)
 add_subdirectory(scan)
 add_subdirectory(constant)
 
@@ -41,11 +46,13 @@ set(bench_libs
 )
 
 if(ENABLE_DPCPP)
+  add_subdirectory(common/dpcpp)
   list(APPEND bench_libs
     dpcpp_constant
-    dpcpp_constant_cuda)
-  add_definitions(-DDPCPP_ENABLED)  
-  find_package(oneDPL REQUIRED)
+    dpcpp_constant_cuda
+    dplscan
+    dplscan_cuda
+  )
 endif()
 
 set(${CMAKE_CXX_FLAGS_DEBUG} "${CMAKE_CXX_FLAGS_DEBUG} -O0")

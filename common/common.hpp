@@ -30,4 +30,14 @@ std::vector<int> make_random_uniform_binary(size_t size);
 std::string get_kernels_root_env(const char *argv0);
 void set_dpcpp_filter_env_no_overwrite(const char *filter);
 void set_dpcpp_filter_env(const RunOptions &opts);
+
+template <typename T, typename U>
+bool check_first(const T &v1, const U &v2, size_t sz) {
+  for (size_t i = 0; i < sz; ++i) {
+    if (v1[i] != v2[i])
+      return false;
+  }
+  return true;
+}
+
 } // namespace helpers
