@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 project(dwarf_bench)
 
 find_package(OpenCL REQUIRED)
-find_package(oclhelpers 0.1.1 REQUIRED)
+find_package(oclhelpers 0.1.3 REQUIRED)
 find_package(CUDA)
 
 option(ENABLE_DPCPP ON)
