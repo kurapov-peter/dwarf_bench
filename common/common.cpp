@@ -38,7 +38,6 @@ void set_dpcpp_filter_env(const RunOptions &opts) {
 }
 
 void set_dpcpp_filter_env_no_overwrite(const char *filter) {
-  std::cout << "SETTING DEVICE FILTER to " << filter << "\n";
-  setenv("SYCL_DEVICE_FILTER", filter, 1);
+  setenv("SYCL_DEVICE_FILTER", filter, 0);
 }
 } // namespace helpers

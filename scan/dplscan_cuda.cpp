@@ -2,11 +2,11 @@
 #include <oneapi/dpl/execution>
 #include <oneapi/dpl/iterator>
 
+#include "common/dpcpp/dpcpp_common.hpp"
 #include "scan/scan.hpp"
+#include <CL/sycl.hpp>
 #include <functional>
 #include <iostream>
-
-#include "common/dpcpp/dpcpp_common.hpp"
 
 namespace {
 template <typename T> using Func = std::function<bool(T)>;
