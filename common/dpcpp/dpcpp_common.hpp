@@ -1,3 +1,4 @@
+#pragma once
 #include "common/options.hpp"
 #include <CL/sycl.hpp>
 
