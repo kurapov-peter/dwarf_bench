@@ -38,6 +38,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_subdirectory(common)
 add_subdirectory(scan)
 add_subdirectory(constant)
+add_subdirectory(radix)
 
 set(bench_libs 
   common
@@ -47,12 +48,19 @@ set(bench_libs
 
 if(ENABLE_DPCPP)
   add_subdirectory(common/dpcpp)
+  
   list(APPEND bench_libs
     dpcpp_constant
-    dpcpp_constant_cuda
     dplscan
-    dplscan_cuda
+    radix
   )
+  if(CUDA_FOUND)
+  list(APPEND bench_libs
+      dpcpp_constant_cuda
+      dplscan_cuda
+      radix_cuda
+  )
+  endif()
 endif()
 
 set(${CMAKE_CXX_FLAGS_DEBUG} "${CMAKE_CXX_FLAGS_DEBUG} -O0")
