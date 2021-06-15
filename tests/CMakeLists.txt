@@ -1,7 +1,19 @@
 enable_testing()
 
 add_executable(scan_tests scan_tests.cpp)
-target_link_libraries(scan_tests gtest scan)
+add_executable(hash_table_tests hash_table_tests.cpp)
+
+target_link_libraries(scan_tests gtest scan oclhelpers::oclhelpers)
+target_link_libraries(hash_table_tests dpcpp_common sycl GTest::gtest)
+
 target_include_directories(scan_tests PRIVATE ${PROJECT_SOURCE_DIR})
+target_include_directories(hash_table_tests PRIVATE ${PROJECT_SOURCE_DIR})
+
+target_compile_options(scan_tests PRIVATE -fsycl)
+target_link_options(scan_tests PRIVATE -fsycl)
+
+target_compile_options(hash_table_tests PRIVATE -fsycl)
+target_link_options(hash_table_tests PRIVATE -fsycl)
 
 add_test(scan_tests scan_tests WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tests)
+add_test(hash_table_tests hash_table_tests WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tests)
