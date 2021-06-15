@@ -39,6 +39,7 @@ add_subdirectory(common)
 add_subdirectory(scan)
 add_subdirectory(constant)
 add_subdirectory(radix)
+add_subdirectory(reduce)
 
 set(bench_libs 
   common
@@ -53,6 +54,7 @@ if(ENABLE_DPCPP)
     dpcpp_constant
     dplscan
     radix
+    reduce
   )
   if(CUDA_FOUND)
   list(APPEND bench_libs

@@ -2,6 +2,7 @@
 #include "common/registry.hpp"
 #include "constant/constant.hpp"
 #include "radix/radix.hpp"
+#include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
 
 void populate_registry() {
@@ -17,5 +18,6 @@ void populate_registry() {
   registry->registerd(new DPLScanCuda());
   registry->registerd(new Radix());
   registry->registerd(new RadixCuda());
+  registry->registerd(new ReduceDPCPP());
 #endif
 }
