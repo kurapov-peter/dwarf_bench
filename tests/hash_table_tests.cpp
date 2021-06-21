@@ -19,15 +19,15 @@ TEST(HashTable, Build) {
   SimpleHasher<input_size> hasher;
 
   q.submit([&](handler &h) {
-    auto bitmask_acc = bitmask_buf.get_access<access::mode::read_write>();
-    auto data_acc = data_buf.get_access<access::mode::read_write>();
-    auto keys_acc = keys_buf.get_access<access::mode::read_write>();
+    auto bitmask_acc = bitmask_buf.get_access<access::mode::read_write>(h);
+    auto data_acc = data_buf.get_access<access::mode::read_write>(h);
+    auto keys_acc = keys_buf.get_access<access::mode::read_write>(h);
 
     h.parallel_for<class test_hash>(range<1>{1}, [=](auto &idx) {
       SimpleNonOwningHashTable<uint32_t, uint32_t, SimpleHasher<input_size>> ht(
           input_size, keys_acc.get_pointer(), data_acc.get_pointer(),
           bitmask_acc.get_pointer(), hasher);
-      //   ht.insert(2, 2);
+      ht.insert(2, 2);
     });
   });
 
@@ -36,6 +36,8 @@ TEST(HashTable, Build) {
     std::cout << result[i] << " ";
   }
   std::cout << std::endl;
+
+  ASSERT_EQ(result[2], 2);
 }
 
 int main(int argc, char **argv) {
