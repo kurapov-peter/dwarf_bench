@@ -24,7 +24,7 @@ DPLScanCuda::DPLScanCuda() : Dwarf("DPLScanCuda") {}
 void DPLScanCuda::run_scan(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
   const int buffer_size = buf_size;
-  const std::vector<int> host_src = helpers::make_random(buffer_size);
+  const std::vector<int> host_src = helpers::make_random<int>(buffer_size);
 
   std::vector<int> expected =
       expected_out<int>(host_src, [](int x) { return x < 5; });

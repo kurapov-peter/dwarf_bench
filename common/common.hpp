@@ -25,7 +25,15 @@ void dump_collection(const Collection &c, std::ostream &os = std::cout) {
 }
 
 namespace helpers {
-std::vector<int> make_random(size_t size);
+template <class T> std::vector<T> make_random(size_t size) {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::vector<T> out(size);
+  std::uniform_int_distribution<T> dist(0, 10);
+  std::generate(out.begin(), out.end(), [&]() { return dist(gen); });
+  return out;
+}
+
 std::vector<int> make_random_uniform_binary(size_t size);
 std::string get_kernels_root_env(const char *argv0);
 void set_dpcpp_filter_env_no_overwrite(const char *filter);

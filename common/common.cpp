@@ -3,14 +3,6 @@
 #include <cstdlib>
 
 namespace helpers {
-std::vector<int> make_random(size_t size) {
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::vector<int> out(size);
-  std::uniform_int_distribution<int> dist(0, 10);
-  std::generate(out.begin(), out.end(), [&]() { return dist(gen); });
-  return out;
-}
 
 std::vector<int> make_random_uniform_binary(size_t size) {
   std::random_device rd;

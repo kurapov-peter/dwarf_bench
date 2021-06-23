@@ -18,7 +18,7 @@ Radix::Radix() : Dwarf("Radix") {}
 
 void Radix::_run(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
-  const std::vector<int> host_src = helpers::make_random(buf_size);
+  const std::vector<int> host_src = helpers::make_random<int>(buf_size);
   const std::vector<int> expected = expected_out(host_src);
 
   auto sel = get_device_selector(opts);

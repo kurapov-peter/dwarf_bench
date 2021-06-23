@@ -88,7 +88,7 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
     std::cerr << get_error_string(queue_init_err) << std::endl;
   }
 
-  std::vector<int> host_src = helpers::make_random(buffer_size);
+  std::vector<int> host_src = helpers::make_random<int>(buffer_size);
 
   for (auto it = 0; it < opts.iterations; ++it) {
     cl::Buffer src(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
