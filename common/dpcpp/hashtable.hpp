@@ -2,7 +2,7 @@
 #include "dpcpp_common.hpp"
 
 template <size_t Size> struct SimpleHasher {
-  size_t operator()(const uint32_t &v) { return v % Size; }
+  size_t operator()(const uint32_t &v) const { return v % Size; }
 };
 
 template <class Key, class T, class Hash> class SimpleNonOwningHashTable {
@@ -22,9 +22,41 @@ public:
     return {pos, true};
   }
 
-  T &at(const Key &key) {
+  const std::pair<T, bool> at(const Key &key) const {
     uint32_t pos = _hasher(key);
+    const auto start = pos;
     bool present = (_bitmask[pos / elem_sz] & (uint32_t(1) << pos % elem_sz));
+    while (present) {
+      if (_keys[pos] == key) {
+        return {_vals[pos], true};
+      }
+
+      pos = (++pos) % _size;
+      if (pos == start)
+        break;
+
+      present = (_bitmask[pos / elem_sz] & (uint32_t(1) << pos % elem_sz));
+    }
+
+    return {{}, false};
+  }
+
+  bool has(const Key &key) const {
+    uint32_t pos = _hasher(key);
+    const auto start = pos;
+    bool present = (_bitmask[pos / elem_sz] & (uint32_t(1) << pos % elem_sz));
+    while (present) {
+      if (_keys[pos] == key)
+        return true;
+
+      pos = (++pos) % _size;
+      if (pos == start)
+        break;
+
+      present = (_bitmask[pos / elem_sz] & (uint32_t(1) << pos % elem_sz));
+    }
+
+    return false;
   }
 
 private:
