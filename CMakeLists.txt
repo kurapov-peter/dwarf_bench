@@ -40,6 +40,7 @@ add_subdirectory(scan)
 add_subdirectory(constant)
 add_subdirectory(radix)
 add_subdirectory(reduce)
+add_subdirectory(hash)
 
 set(bench_libs 
   common
@@ -55,6 +56,7 @@ if(ENABLE_DPCPP)
     dplscan
     radix
     reduce
+    hash_build
   )
   if(CUDA_FOUND)
   list(APPEND bench_libs
