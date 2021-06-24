@@ -16,7 +16,7 @@ TEST(HashTable, Build) {
   buffer<uint32_t> data_buf(data.data(), data.size());
   buffer<uint32_t> keys_buf(keys.data(), keys.size());
 
-  SimpleHasher<input_size> hasher;
+  StaticSimpleHasher<input_size> hasher;
 
   q.submit([&](handler &h) {
     auto bitmask_acc = bitmask_buf.get_access<access::mode::read_write>(h);
@@ -24,9 +24,10 @@ TEST(HashTable, Build) {
     auto keys_acc = keys_buf.get_access<access::mode::read_write>(h);
 
     h.parallel_for<class test_hash>(range<1>{2}, [=](auto &idx) {
-      SimpleNonOwningHashTable<uint32_t, uint32_t, SimpleHasher<input_size>> ht(
-          input_size, keys_acc.get_pointer(), data_acc.get_pointer(),
-          bitmask_acc.get_pointer(), hasher);
+      SimpleNonOwningHashTable<uint32_t, uint32_t,
+                               StaticSimpleHasher<input_size>>
+          ht(input_size, keys_acc.get_pointer(), data_acc.get_pointer(),
+             bitmask_acc.get_pointer(), hasher);
       int id = idx.get_id(0);
       if (id == 0) {
         ht.insert(2, 2);
@@ -69,7 +70,7 @@ TEST(HashTable, Probe) {
 
   buffer<uint32_t> out_buf(output);
 
-  SimpleHasher<input_size> hasher;
+  StaticSimpleHasher<input_size> hasher;
 
   q.submit([&](handler &h) {
     auto bitmask_acc = bitmask_buf.get_access(h);
@@ -78,9 +79,10 @@ TEST(HashTable, Probe) {
     auto out_acc = out_buf.get_access(h);
 
     h.parallel_for<class test_hash_probe>(range{1}, [=](auto &idx) {
-      SimpleNonOwningHashTable<uint32_t, uint32_t, SimpleHasher<input_size>> ht(
-          input_size, keys_acc.get_pointer(), data_acc.get_pointer(),
-          bitmask_acc.get_pointer(), hasher);
+      SimpleNonOwningHashTable<uint32_t, uint32_t,
+                               StaticSimpleHasher<input_size>>
+          ht(input_size, keys_acc.get_pointer(), data_acc.get_pointer(),
+             bitmask_acc.get_pointer(), hasher);
       int id = idx.get_id(0);
 
       ht.insert(1, 1);
@@ -126,7 +128,7 @@ TEST(HashTable, Has) {
 
   buffer<uint32_t> out_buf(output);
 
-  SimpleHasher<input_size> hasher;
+  StaticSimpleHasher<input_size> hasher;
 
   q.submit([&](handler &h) {
     auto bitmask_acc = bitmask_buf.get_access(h);
@@ -135,9 +137,10 @@ TEST(HashTable, Has) {
     auto out_acc = out_buf.get_access(h);
 
     h.parallel_for<class test_hash_has>(range{1}, [=](auto &idx) {
-      SimpleNonOwningHashTable<uint32_t, uint32_t, SimpleHasher<input_size>> ht(
-          input_size, keys_acc.get_pointer(), data_acc.get_pointer(),
-          bitmask_acc.get_pointer(), hasher);
+      SimpleNonOwningHashTable<uint32_t, uint32_t,
+                               StaticSimpleHasher<input_size>>
+          ht(input_size, keys_acc.get_pointer(), data_acc.get_pointer(),
+             bitmask_acc.get_pointer(), hasher);
       int id = idx.get_id(0);
 
       ht.insert(1, 1);
