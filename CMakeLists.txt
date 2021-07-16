@@ -7,10 +7,13 @@ find_package(CUDA)
 
 option(ENABLE_DPCPP ON)
 option(ENABLE_CUDA OFF)
+option(EXPLICIT_DPL OFF)
 
 if(ENABLE_DPCPP)
-  find_package(oneDPL REQUIRED)
-  find_package(TBB REQUIRED)
+  if(EXPLICIT_DPL)
+    find_package(oneDPL REQUIRED)
+    find_package(TBB REQUIRED)
+  endif()
   add_definitions(-DDPCPP_ENABLED)  
 endif()
 

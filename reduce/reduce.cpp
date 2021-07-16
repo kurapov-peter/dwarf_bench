@@ -18,7 +18,7 @@ template <typename T> T expected_out(const std::vector<T> &v) {
     return e > min_T / static_cast<int>(v.size());
   }));
 
-  return std::reduce(v.begin(), v.end());
+  return std::accumulate(v.begin(), v.end(), 0);
 }
 } // namespace
 
