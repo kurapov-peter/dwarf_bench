@@ -14,12 +14,14 @@ void populate_registry() {
 
 #ifdef DPCPP_ENABLED
   registry->registerd(new ConstantExampleDPCPP());
-  registry->registerd(new ConstantExampleDPCPPCuda());
   registry->registerd(new DPLScan());
-  registry->registerd(new DPLScanCuda());
   registry->registerd(new Radix());
-  registry->registerd(new RadixCuda());
   registry->registerd(new ReduceDPCPP());
   registry->registerd(new HashBuild());
+#ifdef CUDA_ENABLED
+  registry->registerd(new ConstantExampleDPCPPCuda());
+  registry->registerd(new DPLScanCuda());
+  registry->registerd(new RadixCuda());
+#endif
 #endif
 }

@@ -21,13 +21,15 @@ if(ENABLE_DPCPP)
     target_compile_options(dpcpp_constant PRIVATE -fsycl)
     target_link_options(dpcpp_constant PRIVATE -fsycl)
 
-    set(dpcpp_cuda_sources
-        constant_dpcpp_cuda.cpp
-        constant.hpp
-    )
-    add_library(dpcpp_constant_cuda SHARED ${dpcpp_cuda_sources})
-    target_link_libraries(dpcpp_constant_cuda PRIVATE common dpcpp_common sycl oneDPL)
-    target_include_directories(dpcpp_constant_cuda PRIVATE ${PROJECT_SOURCE_DIR})
-    target_compile_options(dpcpp_constant_cuda PRIVATE -fsycl -fsycl-targets=nvptx64-nvidia-cuda-sycldevice)
-    target_link_options(dpcpp_constant_cuda PRIVATE -fsycl -fsycl-targets=nvptx64-nvidia-cuda-sycldevice)
+    if(ENABLE_CUDA)
+        set(dpcpp_cuda_sources
+            constant_dpcpp_cuda.cpp
+            constant.hpp
+        )
+        add_library(dpcpp_constant_cuda SHARED ${dpcpp_cuda_sources})
+        target_link_libraries(dpcpp_constant_cuda PRIVATE common dpcpp_common sycl oneDPL)
+        target_include_directories(dpcpp_constant_cuda PRIVATE ${PROJECT_SOURCE_DIR})
+        target_compile_options(dpcpp_constant_cuda PRIVATE -fsycl -fsycl-targets=nvptx64-nvidia-cuda-sycldevice)
+        target_link_options(dpcpp_constant_cuda PRIVATE -fsycl -fsycl-targets=nvptx64-nvidia-cuda-sycldevice)
+    endif()
 endif()

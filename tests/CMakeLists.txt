@@ -6,7 +6,7 @@ add_executable(scan_tests scan_tests.cpp)
 add_executable(hash_table_tests hash_table_tests.cpp)
 add_executable(join_tests join_tests.cpp)
 
-target_link_libraries(scan_tests gtest scan oclhelpers::oclhelpers)
+target_link_libraries(scan_tests gtest standalone_scan oclhelpers::oclhelpers)
 target_link_libraries(hash_table_tests dpcpp_common sycl GTest::gtest)
 target_link_libraries(join_tests join sycl GTest::gtest)
 

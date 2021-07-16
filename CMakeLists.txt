@@ -6,6 +6,7 @@ find_package(oclhelpers 0.1.3 REQUIRED)
 find_package(CUDA)
 
 option(ENABLE_DPCPP ON)
+option(ENABLE_CUDA OFF)
 
 if(ENABLE_DPCPP)
   find_package(oneDPL REQUIRED)
@@ -13,11 +14,12 @@ if(ENABLE_DPCPP)
   add_definitions(-DDPCPP_ENABLED)  
 endif()
 
-if(CUDA_FOUND)
+if(CUDA_FOUND AND ENABLE_CUDA)
   message(STATUS "Using ${CUDA_VERSION} headers")
   if (${CUDA_VERSION_MAJOR} GREATER_EQUAL 11)
     add_definitions(-DCUDA_OCL_API_CHANGED)
   endif()
+  add_definitions(-DCUDA_ENABLED)
 endif()
 
 find_package(Boost 1.61 COMPONENTS program_options filesystem REQUIRED)
@@ -45,7 +47,7 @@ add_subdirectory(join)
 
 set(bench_libs 
   common
-  scan
+  standalone_scan
   constant
 )
 
@@ -54,16 +56,16 @@ if(ENABLE_DPCPP)
   
   list(APPEND bench_libs
     dpcpp_constant
-    dplscan
+    scan
     radix
     reduce
     hash_build
     join
   )
-  if(CUDA_FOUND)
+  if(ENABLE_CUDA)
   list(APPEND bench_libs
       dpcpp_constant_cuda
-      dplscan_cuda
+      scan_cuda
       radix_cuda
   )
   endif()
