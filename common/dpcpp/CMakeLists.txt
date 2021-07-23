@@ -3,6 +3,7 @@ set(dpcpp_common_sources
 
     dpcpp_common.hpp
     hashtable.hpp
+    slab_hash.hpp
 )
 
 add_library(dpcpp_common ${dpcpp_common_sources})
