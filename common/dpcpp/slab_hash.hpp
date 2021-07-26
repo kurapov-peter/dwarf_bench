@@ -73,15 +73,15 @@ public:
         }
         sycl::group_barrier(_gr);
 
-        while (_iter != nullptr) {
+        //while (_iter != nullptr) {
             if (insert_in_node()) {
-                break;
+          //      break;
             } else if (_ind == 0) {
                 _iter = _iter->next;
             }
 
             sycl::group_barrier(_gr);
-        }
+        //}
     }
 
     pair<T, bool> find(K key) {
@@ -127,6 +127,7 @@ private:
     }
 
     bool insert_in_subgroup(bool find, int i) {
+        _out << "here" << sycl::endl;
         for (int j = 0; j < SUBGROUP_SIZE; j++) {
             if (cl::sycl::group_broadcast(_gr, find, j)) {
                 K tmp_empty = _empty;
