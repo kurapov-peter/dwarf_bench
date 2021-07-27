@@ -2,6 +2,7 @@
 
 #include <CL/sycl.hpp>
 #include <algorithm>
+#include "dpcpp_common.hpp"
 
 #define SUBGROUP_SIZE 16
 #define CONST 64
@@ -36,20 +37,8 @@ struct SlabNode {
 template <typename T>
 struct SlabList {
     SlabList() = default;
-    SlabList(sycl::queue &q, T empty) : _q(q) {
-        root = sycl::global_ptr<SlabNode<T>>(sycl::malloc_shared<SlabNode<T>>(CLUSTER_SIZE, q));
-
-        for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
-            *(root + i) = SlabNode(empty);
-            (root + i)->next = (root + i + 1);
-        }
-    }
-    ~SlabList() {
-        //sycl::free(root, _q);
-    }
 
     sycl::global_ptr<SlabNode<T>> root;
-    sycl::queue _q;
 };
 
 template <typename K, typename T, typename Hash>
@@ -59,10 +48,8 @@ public:
     SlabHash(K empty, Hash hasher, 
             sycl::global_ptr<SlabList<pair<K, T>>> lists,
             sycl::nd_item<1> & it, 
-            sycl::global_ptr<SlabNode<pair<K, T>>> &iter, 
-            const sycl::stream &out) : _lists(lists), _gr(it.get_group()), _it(it), 
-                                       _empty(empty), _hasher(hasher), _iter(iter), 
-                                       _out(out), _ind(_it.get_local_id()) { };
+            sycl::global_ptr<SlabNode<pair<K, T>>> &iter) : _lists(lists), _gr(it.get_group()), _it(it), 
+                                       _empty(empty), _hasher(hasher), _iter(iter), _ind(_it.get_local_id()) { };
 
     void insert(K key, T val) {
         _key = key;
@@ -73,15 +60,15 @@ public:
         }
         sycl::group_barrier(_gr);
 
-        //while (_iter != nullptr) {
+        while (_iter != nullptr) {
             if (insert_in_node()) {
-          //      break;
+                break;
             } else if (_ind == 0) {
                 _iter = _iter->next;
             }
 
             sycl::group_barrier(_gr);
-        //}
+        }
     }
 
     pair<T, bool> find(K key) {
@@ -127,7 +114,6 @@ private:
     }
 
     bool insert_in_subgroup(bool find, int i) {
-        _out << "here" << sycl::endl;
         for (int j = 0; j < SUBGROUP_SIZE; j++) {
             if (cl::sycl::group_broadcast(_gr, find, j)) {
                 K tmp_empty = _empty;
@@ -182,7 +168,6 @@ private:
 
     sycl::global_ptr<SlabList<pair<K, T>>> _lists;
     sycl::global_ptr<SlabNode<pair<K, T>>> &_iter;
-    const sycl::stream &_out;
     sycl::group<1> _gr;
     sycl::nd_item<1> &_it;
     size_t _ind;
