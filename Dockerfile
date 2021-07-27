@@ -2,8 +2,7 @@ FROM intel/oneapi-basekit
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
-ENV http_proxy=http://proxy-dmz.intel.com:911
-ENV https_proxy=http://proxy-dmz.intel.com:912
+
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
     build-essential \
