@@ -3,18 +3,17 @@
 #include <CL/sycl.hpp>
 #include <algorithm>
 #include "dpcpp_common.hpp"
+#include <limits>
 
-#define SUBGROUP_SIZE 16
-#define CONST 64
-#define SLAB_SIZE CONST * SUBGROUP_SIZE
+constexpr size_t SUBGROUP_SIZE = 16;
+constexpr size_t CONST = 64;
+constexpr size_t SLAB_SIZE = CONST * SUBGROUP_SIZE;
 
-#define CLUSTER_SIZE 1024
+constexpr size_t CLUSTER_SIZE = 1024;
 
-#define BUCKETS_COUNT 128
+constexpr size_t BUCKETS_COUNT = 128;
 
-#define EMPTY_UINT32_T 4294967295
-
-using std::pair;
+constexpr size_t EMPTY_UINT32_T = std::numeric_limits<uint32_t>::max();
 
 template <size_t A, size_t B, size_t P>
 struct Hasher {
@@ -60,15 +59,14 @@ public:
         }
         sycl::group_barrier(_gr);
 
-        while (_iter != nullptr) {
-            if (insert_in_node()) {
+        while (1) {
+            if (try_insert()) {
                 break;
-            } else if (_ind == 0) {
-                _iter = _iter->next;
+            } else {
+                alloc_node();
             }
-
-            sycl::group_barrier(_gr);
         }
+        
     }
 
     pair<T, bool> find(K key) {
@@ -79,7 +77,7 @@ public:
             _iter = (_lists + _hasher(key))->root;
         }
         sycl::group_barrier(_gr);
-
+    
         while (_iter != nullptr) {
             if (find_in_node()) {
                 break;
@@ -94,6 +92,28 @@ public:
     }
 
 private:
+    void alloc_node() {
+        sycl::ONEAPI::atomic_ref<K, sycl::ONEAPI::memory_order::acq_rel,
+                                            sycl::ONEAPI::memory_scope::system,
+                                            sycl::access::address_space::global_space>(
+                                                _iter->data[i].first
+                                            ).compare_exchange_strong(tmp_empty,
+                                                                        _key)
+    }
+
+    bool try_insert() {
+        while (_iter != nullptr) {
+            if (insert_in_node()) {
+                return true;
+            } else if (_ind == 0) {
+                _iter = _iter->next;
+            }
+
+            sycl::group_barrier(_gr);
+        }
+        return false;
+    }
+
     bool insert_in_node() {
         bool total_found = false;
         bool find = false;
@@ -168,6 +188,7 @@ private:
 
     sycl::global_ptr<SlabList<pair<K, T>>> _lists;
     sycl::global_ptr<SlabNode<pair<K, T>>> &_iter;
+    sycl::global_ptr<SlabNode<pair<K, T>>> &_prev;
     sycl::group<1> _gr;
     sycl::nd_item<1> &_it;
     size_t _ind;
