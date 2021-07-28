@@ -15,13 +15,13 @@ constexpr size_t BUCKETS_COUNT = 128;
 
 constexpr size_t EMPTY_UINT32_T = std::numeric_limits<uint32_t>::max();
 
-namespace SlabHashHashers {
+namespace SlabHash {
 template <size_t A, size_t B, size_t P> struct DefaultHasher {
   size_t operator()(const uint32_t &k) {
     return ((A * k + B) % P) % BUCKETS_COUNT;
   };
 };
-} // namespace SlabHashHashers
+
 
 template <typename T> struct SlabNode {
   SlabNode() = default;
@@ -41,11 +41,13 @@ template <typename T> struct SlabList {
   sycl::global_ptr<SlabNode<T>> root;
 };
 
-template <typename K, typename T, typename Hash> class SlabHash {
+template <typename K, typename T, typename Hash> class SlabHashTable {
 public:
-  SlabHash() = default;
-  SlabHash(K empty, Hash hasher, sycl::global_ptr<SlabList<std::pair<K, T>>> lists,
-           sycl::nd_item<1> &it, sycl::global_ptr<SlabNode<std::pair<K, T>>> &iter)
+  SlabHashTable() = default;
+  SlabHashTable(K empty, Hash hasher,
+           sycl::global_ptr<SlabList<std::pair<K, T>>> lists,
+           sycl::nd_item<1> &it,
+           sycl::global_ptr<SlabNode<std::pair<K, T>>> &iter)
       : _lists(lists), _gr(it.get_group()), _it(it), _empty(empty),
         _hasher(hasher), _iter(iter), _ind(_it.get_local_id()){};
 
@@ -181,3 +183,4 @@ private:
 
   std::optional<T> _ans;
 };
+} // namespace SlabHash
