@@ -1,6 +1,8 @@
 #include "slab_hash_build.hpp"
 #include "common/dpcpp/slab_hash.hpp"
 
+using std::pair;
+
 SlabHashBuild::SlabHashBuild() : Dwarf("SlabHashBuild") {}
 
 void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
