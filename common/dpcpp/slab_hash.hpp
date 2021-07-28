@@ -3,6 +3,7 @@
 #include <CL/sycl.hpp>
 #include <algorithm>
 #include "dpcpp_common.hpp"
+#include <optional>
 
 constexpr size_t SUBGROUP_SIZE = 16;
 constexpr size_t CONST = 64;
@@ -74,9 +75,9 @@ public:
         }
     }
 
-    pair<T, bool> find(K key) {
+    std::optional<T> find(K key) {
         _key = key;
-        _ans = {T(), false};
+        _ans = std::nullopt;
         
         if (_ind == 0) {
             _iter = (_lists + _hasher(key))->root;
@@ -163,7 +164,7 @@ private:
                 T tmp;
                 if (_ind == j) tmp = _iter->data[i].second;                          //todo index shuffle
 
-                _ans = {cl::sycl::group_broadcast(_gr, tmp, j), true};
+                _ans = std::optional<T> {cl::sycl::group_broadcast(_gr, tmp, j)};
                 break;
             }
         }
@@ -181,5 +182,5 @@ private:
     K _key;
     T _val;
 
-    pair<T, bool> _ans;
+    std::optional<T> _ans;
 };

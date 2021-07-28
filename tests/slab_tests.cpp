@@ -132,7 +132,7 @@ TEST(SlabHash, find) {
                 for (int i = ind * 2; i < ind * 2 + 2; i++) {
                     auto ans = ht.find(tests[i].first);
                     
-                    if (it.get_local_id() == 0) accChecks[i] = { ans.second, ans.first == tests[i].second };
+                    if (it.get_local_id() == 0) accChecks[i] = { static_cast<bool>(ans), ans.value_or(-1) == tests[i].second };
                 }
             });
         }).wait();
@@ -224,7 +224,7 @@ TEST(SlabHash, find_and_insert_together) {
                 for (int i = ind * 2; i < ind * 2 + 2; i++) {
                     auto ans = ht.find(tests[i].first);
                     
-                    if (it.get_local_id() == 0) accChecks[i] = { ans.second, ans.first == tests[i].second };
+                    if (it.get_local_id() == 0) accChecks[i] = { static_cast<bool>(ans), ans.value_or(-1) == tests[i].second };
                 }
             });
         }).wait();
@@ -318,7 +318,7 @@ TEST(SlabHash, find_and_insert_together_big) {
                 for (int i = ind * 40; i < ind * 40 + 40; i++) {
                     auto ans = ht.find(tests[i].first);
                     
-                    if (it.get_local_id() == 0) accChecks[i] = { ans.second, ans.first == tests[i].second };
+                    if (it.get_local_id() == 0) accChecks[i] = { static_cast<bool>(ans), ans.value_or(-1) == tests[i].second };
                 }
             });
         }).wait();
