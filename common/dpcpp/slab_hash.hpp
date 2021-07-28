@@ -16,10 +16,13 @@ constexpr size_t EMPTY_UINT32_T = std::numeric_limits<uint32_t>::max();
 
 using std::pair;
 
-template <size_t A, size_t B, size_t P>
-struct Hasher {
-    size_t operator()(const uint32_t &k) { return ((A * k + B) % P) % BUCKETS_COUNT; };
-};
+namespace SlabHashHashers {
+    template <size_t A, size_t B, size_t P>
+    struct DefaultHasher {
+        size_t operator()(const uint32_t &k) { return ((A * k + B) % P) % BUCKETS_COUNT; };
+    };
+}
+
 
 template <typename T>
 struct SlabNode {
