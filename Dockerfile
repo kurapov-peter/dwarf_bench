@@ -53,5 +53,7 @@ RUN cd root && wget https://github.com/intel/llvm/archive/refs/tags/sycl-nightly
             && cd buildbot \
 	    && python3.7 configure.py && python3.7 compile.py
 
+RUN cd root && rm -rf 20210725.tar.gz
+
 ENV LD_LIBRARY_PATH=/root/llvm-sycl-nightly-20210725/build/lib:$LD_LIBRARY_PATH
 ENV PATH=/root/llvm-sycl-nightly-20210725/build/bin:$PATH
