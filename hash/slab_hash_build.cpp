@@ -22,23 +22,14 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
   for (auto it = 0; it < opts.iterations; ++it) {
     int work_size = (buf_size / scale);
     sycl::nd_range<1> r{SUBGROUP_SIZE * work_size, SUBGROUP_SIZE};
-    std::vector<SlabList<pair<uint32_t, uint32_t>>> data(BUCKETS_COUNT);
-    for (auto &e : data) {
-      e.root = sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>(
-          sycl::malloc_shared<SlabNode<pair<uint32_t, uint32_t>>>(CLUSTER_SIZE,
-                                                                  q));
-
-      for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
-        *(e.root + i) = SlabNode<pair<uint32_t, uint32_t>>({EMPTY_UINT32_T, 0});
-        (e.root + i)->next = (e.root + i + 1);
-      }
-    }
+    SlabHashHelpers::AllocAdapter<pair<uint32_t, uint32_t>> data(BUCKETS_COUNT,SLAB_SIZE, {EMPTY_UINT32_T, 0}, q);
+    //---------------------------------------------------------------------------------------------
 
     std::vector<uint32_t> output(buf_size, 0);
     std::vector<uint32_t> expected(buf_size, 1);
 
     {
-      sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> data_buf(data);
+      sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> data_buf(data._data);
       sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(
           work_size);
       sycl::buffer<uint32_t> src(host_src);
@@ -108,9 +99,7 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
       meter.add_result(std::move(params), std::move(result));
     }
 
-    for (auto &e : data) {
-      sycl::free(e.root, q);
-    }
+    
   }
 }
 

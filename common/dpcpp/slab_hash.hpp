@@ -24,28 +24,69 @@ template <size_t A, size_t B, size_t P> struct DefaultHasher {
 } // namespace SlabHashHashers
 
 template <typename T> struct SlabNode {
-  SlabNode() = default;
-  SlabNode(T el) {
-    for (int i = 0; i < SLAB_SIZE; i++) {
+  SlabNode(T el, size_t size, sycl::queue &q) : _q(q) {
+    data = sycl::malloc_shared<T>(size, q);
+    for (int i = 0; i < size; i++) {
       data[i] = el;
     }
   }
 
-  T data[SLAB_SIZE];
+  void clear() { sycl::free(data, _q); }
+
+  T *data;
+  sycl::queue &_q;
   sycl::global_ptr<SlabNode<T>> next = nullptr;
 };
 
 template <typename T> struct SlabList {
   SlabList() = default;
+  SlabList(T empty, size_t slab_size, sycl::queue &q) : _q(q) {
+      for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
+       root = sycl::global_ptr<SlabNode<T>>(
+          sycl::malloc_shared<SlabNode<T>>(CLUSTER_SIZE, q));
+      *(root + i) = SlabNode<T>(empty, slab_size, q);
+      (root + i)->next = (root + i + 1);
+    }
+  }
+
+  void clear() {
+    for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
+      (root + i)->clear();
+      (root + i)->next = (root + i + 1);
+    }
+    sycl::free(root, _q);
+  }
 
   sycl::global_ptr<SlabNode<T>> root;
+  sycl::queue &_q;
 };
+
+namespace SlabHashHelpers {
+template <typename T> struct AllocAdapter {
+  AllocAdapter(size_t bucket_size, size_t slab_size, T empty, sycl::queue &q) {
+    _data.resize(bucket_size);
+    for (auto &e : _data) {
+      e = SlabList<T>(empty, slab_size, q);
+    }
+  }
+
+  ~AllocAdapter() {
+    for (auto &e : _data) {
+      e.clear();
+    }
+  }
+
+  std::vector<SlabList<T>> _data;
+};
+} // namespace SlabHashHelpers
 
 template <typename K, typename T, typename Hash> class SlabHash {
 public:
   SlabHash() = default;
-  SlabHash(K empty, Hash hasher, sycl::global_ptr<SlabList<std::pair<K, T>>> lists,
-           sycl::nd_item<1> &it, sycl::global_ptr<SlabNode<std::pair<K, T>>> &iter)
+  SlabHash(K empty, Hash hasher,
+           sycl::global_ptr<SlabList<std::pair<K, T>>> lists,
+           sycl::nd_item<1> &it,
+           sycl::global_ptr<SlabNode<std::pair<K, T>>> &iter)
       : _lists(lists), _gr(it.get_group()), _it(it), _empty(empty),
         _hasher(hasher), _iter(iter), _ind(_it.get_local_id()){};
 
