@@ -16,7 +16,7 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
 
-  SlabHashHashers::Hasher<32, 48, 1031> hasher;
+  SlabHashHashers::DefaultHasher<32, 48, 1031> hasher;
 
   for (auto it = 0; it < opts.iterations; ++it) {
     int work_size = (buf_size / scale);
@@ -50,8 +50,8 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
 
         h.parallel_for<class slab_hash_build>(r, [=](sycl::nd_item<1> it) {
             size_t ind = it.get_group().get_id();
-            SlabHashHashers::Hasher<32, 48, 1031> h;
-            SlabHash<uint32_t, uint32_t, SlabHashHashers::Hasher<32, 48, 1031>> ht(EMPTY_UINT32_T, 
+            SlabHashHashers::DefaultHasher<32, 48, 1031> h;
+            SlabHash<uint32_t, uint32_t, SlabHashHashers::DefaultHasher<32, 48, 1031>> ht(EMPTY_UINT32_T, 
                                                                     h, data_acc.get_pointer(), 
                                                                     it, itrs[it.get_group().get_id()]);
 
@@ -80,8 +80,8 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
 
         h.parallel_for<class slab_hash_build_check>(r, [=](sycl::nd_item<1> it) {
             size_t ind = it.get_group().get_id();
-            SlabHashHashers::Hasher<32, 48, 1031> h;
-            SlabHash<uint32_t, uint32_t, SlabHashHashers::Hasher<32, 48, 1031>> ht(EMPTY_UINT32_T, 
+            SlabHashHashers::DefaultHasher<32, 48, 1031> h;
+            SlabHash<uint32_t, uint32_t, SlabHashHashers::DefaultHasher<32, 48, 1031>> ht(EMPTY_UINT32_T, 
                                                                     h, data_acc.get_pointer(), 
                                                                     it, itrs[it.get_group().get_id()]);
 

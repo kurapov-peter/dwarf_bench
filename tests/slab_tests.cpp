@@ -40,8 +40,8 @@ TEST(SlabHash, insert) {
 
             cgh.parallel_for<class insert_test_slab>(r, [=](sycl::nd_item<1> it) {
                 size_t ind = it.get_group().get_id();
-                SlabHashHashers::Hasher<13, 24, 343> h;
-                SlabHash<uint32_t, uint32_t, SlabHashHashers::Hasher<13, 24, 343>> ht(EMPTY_UINT32_T, 
+                SlabHashHashers::DefaultHasher<13, 24, 343> h;
+                SlabHash<uint32_t, uint32_t, SlabHashHashers::DefaultHasher<13, 24, 343>> ht(EMPTY_UINT32_T, 
                                                                     h, l.get_pointer(), 
                                                                     it, itrs[it.get_group().get_id()]);
 
@@ -54,7 +54,7 @@ TEST(SlabHash, insert) {
     }
 
     bool allOk = true;
-    SlabHashHashers::Hasher<13, 24, 343> h;
+    SlabHashHashers::DefaultHasher<13, 24, 343> h;
     for(auto &e: testUniv) {
         auto r = lists[h(e.first)].root;
 
@@ -96,7 +96,7 @@ TEST(SlabHash, find) {
                                                        {3, 0},
                                                        {10, 10} };
     
-    SlabHashHashers::Hasher<13, 24, 343> h;
+    SlabHashHashers::DefaultHasher<13, 24, 343> h;
 
     for(auto &e: testUniv) {
         auto r = lists[h(e.first)].root;
@@ -124,8 +124,8 @@ TEST(SlabHash, find) {
 
             cgh.parallel_for<class find_test_slab>(r, [=](sycl::nd_item<1> it) {
                 size_t ind = it.get_group().get_id();
-                SlabHashHashers::Hasher<13, 24, 343> h;
-                SlabHash<uint32_t, uint32_t, SlabHashHashers::Hasher<13, 24, 343>> ht(EMPTY_UINT32_T, 
+                SlabHashHashers::DefaultHasher<13, 24, 343> h;
+                SlabHash<uint32_t, uint32_t, SlabHashHashers::DefaultHasher<13, 24, 343>> ht(EMPTY_UINT32_T, 
                                                                     h, l.get_pointer(), it, 
                                                                     itrs[it.get_group().get_id()]);
 
@@ -186,8 +186,8 @@ TEST(SlabHash, find_and_insert_together) {
 
             cgh.parallel_for<class insert_test_slab_both>(r, [=](sycl::nd_item<1> it) {
                 size_t ind = it.get_group().get_id();
-                SlabHashHashers::Hasher<13, 24, 343> h;
-                SlabHash<uint32_t, uint32_t, SlabHashHashers::Hasher<13, 24, 343>> ht(EMPTY_UINT32_T, 
+                SlabHashHashers::DefaultHasher<13, 24, 343> h;
+                SlabHash<uint32_t, uint32_t, SlabHashHashers::DefaultHasher<13, 24, 343>> ht(EMPTY_UINT32_T, 
                                                                     h, l.get_pointer(), 
                                                                     it, itrs[it.get_group().get_id()]);
 
@@ -216,8 +216,8 @@ TEST(SlabHash, find_and_insert_together) {
 
             cgh.parallel_for<class find_test_slab_both>(r, [=](sycl::nd_item<1> it) {
                 size_t ind = it.get_group().get_id();
-                SlabHashHashers::Hasher<13, 24, 343> h;
-                SlabHash<uint32_t, uint32_t, SlabHashHashers::Hasher<13, 24, 343>> ht(EMPTY_UINT32_T, 
+                SlabHashHashers::DefaultHasher<13, 24, 343> h;
+                SlabHash<uint32_t, uint32_t, SlabHashHashers::DefaultHasher<13, 24, 343>> ht(EMPTY_UINT32_T, 
                                                                     h, l.get_pointer(), it, 
                                                                     itrs[it.get_group().get_id()]);
 
@@ -280,8 +280,8 @@ TEST(SlabHash, find_and_insert_together_big) {
 
             cgh.parallel_for<class insert_test_slab_both_big>(r, [=](sycl::nd_item<1> it) {
                 size_t ind = it.get_group().get_id();
-                SlabHashHashers::Hasher<13, 24, 343> h;
-                SlabHash<uint32_t, uint32_t, SlabHashHashers::Hasher<13, 24, 343>> ht(EMPTY_UINT32_T, 
+                SlabHashHashers::DefaultHasher<13, 24, 343> h;
+                SlabHash<uint32_t, uint32_t, SlabHashHashers::DefaultHasher<13, 24, 343>> ht(EMPTY_UINT32_T, 
                                                                     h, l.get_pointer(), 
                                                                     it, itrs[it.get_group().get_id()]);
 
@@ -310,8 +310,8 @@ TEST(SlabHash, find_and_insert_together_big) {
 
             cgh.parallel_for<class find_test_slab_both_big>(r, [=](sycl::nd_item<1> it) {
                 size_t ind = it.get_group().get_id();
-                SlabHashHashers::Hasher<13, 24, 343> h;
-                SlabHash<uint32_t, uint32_t, SlabHashHashers::Hasher<13, 24, 343>> ht(EMPTY_UINT32_T, 
+                SlabHashHashers::DefaultHasher<13, 24, 343> h;
+                SlabHash<uint32_t, uint32_t, SlabHashHashers::DefaultHasher<13, 24, 343>> ht(EMPTY_UINT32_T, 
                                                                     h, l.get_pointer(), it, 
                                                                     itrs[it.get_group().get_id()]);
 
