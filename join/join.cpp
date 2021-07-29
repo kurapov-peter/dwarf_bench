@@ -1,5 +1,4 @@
 #include "join.hpp"
-
 #include "common/dpcpp/hashtable.hpp"
 
 Join::Join() : Dwarf("Join") {}
