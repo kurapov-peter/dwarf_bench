@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <optional>
 
+namespace SlabHash {
 constexpr size_t SUBGROUP_SIZE = 16;
 constexpr size_t CONST = 64;
 constexpr size_t SLAB_SIZE = CONST * SUBGROUP_SIZE;
@@ -15,25 +16,18 @@ constexpr size_t BUCKETS_COUNT = 128;
 
 constexpr size_t EMPTY_UINT32_T = std::numeric_limits<uint32_t>::max();
 
-namespace SlabHashHashers {
 template <size_t A, size_t B, size_t P> struct DefaultHasher {
   size_t operator()(const uint32_t &k) {
     return ((A * k + B) % P) % BUCKETS_COUNT;
   };
 };
-} // namespace SlabHashHashers
 
 template <typename T> struct SlabNode {
-  SlabNode(T el, size_t size/*, sycl::queue &q*/)  {
-    //data = sycl::malloc_shared<T>(size, q);
-    for (int i = 0; i < size; i++) {
+  SlabNode(T el) {
+    for (int i = 0; i < SLAB_SIZE; i++) {
       data[i] = el;
     }
   }
-
-  void clear(sycl::queue &q) { /*sycl::free(data, q);*/ }
-
-
 
   T data[SLAB_SIZE];
   sycl::device_ptr<SlabNode<T>> next = nullptr;
@@ -41,42 +35,33 @@ template <typename T> struct SlabNode {
 
 template <typename T> struct SlabList {
   SlabList() = default;
-  SlabList(T empty, size_t slab_size, sycl::queue &q) {
+  SlabList(T empty, sycl::queue &q) {
     auto tmp = sycl::device_ptr<SlabNode<T>>(
-          sycl::malloc_device<SlabNode<T>>(CLUSTER_SIZE, q));
-    /*root = sycl::device_ptr<SlabNode<T>>(
-          sycl::malloc_device<SlabNode<T>>(CLUSTER_SIZE, q));*/
-      
-      q.parallel_for(CLUSTER_SIZE, [=](auto &i) {
-        *(tmp + i) = SlabNode<T>(empty, slab_size/*, q*/);
-        (tmp + i)->next = (tmp + i + 1);
-      }).wait();
-      /*for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
-      *(root + i) = SlabNode<T>(empty, slab_size, q);
-      (root + i)->next = (root + i + 1);
-    }*/
+        sycl::malloc_device<SlabNode<T>>(CLUSTER_SIZE, q));
+
+    q.parallel_for(CLUSTER_SIZE,
+                   [=](auto &i) {
+                     *(tmp + i) = SlabNode<T>(empty);
+                     (tmp + i)->next = (tmp + i + 1);
+                   })
+        .wait();
+
     root = tmp;
   }
 
-  void clear(sycl::queue &q) {
-    for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
-      (root + i)->clear(q);
-      (root + i)->next = (root + i + 1);
-    }
-    sycl::free(root, q);
-  }
+  void clear(sycl::queue &q) { sycl::free(root, q); }
 
   sycl::device_ptr<SlabNode<T>> root;
 };
 
-namespace SlabHashHelpers {
-template <typename T> struct AllocAdapter {
-  AllocAdapter(size_t bucket_size, size_t slab_size, T empty, sycl::queue &q) : _q(q) {
-    _data.resize(bucket_size);
-  
-    for (auto &e : _data) {
 
-      e = SlabList<T>(empty, slab_size, _q);
+template <typename T> struct AllocAdapter {
+  AllocAdapter(size_t bucket_size, T empty, sycl::queue &q)
+      : _q(q) {
+    _data.resize(bucket_size);
+
+    for (auto &e : _data) {
+      e = SlabList<T>(empty, _q);
     }
   }
 
@@ -89,17 +74,16 @@ template <typename T> struct AllocAdapter {
   std::vector<SlabList<T>> _data;
   sycl::queue &_q;
 };
-} // namespace SlabHashHelpers
 
-template <typename K, typename T, typename Hash> class SlabHash {
+template <typename K, typename T, typename Hash> class SlabHashTable {
 public:
-  SlabHash() = default;
-  SlabHash(K empty, Hash hasher,
-           sycl::global_ptr<SlabList<std::pair<K, T>>> lists,
-           sycl::nd_item<1> &it,
-           sycl::device_ptr<SlabNode<std::pair<K, T>>> &iter)
+  SlabHashTable() = default;
+  SlabHashTable(K empty, Hash hasher,
+                sycl::global_ptr<SlabList<std::pair<K, T>>> lists,
+                sycl::nd_item<1> &it,
+                sycl::device_ptr<SlabNode<std::pair<K, T>>> &iter)
       : _lists(lists), _gr(it.get_group()), _it(it), _empty(empty),
-        _hasher(hasher), _iter(iter), _ind(_it.get_local_id()) {};
+        _hasher(hasher), _iter(iter), _ind(_it.get_local_id()){};
 
   void insert(K key, T val) {
     _key = key;
@@ -152,7 +136,6 @@ private:
          i += SUBGROUP_SIZE) {
       find = ((_iter->data[i].first) == _empty);
       sycl::group_barrier(_gr);
-
       total_found = sycl::any_of_group(_gr, find);
 
       if (total_found) {
@@ -233,5 +216,5 @@ private:
   T _val;
 
   std::optional<T> _ans;
-
 };
+} // namespace SlabHash

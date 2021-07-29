@@ -4,18 +4,30 @@
 #include <vector>
 
 using std::pair;
-/*
+using namespace SlabHash;
+
 TEST(SlabHash, insert) {
   std::vector<pair<uint32_t, uint32_t>> testUniv = {{1, 2}, {5, 2}, {101, 3},
                                                     {5, 5}, {3, 0}, {10, 10}};
 
   sycl::queue q{sycl::gpu_selector()};
   sycl::nd_range<1> r{SUBGROUP_SIZE * 3, SUBGROUP_SIZE};
-  SlabHashHelpers::AllocAdapter<pair<uint32_t, uint32_t>> data(BUCKETS_COUNT,SLAB_SIZE, {EMPTY_UINT32_T, 0}, q);
+
+  std::vector<SlabList<pair<uint32_t, uint32_t>>> lists(BUCKETS_COUNT);
+  for (auto &e : lists) {
+    e.root = sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>(
+        sycl::malloc_shared<SlabNode<pair<uint32_t, uint32_t>>>(CLUSTER_SIZE,
+                                                                q));
+
+    for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
+      *(e.root + i) = SlabNode<pair<uint32_t, uint32_t>>({EMPTY_UINT32_T, 0});
+      (e.root + i)->next = (e.root + i + 1);
+    }
+  }
 
   {
-    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(data._data);
-    sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
+    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(lists);
+    sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
 
     q.submit([&](sycl::handler &cgh) {
@@ -25,9 +37,9 @@ TEST(SlabHash, insert) {
 
        cgh.parallel_for<class insert_test_slab>(r, [=](sycl::nd_item<1> it) {
          size_t ind = it.get_group().get_id();
-         SlabHashHashers::DefaultHasher<13, 24, 343> h;
-         SlabHash<uint32_t, uint32_t,
-                  SlabHashHashers::DefaultHasher<13, 24, 343>>
+         DefaultHasher<13, 24, 343> h;
+         SlabHashTable<uint32_t, uint32_t,
+                  DefaultHasher<13, 24, 343>>
              ht(EMPTY_UINT32_T, h, l.get_pointer(), it,
                 itrs[it.get_group().get_id()]);
 
@@ -40,9 +52,9 @@ TEST(SlabHash, insert) {
   }
 
   bool allOk = true;
-  SlabHashHashers::DefaultHasher<13, 24, 343> h;
+  DefaultHasher<13, 24, 343> h;
   for (auto &e : testUniv) {
-    auto r = data._data[h(e.first)].root;
+    auto r = lists[h(e.first)].root;
 
     for (int i = 0; i < SLAB_SIZE; i++) {
       if (r->data[i] == e)
@@ -53,6 +65,10 @@ TEST(SlabHash, insert) {
   }
 
   EXPECT_TRUE(allOk);
+
+  for (auto &e : lists) {
+    sycl::free(e.root, q);
+  }
 }
 
 TEST(SlabHash, find) {
@@ -74,7 +90,7 @@ TEST(SlabHash, find) {
   std::vector<pair<uint32_t, uint32_t>> testUniv = {
       {1, 2}, {5, 2}, {101, 3}, {21312, 5}, {3, 0}, {10, 10}};
 
-  SlabHashHashers::DefaultHasher<13, 24, 343> h;
+  DefaultHasher<13, 24, 343> h;
 
   for (auto &e : testUniv) {
     auto r = lists[h(e.first)].root;
@@ -89,7 +105,7 @@ TEST(SlabHash, find) {
   std::vector<pair<bool, bool>> checks(6);
   {
     sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(lists);
-    sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
+    sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
     sycl::buffer<pair<bool, bool>> buffChecks(checks);
 
@@ -101,9 +117,9 @@ TEST(SlabHash, find) {
 
        cgh.parallel_for<class find_test_slab>(r, [=](sycl::nd_item<1> it) {
          size_t ind = it.get_group().get_id();
-         SlabHashHashers::DefaultHasher<13, 24, 343> h;
-         SlabHash<uint32_t, uint32_t,
-                  SlabHashHashers::DefaultHasher<13, 24, 343>>
+         DefaultHasher<13, 24, 343> h;
+         SlabHashTable<uint32_t, uint32_t,
+                  DefaultHasher<13, 24, 343>>
              ht(EMPTY_UINT32_T, h, l.get_pointer(), it,
                 itrs[it.get_group().get_id()]);
 
@@ -135,21 +151,11 @@ TEST(SlabHash, find_and_insert_together) {
   sycl::queue q{sycl::gpu_selector()};
   sycl::nd_range<1> r{SUBGROUP_SIZE * 3, SUBGROUP_SIZE};
 
-  std::vector<SlabList<pair<uint32_t, uint32_t>>> lists(BUCKETS_COUNT);
-  for (auto &e : lists) {
-    e.root = sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>(
-        sycl::malloc_shared<SlabNode<pair<uint32_t, uint32_t>>>(CLUSTER_SIZE,
-                                                                q));
-
-    for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
-      *(e.root + i) = SlabNode<pair<uint32_t, uint32_t>>({EMPTY_UINT32_T, 0});
-      (e.root + i)->next = (e.root + i + 1);
-    }
-  }
+  SlabHash::AllocAdapter<pair<uint32_t, uint32_t>> data(SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
 
   {
-    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(lists);
-    sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
+    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(data._data);
+    sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
 
     q.submit([&](sycl::handler &cgh) {
@@ -160,9 +166,9 @@ TEST(SlabHash, find_and_insert_together) {
        cgh.parallel_for<class insert_test_slab_both>(
            r, [=](sycl::nd_item<1> it) {
              size_t ind = it.get_group().get_id();
-             SlabHashHashers::DefaultHasher<13, 24, 343> h;
-             SlabHash<uint32_t, uint32_t,
-                      SlabHashHashers::DefaultHasher<13, 24, 343>>
+             DefaultHasher<13, 24, 343> h;
+             SlabHashTable<uint32_t, uint32_t,
+                      DefaultHasher<13, 24, 343>>
                  ht(EMPTY_UINT32_T, h, l.get_pointer(), it,
                     itrs[it.get_group().get_id()]);
 
@@ -176,8 +182,8 @@ TEST(SlabHash, find_and_insert_together) {
 
   std::vector<pair<bool, bool>> checks(6);
   {
-    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(lists);
-    sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
+    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(data._data);
+    sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
     sycl::buffer<pair<bool, bool>> buffChecks(checks);
 
@@ -189,9 +195,9 @@ TEST(SlabHash, find_and_insert_together) {
 
        cgh.parallel_for<class find_test_slab_both>(r, [=](sycl::nd_item<1> it) {
          size_t ind = it.get_group().get_id();
-         SlabHashHashers::DefaultHasher<13, 24, 343> h;
-         SlabHash<uint32_t, uint32_t,
-                  SlabHashHashers::DefaultHasher<13, 24, 343>>
+         DefaultHasher<13, 24, 343> h;
+         SlabHashTable<uint32_t, uint32_t,
+                  DefaultHasher<13, 24, 343>>
              ht(EMPTY_UINT32_T, h, l.get_pointer(), it,
                 itrs[it.get_group().get_id()]);
 
@@ -210,10 +216,6 @@ TEST(SlabHash, find_and_insert_together) {
   for (auto &e : checks) {
     EXPECT_TRUE(e.first && e.second);
   }
-
-  for (auto &e : lists) {
-    sycl::free(e.root, q);
-  }
 }
 
 TEST(SlabHash, find_and_insert_together_big) {
@@ -227,21 +229,12 @@ TEST(SlabHash, find_and_insert_together_big) {
   sycl::queue q{sycl::gpu_selector()};
   sycl::nd_range<1> r{SUBGROUP_SIZE * 25, SUBGROUP_SIZE};
 
-  std::vector<SlabList<pair<uint32_t, uint32_t>>> lists(BUCKETS_COUNT);
-  for (auto &e : lists) {
-    e.root = sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>(
-        sycl::malloc_shared<SlabNode<pair<uint32_t, uint32_t>>>(CLUSTER_SIZE,
-                                                                q));
-
-    for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
-      *(e.root + i) = SlabNode<pair<uint32_t, uint32_t>>({EMPTY_UINT32_T, 0});
-      (e.root + i)->next = (e.root + i + 1);
-    }
-  }
+  SlabHash::AllocAdapter<pair<uint32_t, uint32_t>> data(SlabHash::BUCKETS_COUNT, 
+                                                        {SlabHash::EMPTY_UINT32_T, 0}, q);
 
   {
-    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(lists);
-    sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(25);
+    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(data._data);
+    sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(25);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
 
     q.submit([&](sycl::handler &cgh) {
@@ -252,9 +245,9 @@ TEST(SlabHash, find_and_insert_together_big) {
        cgh.parallel_for<class insert_test_slab_both_big>(
            r, [=](sycl::nd_item<1> it) {
              size_t ind = it.get_group().get_id();
-             SlabHashHashers::DefaultHasher<13, 24, 343> h;
-             SlabHash<uint32_t, uint32_t,
-                      SlabHashHashers::DefaultHasher<13, 24, 343>>
+             DefaultHasher<13, 24, 343> h;
+             SlabHashTable<uint32_t, uint32_t,
+                      DefaultHasher<13, 24, 343>>
                  ht(EMPTY_UINT32_T, h, l.get_pointer(), it,
                     itrs[it.get_group().get_id()]);
 
@@ -268,8 +261,8 @@ TEST(SlabHash, find_and_insert_together_big) {
 
   std::vector<pair<bool, bool>> checks(1000);
   {
-    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(lists);
-    sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(25);
+    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(data._data);
+    sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(25);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
     sycl::buffer<pair<bool, bool>> buffChecks(checks);
 
@@ -282,9 +275,9 @@ TEST(SlabHash, find_and_insert_together_big) {
        cgh.parallel_for<class find_test_slab_both_big>(
            r, [=](sycl::nd_item<1> it) {
              size_t ind = it.get_group().get_id();
-             SlabHashHashers::DefaultHasher<13, 24, 343> h;
-             SlabHash<uint32_t, uint32_t,
-                      SlabHashHashers::DefaultHasher<13, 24, 343>>
+             DefaultHasher<13, 24, 343> h;
+             SlabHashTable<uint32_t, uint32_t,
+                      DefaultHasher<13, 24, 343>>
                  ht(EMPTY_UINT32_T, h, l.get_pointer(), it,
                     itrs[it.get_group().get_id()]);
 
@@ -304,11 +297,8 @@ TEST(SlabHash, find_and_insert_together_big) {
     EXPECT_TRUE(e.first && e.second);
   }
 
-  for (auto &e : lists) {
-    sycl::free(e.root, q);
-  }
 }
-*/
+
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

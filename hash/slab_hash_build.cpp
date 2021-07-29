@@ -6,7 +6,7 @@ using std::pair;
 SlabHashBuild::SlabHashBuild() : Dwarf("SlabHashBuild") {}
 
 void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
-  const int scale = 16; // todo how to get through options
+  const int scale = 8; // todo how to get through options
 
   auto opts = meter.opts();
   const std::vector<uint32_t> host_src =
@@ -17,39 +17,35 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
 
-  SlabHashHashers::DefaultHasher<32, 48, 1031> hasher;
+  SlabHash::DefaultHasher<32, 48, 1031> hasher;
 
   for (auto it = 0; it < opts.iterations; ++it) {
     int work_size = (buf_size / scale);
-    sycl::nd_range<1> r{SUBGROUP_SIZE * work_size, SUBGROUP_SIZE};
-    std::cout << "im here" << std::endl;
-    SlabHashHelpers::AllocAdapter<pair<uint32_t, uint32_t>> data(BUCKETS_COUNT,SLAB_SIZE, {EMPTY_UINT32_T, 0}, q);
-    std::cout << "im here" << std::endl;
-    //---------------------------------------------------------------------------------------------
+    sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * work_size, SlabHash::SUBGROUP_SIZE};
+    SlabHash::AllocAdapter<pair<uint32_t, uint32_t>> data(SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
 
     std::vector<uint32_t> output(buf_size, 0);
     std::vector<uint32_t> expected(buf_size, 1);
 
     {
-      std::cout << "im here" << std::endl;
-      sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> data_buf(data._data);
-      sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(
-          work_size);
+      sycl::buffer<SlabHash::SlabList<pair<uint32_t, uint32_t>>> data_buf(data._data);
+      sycl::buffer<
+          sycl::device_ptr<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>>
+          its(work_size);
       sycl::buffer<uint32_t> src(host_src);
-      std::cout << "im here" << std::endl;
+
       auto host_start = std::chrono::steady_clock::now();
       q.submit([&](sycl::handler &h) {
          auto data_acc = sycl::accessor(data_buf, h, sycl::read_write);
          auto itrs = sycl::accessor(its, h, sycl::read_write);
          auto s = sycl::accessor(src, h, sycl::read_only);
-         std::cout << "im here" << std::endl;
 
          h.parallel_for<class slab_hash_build>(r, [=](sycl::nd_item<1> it) {
            size_t ind = it.get_group().get_id();
-           SlabHashHashers::DefaultHasher<32, 48, 1031> h;
-           SlabHash<uint32_t, uint32_t,
-                    SlabHashHashers::DefaultHasher<32, 48, 1031>>
-               ht(EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
+           SlabHash::DefaultHasher<32, 48, 1031> h;
+           SlabHash::SlabHashTable<uint32_t, uint32_t,
+                                   SlabHash::DefaultHasher<32, 48, 1031>>
+               ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
                   itrs[it.get_group().get_id()]);
 
            for (int i = ind * scale; i < ind * scale + scale; i++) {
@@ -75,14 +71,13 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
          auto s = sycl::accessor(src, h, sycl::read_only);
          auto o = sycl::accessor(out_buf, h, sycl::read_write);
 
-
          h.parallel_for<class slab_hash_build_check>(
              r, [=](sycl::nd_item<1> it) {
                size_t ind = it.get_group().get_id();
-               SlabHashHashers::DefaultHasher<32, 48, 1031> h;
-               SlabHash<uint32_t, uint32_t,
-                        SlabHashHashers::DefaultHasher<32, 48, 1031>>
-                   ht(EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
+               SlabHash::DefaultHasher<32, 48, 1031> h;
+               SlabHash::SlabHashTable<uint32_t, uint32_t,
+                                       SlabHash::DefaultHasher<32, 48, 1031>>
+                   ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
                       itrs[it.get_group().get_id()]);
 
                for (int i = ind * scale; i < ind * scale + scale; i++) {
@@ -103,8 +98,6 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
       DwarfParams params{{"buf_size", std::to_string(buf_size)}};
       meter.add_result(std::move(params), std::move(result));
     }
-
-    
   }
 }
 
