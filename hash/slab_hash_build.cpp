@@ -22,23 +22,27 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
   for (auto it = 0; it < opts.iterations; ++it) {
     int work_size = (buf_size / scale);
     sycl::nd_range<1> r{SUBGROUP_SIZE * work_size, SUBGROUP_SIZE};
+    std::cout << "im here" << std::endl;
     SlabHashHelpers::AllocAdapter<pair<uint32_t, uint32_t>> data(BUCKETS_COUNT,SLAB_SIZE, {EMPTY_UINT32_T, 0}, q);
+    std::cout << "im here" << std::endl;
     //---------------------------------------------------------------------------------------------
 
     std::vector<uint32_t> output(buf_size, 0);
     std::vector<uint32_t> expected(buf_size, 1);
 
     {
+      std::cout << "im here" << std::endl;
       sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> data_buf(data._data);
-      sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(
+      sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(
           work_size);
       sycl::buffer<uint32_t> src(host_src);
-
+      std::cout << "im here" << std::endl;
       auto host_start = std::chrono::steady_clock::now();
       q.submit([&](sycl::handler &h) {
          auto data_acc = sycl::accessor(data_buf, h, sycl::read_write);
          auto itrs = sycl::accessor(its, h, sycl::read_write);
          auto s = sycl::accessor(src, h, sycl::read_only);
+         std::cout << "im here" << std::endl;
 
          h.parallel_for<class slab_hash_build>(r, [=](sycl::nd_item<1> it) {
            size_t ind = it.get_group().get_id();

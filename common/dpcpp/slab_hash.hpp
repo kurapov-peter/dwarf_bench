@@ -24,30 +24,38 @@ template <size_t A, size_t B, size_t P> struct DefaultHasher {
 } // namespace SlabHashHashers
 
 template <typename T> struct SlabNode {
-  SlabNode(T el, size_t size, sycl::queue &q)  {
-    data = sycl::malloc_shared<T>(size, q);
+  SlabNode(T el, size_t size/*, sycl::queue &q*/)  {
+    //data = sycl::malloc_shared<T>(size, q);
     for (int i = 0; i < size; i++) {
       data[i] = el;
     }
   }
 
-  void clear(sycl::queue &q) { sycl::free(data, q); }
+  void clear(sycl::queue &q) { /*sycl::free(data, q);*/ }
 
 
 
-  T *data;
-  sycl::global_ptr<SlabNode<T>> next = nullptr;
+  T data[SLAB_SIZE];
+  sycl::device_ptr<SlabNode<T>> next = nullptr;
 };
 
 template <typename T> struct SlabList {
   SlabList() = default;
   SlabList(T empty, size_t slab_size, sycl::queue &q) {
-    root = sycl::global_ptr<SlabNode<T>>(
-          sycl::malloc_shared<SlabNode<T>>(CLUSTER_SIZE, q));
-      for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
+    auto tmp = sycl::device_ptr<SlabNode<T>>(
+          sycl::malloc_device<SlabNode<T>>(CLUSTER_SIZE, q));
+    /*root = sycl::device_ptr<SlabNode<T>>(
+          sycl::malloc_device<SlabNode<T>>(CLUSTER_SIZE, q));*/
+      
+      q.parallel_for(CLUSTER_SIZE, [=](auto &i) {
+        *(tmp + i) = SlabNode<T>(empty, slab_size/*, q*/);
+        (tmp + i)->next = (tmp + i + 1);
+      }).wait();
+      /*for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
       *(root + i) = SlabNode<T>(empty, slab_size, q);
       (root + i)->next = (root + i + 1);
-    }
+    }*/
+    root = tmp;
   }
 
   void clear(sycl::queue &q) {
@@ -58,7 +66,7 @@ template <typename T> struct SlabList {
     sycl::free(root, q);
   }
 
-  sycl::global_ptr<SlabNode<T>> root;
+  sycl::device_ptr<SlabNode<T>> root;
 };
 
 namespace SlabHashHelpers {
@@ -89,7 +97,7 @@ public:
   SlabHash(K empty, Hash hasher,
            sycl::global_ptr<SlabList<std::pair<K, T>>> lists,
            sycl::nd_item<1> &it,
-           sycl::global_ptr<SlabNode<std::pair<K, T>>> &iter)
+           sycl::device_ptr<SlabNode<std::pair<K, T>>> &iter)
       : _lists(lists), _gr(it.get_group()), _it(it), _empty(empty),
         _hasher(hasher), _iter(iter), _ind(_it.get_local_id()) {};
 
@@ -213,7 +221,7 @@ private:
   }
 
   sycl::global_ptr<SlabList<std::pair<K, T>>> _lists;
-  sycl::global_ptr<SlabNode<std::pair<K, T>>> &_iter;
+  sycl::device_ptr<SlabNode<std::pair<K, T>>> &_iter;
   sycl::group<1> _gr;
   sycl::nd_item<1> &_it;
   size_t _ind;
