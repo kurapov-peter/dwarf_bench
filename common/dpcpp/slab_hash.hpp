@@ -24,59 +24,62 @@ template <size_t A, size_t B, size_t P> struct DefaultHasher {
 } // namespace SlabHashHashers
 
 template <typename T> struct SlabNode {
-  SlabNode(T el, size_t size, sycl::queue &q) : _q(q) {
+  SlabNode(T el, size_t size, sycl::queue &q)  {
     data = sycl::malloc_shared<T>(size, q);
     for (int i = 0; i < size; i++) {
       data[i] = el;
     }
   }
 
-  void clear() { sycl::free(data, _q); }
+  void clear(sycl::queue &q) { sycl::free(data, q); }
+
+
 
   T *data;
-  sycl::queue &_q;
   sycl::global_ptr<SlabNode<T>> next = nullptr;
 };
 
 template <typename T> struct SlabList {
   SlabList() = default;
-  SlabList(T empty, size_t slab_size, sycl::queue &q) : _q(q) {
-      for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
-       root = sycl::global_ptr<SlabNode<T>>(
+  SlabList(T empty, size_t slab_size, sycl::queue &q) {
+    root = sycl::global_ptr<SlabNode<T>>(
           sycl::malloc_shared<SlabNode<T>>(CLUSTER_SIZE, q));
+      for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
       *(root + i) = SlabNode<T>(empty, slab_size, q);
       (root + i)->next = (root + i + 1);
     }
   }
 
-  void clear() {
+  void clear(sycl::queue &q) {
     for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
-      (root + i)->clear();
+      (root + i)->clear(q);
       (root + i)->next = (root + i + 1);
     }
-    sycl::free(root, _q);
+    sycl::free(root, q);
   }
 
   sycl::global_ptr<SlabNode<T>> root;
-  sycl::queue &_q;
 };
 
 namespace SlabHashHelpers {
 template <typename T> struct AllocAdapter {
-  AllocAdapter(size_t bucket_size, size_t slab_size, T empty, sycl::queue &q) {
+  AllocAdapter(size_t bucket_size, size_t slab_size, T empty, sycl::queue &q) : _q(q) {
     _data.resize(bucket_size);
+  
     for (auto &e : _data) {
-      e = SlabList<T>(empty, slab_size, q);
+
+      e = SlabList<T>(empty, slab_size, _q);
     }
   }
 
   ~AllocAdapter() {
     for (auto &e : _data) {
-      e.clear();
+      e.clear(_q);
     }
   }
 
   std::vector<SlabList<T>> _data;
+  sycl::queue &_q;
 };
 } // namespace SlabHashHelpers
 
@@ -88,7 +91,7 @@ public:
            sycl::nd_item<1> &it,
            sycl::global_ptr<SlabNode<std::pair<K, T>>> &iter)
       : _lists(lists), _gr(it.get_group()), _it(it), _empty(empty),
-        _hasher(hasher), _iter(iter), _ind(_it.get_local_id()){};
+        _hasher(hasher), _iter(iter), _ind(_it.get_local_id()) {};
 
   void insert(K key, T val) {
     _key = key;
@@ -141,6 +144,7 @@ private:
          i += SUBGROUP_SIZE) {
       find = ((_iter->data[i].first) == _empty);
       sycl::group_barrier(_gr);
+
       total_found = sycl::any_of_group(_gr, find);
 
       if (total_found) {
@@ -221,4 +225,5 @@ private:
   T _val;
 
   std::optional<T> _ans;
+
 };
