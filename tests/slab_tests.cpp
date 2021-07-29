@@ -38,9 +38,10 @@ TEST(SlabHash, insert) {
        cgh.parallel_for<class insert_test_slab>(r, [=](sycl::nd_item<1> it) {
          size_t ind = it.get_group().get_id();
          DefaultHasher<13, 24, 343> h;
-         SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
-             EMPTY_UINT32_T, h, l.get_pointer(), it,
-             itrs[it.get_group().get_id()]);
+         SlabHashTable<uint32_t, uint32_t,
+                  DefaultHasher<13, 24, 343>>
+             ht(EMPTY_UINT32_T, h, l.get_pointer(), it,
+                itrs[it.get_group().get_id()]);
 
          for (int i = ind * 2; i < ind * 2 + 2; i++) {
            ht.insert(tests[i].first, tests[i].second);
@@ -117,9 +118,10 @@ TEST(SlabHash, find) {
        cgh.parallel_for<class find_test_slab>(r, [=](sycl::nd_item<1> it) {
          size_t ind = it.get_group().get_id();
          DefaultHasher<13, 24, 343> h;
-         SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
-             EMPTY_UINT32_T, h, l.get_pointer(), it,
-             itrs[it.get_group().get_id()]);
+         SlabHashTable<uint32_t, uint32_t,
+                  DefaultHasher<13, 24, 343>>
+             ht(EMPTY_UINT32_T, h, l.get_pointer(), it,
+                itrs[it.get_group().get_id()]);
 
          for (int i = ind * 2; i < ind * 2 + 2; i++) {
            auto ans = ht.find(tests[i].first);
@@ -175,9 +177,10 @@ TEST(SlabHash, find_and_insert_together) {
            r, [=](sycl::nd_item<1> it) {
              size_t ind = it.get_group().get_id();
              DefaultHasher<13, 24, 343> h;
-             SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
-                 EMPTY_UINT32_T, h, l.get_pointer(), it,
-                 itrs[it.get_group().get_id()]);
+             SlabHashTable<uint32_t, uint32_t,
+                      DefaultHasher<13, 24, 343>>
+                 ht(EMPTY_UINT32_T, h, l.get_pointer(), it,
+                    itrs[it.get_group().get_id()]);
 
              for (int i = ind * 2; i < ind * 2 + 2; i++) {
                ht.insert(tests[i].first, tests[i].second);
@@ -203,9 +206,10 @@ TEST(SlabHash, find_and_insert_together) {
        cgh.parallel_for<class find_test_slab_both>(r, [=](sycl::nd_item<1> it) {
          size_t ind = it.get_group().get_id();
          DefaultHasher<13, 24, 343> h;
-         SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
-             EMPTY_UINT32_T, h, l.get_pointer(), it,
-             itrs[it.get_group().get_id()]);
+         SlabHashTable<uint32_t, uint32_t,
+                  DefaultHasher<13, 24, 343>>
+             ht(EMPTY_UINT32_T, h, l.get_pointer(), it,
+                itrs[it.get_group().get_id()]);
 
          for (int i = ind * 2; i < ind * 2 + 2; i++) {
            auto ans = ht.find(tests[i].first);
@@ -265,9 +269,10 @@ TEST(SlabHash, find_and_insert_together_big) {
            r, [=](sycl::nd_item<1> it) {
              size_t ind = it.get_group().get_id();
              DefaultHasher<13, 24, 343> h;
-             SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
-                 EMPTY_UINT32_T, h, l.get_pointer(), it,
-                 itrs[it.get_group().get_id()]);
+             SlabHashTable<uint32_t, uint32_t,
+                      DefaultHasher<13, 24, 343>>
+                 ht(EMPTY_UINT32_T, h, l.get_pointer(), it,
+                    itrs[it.get_group().get_id()]);
 
              for (int i = ind * 40; i < ind * 40 + 40; i++) {
                ht.insert(tests[i].first, tests[i].second);
@@ -294,9 +299,10 @@ TEST(SlabHash, find_and_insert_together_big) {
            r, [=](sycl::nd_item<1> it) {
              size_t ind = it.get_group().get_id();
              DefaultHasher<13, 24, 343> h;
-             SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
-                 EMPTY_UINT32_T, h, l.get_pointer(), it,
-                 itrs[it.get_group().get_id()]);
+             SlabHashTable<uint32_t, uint32_t,
+                      DefaultHasher<13, 24, 343>>
+                 ht(EMPTY_UINT32_T, h, l.get_pointer(), it,
+                    itrs[it.get_group().get_id()]);
 
              for (int i = ind * 40; i < ind * 40 + 40; i++) {
                auto ans = ht.find(tests[i].first);
