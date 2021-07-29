@@ -6,7 +6,7 @@ using std::pair;
 SlabHashBuild::SlabHashBuild() : Dwarf("SlabHashBuild") {}
 
 void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
-  const int scale = 16; // todo how to get through options
+  const int scale = 8; // todo how to get through options
 
   auto opts = meter.opts();
   const std::vector<uint32_t> host_src =
@@ -22,28 +22,18 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
   for (auto it = 0; it < opts.iterations; ++it) {
     int work_size = (buf_size / scale);
     sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * work_size, SlabHash::SUBGROUP_SIZE};
-    std::vector<SlabHash::SlabList<pair<uint32_t, uint32_t>>> data(
-        SlabHash::BUCKETS_COUNT);
-    for (auto &e : data) {
-      e.root = sycl::global_ptr<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>(
-          sycl::malloc_shared<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>(
-              SlabHash::CLUSTER_SIZE, q));
 
-      for (int i = 0; i < SlabHash::CLUSTER_SIZE - 1; i++) {
-        *(e.root + i) =
-            SlabHash::SlabNode<pair<uint32_t, uint32_t>>({SlabHash::EMPTY_UINT32_T, 0});
-        (e.root + i)->next = (e.root + i + 1);
-      }
-    }
+    SlabHash::AllocAdapter<pair<uint32_t, uint32_t>> data(SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
+
 
     std::vector<uint32_t> output(buf_size, 0);
     std::vector<uint32_t> expected(buf_size, 1);
 
     {
-      sycl::buffer<SlabHash::SlabList<pair<uint32_t, uint32_t>>> data_buf(data);
+
+      sycl::buffer<SlabHash::SlabList<pair<uint32_t, uint32_t>>> data_buf(data._data);
       sycl::buffer<
-          sycl::global_ptr<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>>
-          its(work_size);
+          sycl::device_ptr<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>> its(work_size);
       sycl::buffer<uint32_t> src(host_src);
 
       auto host_start = std::chrono::steady_clock::now();
@@ -109,10 +99,6 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
 
       DwarfParams params{{"buf_size", std::to_string(buf_size)}};
       meter.add_result(std::move(params), std::move(result));
-    }
-
-    for (auto &e : data) {
-      sycl::free(e.root, q);
     }
   }
 }

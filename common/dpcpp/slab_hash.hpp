@@ -23,7 +23,6 @@ template <size_t A, size_t B, size_t P> struct DefaultHasher {
 };
 
 template <typename T> struct SlabNode {
-  SlabNode() = default;
   SlabNode(T el) {
     for (int i = 0; i < SLAB_SIZE; i++) {
       data[i] = el;
@@ -31,14 +30,50 @@ template <typename T> struct SlabNode {
   }
 
   T data[SLAB_SIZE];
-  sycl::global_ptr<SlabNode<T>> next = nullptr;
+  sycl::device_ptr<SlabNode<T>> next = nullptr;
 };
 
 template <typename T> struct SlabList {
   SlabList() = default;
+  SlabList(T empty, sycl::queue &q) {
+    auto tmp = sycl::device_ptr<SlabNode<T>>(
+        sycl::malloc_device<SlabNode<T>>(CLUSTER_SIZE, q));
 
-  sycl::global_ptr<SlabNode<T>> root;
+    q.parallel_for(CLUSTER_SIZE,
+                   [=](auto &i) {
+                     *(tmp + i) = SlabNode<T>(empty);
+                     (tmp + i)->next = (tmp + i + 1);
+                   })
+        .wait();
+
+    root = tmp;
+  }
+
+  void clear(sycl::queue &q) { sycl::free(root, q); }
+
+  sycl::device_ptr<SlabNode<T>> root;
 };
+
+template <typename T> struct AllocAdapter {
+  AllocAdapter(size_t bucket_size, T empty, sycl::queue &q)
+      : _q(q) {
+    _data.resize(bucket_size);
+
+    for (auto &e : _data) {
+      e = SlabList<T>(empty, _q);
+    }
+  }
+
+  ~AllocAdapter() {
+    for (auto &e : _data) {
+      e.clear(_q);
+    }
+  }
+
+  std::vector<SlabList<T>> _data;
+  sycl::queue &_q;
+};
+
 
 template <typename K, typename T, typename Hash> class SlabHashTable {
 public:
@@ -46,7 +81,8 @@ public:
   SlabHashTable(K empty, Hash hasher,
                 sycl::global_ptr<SlabList<std::pair<K, T>>> lists,
                 sycl::nd_item<1> &it,
-                sycl::global_ptr<SlabNode<std::pair<K, T>>> &iter)
+                sycl::device_ptr<SlabNode<std::pair<K, T>>> &iter))
+
       : _lists(lists), _gr(it.get_group()), _it(it), _empty(empty),
         _hasher(hasher), _iter(iter), _ind(_it.get_local_id()){};
 
@@ -169,7 +205,7 @@ private:
   }
 
   sycl::global_ptr<SlabList<std::pair<K, T>>> _lists;
-  sycl::global_ptr<SlabNode<std::pair<K, T>>> &_iter;
+  sycl::device_ptr<SlabNode<std::pair<K, T>>> &_iter;
   sycl::group<1> _gr;
   sycl::nd_item<1> &_it;
   size_t _ind;
