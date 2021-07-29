@@ -21,17 +21,15 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
 
   for (auto it = 0; it < opts.iterations; ++it) {
     int work_size = (buf_size / scale);
-    sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * work_size, SlabHash::SUBGROUP_SIZE};
-    std::vector<SlabHash::SlabList<pair<uint32_t, uint32_t>>> data(
-        SlabHash::BUCKETS_COUNT);
+    sycl::nd_range<1> r{SUBGROUP_SIZE * work_size, SUBGROUP_SIZE};
+    std::vector<SlabHash::SlabList<pair<uint32_t, uint32_t>>> data(BUCKETS_COUNT);
     for (auto &e : data) {
       e.root = sycl::global_ptr<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>(
-          sycl::malloc_shared<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>(
-              SlabHash::CLUSTER_SIZE, q));
+          sycl::malloc_shared<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>(CLUSTER_SIZE,
+                                                                  q));
 
-      for (int i = 0; i < SlabHash::CLUSTER_SIZE - 1; i++) {
-        *(e.root + i) =
-            SlabHash::SlabNode<pair<uint32_t, uint32_t>>({SlabHash::EMPTY_UINT32_T, 0});
+      for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
+        *(e.root + i) = SlabHash::SlabNode<pair<uint32_t, uint32_t>>({EMPTY_UINT32_T, 0});
         (e.root + i)->next = (e.root + i + 1);
       }
     }
@@ -41,9 +39,8 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
 
     {
       sycl::buffer<SlabHash::SlabList<pair<uint32_t, uint32_t>>> data_buf(data);
-      sycl::buffer<
-          sycl::global_ptr<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>>
-          its(work_size);
+      sycl::buffer<sycl::global_ptr<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>> its(
+          work_size);
       sycl::buffer<uint32_t> src(host_src);
 
       auto host_start = std::chrono::steady_clock::now();
@@ -56,8 +53,8 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
            size_t ind = it.get_group().get_id();
            SlabHash::DefaultHasher<32, 48, 1031> h;
            SlabHash::SlabHashTable<uint32_t, uint32_t,
-                                   SlabHash::DefaultHasher<32, 48, 1031>>
-               ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
+                    SlabHash::DefaultHasher<32, 48, 1031>>
+               ht(EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
                   itrs[it.get_group().get_id()]);
 
            for (int i = ind * scale; i < ind * scale + scale; i++) {
@@ -88,8 +85,8 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
                size_t ind = it.get_group().get_id();
                SlabHash::DefaultHasher<32, 48, 1031> h;
                SlabHash::SlabHashTable<uint32_t, uint32_t,
-                                       SlabHash::DefaultHasher<32, 48, 1031>>
-                   ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
+                        SlabHash::DefaultHasher<32, 48, 1031>>
+                   ht(EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
                       itrs[it.get_group().get_id()]);
 
                for (int i = ind * scale; i < ind * scale + scale; i++) {
