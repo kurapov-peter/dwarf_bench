@@ -81,7 +81,7 @@ public:
   SlabHashTable(K empty, Hash hasher,
                 sycl::global_ptr<SlabList<std::pair<K, T>>> lists,
                 sycl::nd_item<1> &it,
-                sycl::device_ptr<SlabNode<std::pair<K, T>>> &iter)
+                sycl::device_ptr<SlabNode<std::pair<K, T>>> &iter))
 
       : _lists(lists), _gr(it.get_group()), _it(it), _empty(empty),
         _hasher(hasher), _iter(iter), _ind(_it.get_local_id()){};
