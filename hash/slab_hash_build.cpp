@@ -22,16 +22,18 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
   for (auto it = 0; it < opts.iterations; ++it) {
     int work_size = (buf_size / scale);
     sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * work_size, SlabHash::SUBGROUP_SIZE};
+
     SlabHash::AllocAdapter<pair<uint32_t, uint32_t>> data(SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
+
 
     std::vector<uint32_t> output(buf_size, 0);
     std::vector<uint32_t> expected(buf_size, 1);
 
     {
+
       sycl::buffer<SlabHash::SlabList<pair<uint32_t, uint32_t>>> data_buf(data._data);
       sycl::buffer<
-          sycl::device_ptr<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>>
-          its(work_size);
+          sycl::device_ptr<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>> its(work_size);
       sycl::buffer<uint32_t> src(host_src);
 
       auto host_start = std::chrono::steady_clock::now();
