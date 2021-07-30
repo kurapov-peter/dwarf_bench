@@ -1,4 +1,6 @@
-#pragma once
+#ifndef COMMON_HPP
+#define COMMON_HPP
+
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
@@ -27,14 +29,7 @@ void dump_collection(const Collection &c, std::ostream &os = std::cout) {
 }
 
 namespace helpers {
-std::vector<uint32_t> make_unique_random(size_t size) {
-  srand(time(NULL));
-  std::set<uint32_t> s;
-  while (s.size() < size) {
-    s.insert(rand() % (size * 10))
-  }
-  return std::vector<uint32_t>(s.begin(), s.end());
-}
+std::vector<uint32_t> make_unique_random(size_t size);
 
 template <class T> std::vector<T> make_random(size_t size) {
   std::random_device rd;
@@ -60,3 +55,5 @@ bool check_first(const T &v1, const U &v2, size_t sz) {
 }
 
 } // namespace helpers
+
+#endif
