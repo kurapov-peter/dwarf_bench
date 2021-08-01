@@ -3,6 +3,7 @@ FROM intel/oneapi-basekit
 ARG DEBIAN_FRONTEND=noninteractive
 ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
 
+
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
@@ -45,3 +46,11 @@ RUN mkdir /cmake && cd /cmake \
     && rm cmake-3.21.0-linux-x86_64.tar.gz
 
 ENV PATH="/cmake/cmake-3.21.0-linux-x86_64/bin:${PATH}"
+
+RUN cd root && wget https://github.com/intel/llvm/releases/download/sycl-nightly%2F20210725/dpcpp-compiler.tar.gz \
+	    && tar -xf dpcpp-compiler.tar.gz 
+
+RUN cd root && rm -rf dpcpp-compiler.tar.gz
+
+ENV LD_LIBRARY_PATH=/root/dpcpp_compiler/lib:$LD_LIBRARY_PATH
+ENV PATH=/root/dpcpp_compiler/bin:$PATH
