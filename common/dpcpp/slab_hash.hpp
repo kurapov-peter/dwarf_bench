@@ -172,12 +172,17 @@ private:
 
   bool find_in_node() {
     bool find = false;
+    bool empty = true;
+    bool total_empty = true;
     bool total_found = false;
 
     for (int i = _ind; i <= _ind + SUBGROUP_SIZE * (CONST - 1);
          i += SUBGROUP_SIZE) {
       find = ((_iter->data[i].first) == _key);
+      empty = ((_iter->data[i].first) != _empty);
       sycl::group_barrier(_gr);
+      total_empty = sycl::any_of_group(_gr, empty);
+      if(!total_empty) return false;
       total_found = sycl::any_of_group(_gr, find);
 
       if (total_found) {
