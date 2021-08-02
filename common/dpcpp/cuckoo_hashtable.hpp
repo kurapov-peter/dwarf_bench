@@ -1,7 +1,7 @@
 #include <time.h> 
 #include <CL/sycl.hpp>
 
-#define EMPTY_KEY 2147483647
+// #define EMPTY_KEY 2147483647
 
 struct Hasher {
 
@@ -29,21 +29,21 @@ struct Hasher {
         const int possible_p[14] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43};
 };
 
-template <class Key, class Val, class Hash> class CuckooHashtable{
+template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashtable{
     private:
         sycl::global_ptr<Key> _keys;
         sycl::global_ptr<Val> _vals;
 
-        size_t _size;
-        Hash _hasher1;
-        Hash _hasher2;
+        const size_t _size;
+        Hasher1 _hasher1;
+        Hasher2 _hasher2;
         const Key _EMPTY_KEY;
         sycl::global_ptr<uint32_t> _bitmask;
         static constexpr uint32_t elem_sz = CHAR_BIT * sizeof(uint32_t);
         
     public:
-        explicit CuckooHashtable(size_t size, sycl::global_ptr<Key> keys, sycl::global_ptr<Val> vals, sycl::global_ptr<uint32_t> bitmask, Hash hasher1, Hash hasher2, const Key EMPTY_KEY):
-            _size(size), _keys(keys), _vals(vals), _bitmask(bitmask), _hasher1(hasher1), _hasher2(hasher2) _EMPTY_KEY(EMPTY_KEY){}
+        explicit CuckooHashtable(const size_t size, sycl::global_ptr<Key> keys, sycl::global_ptr<Val> vals, sycl::global_ptr<uint32_t> bitmask, Hasher1 hasher1, Hasher2 hasher2, const Key EMPTY_KEY):
+            _size(size), _keys(keys), _vals(vals), _bitmask(bitmask), _hasher1(hasher1), _hasher2(hasher2), _EMPTY_KEY(EMPTY_KEY){}
         
         bool at(Key key) {
             if (_keys[_hasher1(key)] == key || _keys[_hasher2(key)] == key)
@@ -66,7 +66,7 @@ template <class Key, class Val, class Hash> class CuckooHashtable{
 
                     lock(present, _bitmask + major_idx, mask);
 
-                    if (_keys[pos[i]] == EMPTY_KEY) {
+                    if (_keys[pos[i]] == _EMPTY_KEY) {
                         _keys[pos[i]] = key;
                         _vals[pos[i]] = value;
 
