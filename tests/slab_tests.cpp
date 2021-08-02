@@ -27,7 +27,7 @@ TEST(SlabHash, insert) {
 
   {
     sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(lists);
-    sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
+    sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
 
     q.submit([&](sycl::handler &cgh) {
@@ -103,7 +103,7 @@ TEST(SlabHash, find) {
   std::vector<pair<bool, bool>> checks(6);
   {
     sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(lists);
-    sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
+    sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
     sycl::buffer<pair<bool, bool>> buffChecks(checks);
 
@@ -147,21 +147,11 @@ TEST(SlabHash, find_and_insert_together) {
   sycl::queue q{sycl::gpu_selector()};
   sycl::nd_range<1> r{SUBGROUP_SIZE * 3, SUBGROUP_SIZE};
 
-  std::vector<SlabList<pair<uint32_t, uint32_t>>> lists(BUCKETS_COUNT);
-  for (auto &e : lists) {
-    e.root = sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>(
-        sycl::malloc_shared<SlabNode<pair<uint32_t, uint32_t>>>(CLUSTER_SIZE,
-                                                                q));
-
-    for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
-      *(e.root + i) = SlabNode<pair<uint32_t, uint32_t>>({EMPTY_UINT32_T, 0});
-      (e.root + i)->next = (e.root + i + 1);
-    }
-  }
+  AllocAdapter<std::pair<uint32_t, uint32_t>> adap(BUCKETS_COUNT, {EMPTY_UINT32_T, 0}, q);
 
   {
-    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(lists);
-    sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
+    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(adap._data);
+    sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
 
     q.submit([&](sycl::handler &cgh) {
@@ -186,8 +176,8 @@ TEST(SlabHash, find_and_insert_together) {
 
   std::vector<pair<bool, bool>> checks(6);
   {
-    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(lists);
-    sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
+    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(adap._data);
+    sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
     sycl::buffer<pair<bool, bool>> buffChecks(checks);
 
@@ -218,10 +208,6 @@ TEST(SlabHash, find_and_insert_together) {
   for (auto &e : checks) {
     EXPECT_TRUE(e.first && e.second);
   }
-
-  for (auto &e : lists) {
-    sycl::free(e.root, q);
-  }
 }
 
 TEST(SlabHash, find_and_insert_together_big) {
@@ -235,21 +221,11 @@ TEST(SlabHash, find_and_insert_together_big) {
   sycl::queue q{sycl::gpu_selector()};
   sycl::nd_range<1> r{SUBGROUP_SIZE * 25, SUBGROUP_SIZE};
 
-  std::vector<SlabList<pair<uint32_t, uint32_t>>> lists(BUCKETS_COUNT);
-  for (auto &e : lists) {
-    e.root = sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>(
-        sycl::malloc_shared<SlabNode<pair<uint32_t, uint32_t>>>(CLUSTER_SIZE,
-                                                                q));
-
-    for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
-      *(e.root + i) = SlabNode<pair<uint32_t, uint32_t>>({EMPTY_UINT32_T, 0});
-      (e.root + i)->next = (e.root + i + 1);
-    }
-  }
+  AllocAdapter<std::pair<uint32_t, uint32_t>> adap(BUCKETS_COUNT, {EMPTY_UINT32_T, 0}, q);
 
   {
-    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(lists);
-    sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(25);
+    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(adap._data);
+    sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(25);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
 
     q.submit([&](sycl::handler &cgh) {
@@ -274,8 +250,8 @@ TEST(SlabHash, find_and_insert_together_big) {
 
   std::vector<pair<bool, bool>> checks(1000);
   {
-    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(lists);
-    sycl::buffer<sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(25);
+    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(adap._data);
+    sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(25);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
     sycl::buffer<pair<bool, bool>> buffChecks(checks);
 
@@ -306,10 +282,6 @@ TEST(SlabHash, find_and_insert_together_big) {
 
   for (auto &e : checks) {
     EXPECT_TRUE(e.first && e.second);
-  }
-
-  for (auto &e : lists) {
-    sycl::free(e.root, q);
   }
 }
 
