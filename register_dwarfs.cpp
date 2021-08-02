@@ -2,6 +2,7 @@
 #include "common/registry.hpp"
 #include "constant/constant.hpp"
 #include "hash/hash_build.hpp"
+#include "hash/slab_hash_build.hpp"
 #include "radix/radix.hpp"
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"

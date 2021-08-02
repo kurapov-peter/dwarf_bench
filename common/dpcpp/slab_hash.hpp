@@ -117,9 +117,9 @@ private:
     for (int j = 0; j < SUBGROUP_SIZE; j++) {
       if (cl::sycl::group_broadcast(_gr, find, j)) {
         K tmp_empty = _empty;
-        bool done = _ind == j ? sycl::ONEAPI::atomic_ref<
-                                    K, sycl::ONEAPI::memory_order::acq_rel,
-                                    sycl::ONEAPI::memory_scope::system,
+        bool done = _ind == j ? sycl::ext::oneapi::atomic_ref<
+                                    K, sycl::ext::oneapi::memory_order::acq_rel,
+                                    sycl::ext::oneapi::memory_scope::system,
                                     sycl::access::address_space::global_space>(
                                     _iter->data[i].first)
                                     .compare_exchange_strong(tmp_empty, _key)

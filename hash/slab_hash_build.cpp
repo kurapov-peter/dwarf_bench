@@ -21,9 +21,10 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
   SlabHash::DefaultHasher<32, 48, 1031> hasher;
 
   for (auto it = 0; it < opts.iterations; ++it) {
-    int work_size = ceil((float) buf_size / scale);
-    
-    sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * work_size, SlabHash::SUBGROUP_SIZE};
+    int work_size = ceil((float)buf_size / scale);
+
+    sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * work_size,
+                        SlabHash::SUBGROUP_SIZE};
     std::vector<SlabHash::SlabList<pair<uint32_t, uint32_t>>> data(
         SlabHash::BUCKETS_COUNT);
     for (auto &e : data) {
@@ -32,8 +33,8 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
               SlabHash::CLUSTER_SIZE, q));
 
       for (int i = 0; i < SlabHash::CLUSTER_SIZE - 1; i++) {
-        *(e.root + i) =
-            SlabHash::SlabNode<pair<uint32_t, uint32_t>>({SlabHash::EMPTY_UINT32_T, 0});
+        *(e.root + i) = SlabHash::SlabNode<pair<uint32_t, uint32_t>>(
+            {SlabHash::EMPTY_UINT32_T, 0});
         (e.root + i)->next = (e.root + i + 1);
       }
     }
@@ -62,12 +63,12 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
                ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
                   itrs[it.get_group().get_id()]);
 
-           for (int i = ind * scale; i < ind * scale + scale && i < buf_size; i++) {
+           for (int i = ind * scale; i < ind * scale + scale && i < buf_size;
+                i++) {
              ht.insert(s[i], s[i]);
            }
          });
-       })
-          .wait();
+       }).wait();
 
       auto host_end = std::chrono::steady_clock::now();
       auto host_exe_time =
@@ -94,14 +95,14 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
                    ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
                       itrs[it.get_group().get_id()]);
 
-               for (int i = ind * scale; i < ind * scale + scale && i < buf_size; i++) {
+               for (int i = ind * scale;
+                    i < ind * scale + scale && i < buf_size; i++) {
                  auto ans = ht.find(s[i]);
                  if (it.get_local_id() == 0)
                    o[i] = static_cast<bool>(ans);
                }
              });
-       })
-          .wait();
+       }).wait();
 
       out_buf.get_access<sycl::access::mode::read>();
       if (output != expected) {
