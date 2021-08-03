@@ -2,6 +2,7 @@
 #include "common/registry.hpp"
 #include "constant/constant.hpp"
 #include "hash/hash_build.hpp"
+#include "hash/slab_hash_build.hpp"
 #include "radix/radix.hpp"
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
@@ -18,6 +19,7 @@ void populate_registry() {
   registry->registerd(new Radix());
   registry->registerd(new ReduceDPCPP());
   registry->registerd(new HashBuild());
+  registry->registerd(new SlabHashBuild());
 #ifdef CUDA_ENABLED
   registry->registerd(new ConstantExampleDPCPPCuda());
   registry->registerd(new DPLScanCuda());

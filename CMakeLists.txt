@@ -63,6 +63,7 @@ if(ENABLE_DPCPP)
     radix
     reduce
     hash_build
+    slab_hash_build
     join
   )
   if(ENABLE_CUDA)
