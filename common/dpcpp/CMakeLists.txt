@@ -5,6 +5,7 @@ set(dpcpp_common_sources
     hashtable.hpp
     cuckoo_hashtable.hpp
     slab_hash.hpp
+    hashfunctions.hpp
 )
 
 add_library(dpcpp_common ${dpcpp_common_sources})

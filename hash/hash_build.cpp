@@ -2,16 +2,6 @@
 
 #include "common/dpcpp/hashtable.hpp"
 
-namespace {
-struct Hasher {
-  Hasher(size_t sz) : _sz(sz) {}
-  size_t operator()(const uint32_t &v) const { return v % _sz; }
-
-private:
-  size_t _sz;
-};
-} // namespace
-
 HashBuild::HashBuild() : Dwarf("HashBuild") {}
 void HashBuild::_run(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
@@ -23,7 +13,7 @@ void HashBuild::_run(const size_t buf_size, Meter &meter) {
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
 
-  Hasher hasher(buf_size);
+  SimpleHasher<uint32_t> hasher(buf_size);
 
   for (auto it = 0; it < opts.iterations; ++it) {
     size_t bitmask_sz = (buf_size / 32) ? (buf_size / 32) : 1;
@@ -47,7 +37,7 @@ void HashBuild::_run(const size_t buf_size, Meter &meter) {
        auto keys_acc = keys_buf.get_access(h);
 
        h.parallel_for<class hash_build>(buf_size, [=](auto &idx) {
-         SimpleNonOwningHashTable<uint32_t, uint32_t, Hasher> ht(
+         SimpleNonOwningHashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>> ht(
              buf_size, keys_acc.get_pointer(), data_acc.get_pointer(),
              bitmask_acc.get_pointer(), hasher);
 
@@ -73,7 +63,7 @@ void HashBuild::_run(const size_t buf_size, Meter &meter) {
        auto keys_acc = keys_buf.get_access(h);
 
        h.parallel_for<class hash_build_check>(buf_size, [=](auto &idx) {
-         SimpleNonOwningHashTable<uint32_t, uint32_t, Hasher> ht(
+         SimpleNonOwningHashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>> ht(
              buf_size, keys_acc.get_pointer(), data_acc.get_pointer(),
              bitmask_acc.get_pointer(), hasher);
 

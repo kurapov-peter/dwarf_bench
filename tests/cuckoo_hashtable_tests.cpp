@@ -2,15 +2,15 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-namespace CuckooTest{
-    template <size_t Size> struct Hasher1 {
-        size_t operator()(const uint32_t &v) const { return v % Size; }
-    };
+// namespace CuckooTest{
+//     template <size_t Size> struct Hasher1 {
+//         size_t operator()(const uint32_t &v) const { return v % Size; }
+//     };
     
-    template <size_t Size> struct Hasher2 {
-        size_t operator()(const uint32_t &v) const { return (v % Size + 1) % Size; }
-    };
-}
+//     template <size_t Size> struct Hasher2 {
+//         size_t operator()(const uint32_t &v) const { return (v % Size + 1) % Size; }
+//     };
+// }
 
 #define EMPTY_KEY 2147483647
 
@@ -18,8 +18,8 @@ TEST(CuckooHashTable, insert) {
   const size_t buf_size = 10;
   size_t bitmask_sz = (buf_size / 32) ? (buf_size / 32) : 1;
   
-  CuckooTest::Hasher1<buf_size> hasher1;
-  CuckooTest::Hasher2<buf_size> hasher2;
+  StaticSimpleHasher<buf_size> hasher1;
+  StaticSimpleHasherWithOffset<buf_size, 1> hasher2;
 
   sycl::cpu_selector device_selector;
   sycl::queue q(device_selector);
@@ -39,7 +39,7 @@ TEST(CuckooHashTable, insert) {
       auto bitmask_acc = bitmask_buf.get_access(h);
 
       h.single_task([=]() {
-        CuckooHashtable<uint32_t, uint32_t, CuckooTest::Hasher1<buf_size>, CuckooTest::Hasher2<buf_size>> 
+        CuckooHashtable<uint32_t, uint32_t, StaticSimpleHasher<buf_size>, StaticSimpleHasherWithOffset<buf_size, 1>> 
             ht(buf_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
                     bitmask_acc.get_pointer(), hasher1, hasher2, EMPTY_KEY);
         
@@ -64,8 +64,8 @@ TEST(CuckooHashtable, at) {
   const size_t output_size = 7;
   size_t bitmask_sz = (buf_size / 32) ? (buf_size / 32) : 1;
   
-  CuckooTest::Hasher1<buf_size> hasher1;
-  CuckooTest::Hasher2<buf_size> hasher2;
+  StaticSimpleHasher<buf_size> hasher1;
+  StaticSimpleHasherWithOffset<buf_size, 1> hasher2;
 
   sycl::cpu_selector device_selector;
   sycl::queue q(device_selector);
@@ -88,7 +88,7 @@ TEST(CuckooHashtable, at) {
       auto out_acc = out_buf.get_access(h);
 
       h.single_task([=]() {
-        CuckooHashtable<uint32_t, uint32_t, CuckooTest::Hasher1<buf_size>, CuckooTest::Hasher2<buf_size>> 
+        CuckooHashtable<uint32_t, uint32_t,  StaticSimpleHasher<buf_size>, StaticSimpleHasherWithOffset<buf_size, 1>> 
             ht(buf_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
                     bitmask_acc.get_pointer(), hasher1, hasher2, EMPTY_KEY);
         
@@ -128,8 +128,8 @@ TEST(CuckooHashtable, fails_to_insert) {
   const size_t output_size = 4;
   size_t bitmask_sz = (buf_size / 32) ? (buf_size / 32) : 1;
   
-  CuckooTest::Hasher1<buf_size> hasher1;
-  CuckooTest::Hasher2<buf_size> hasher2;
+  StaticSimpleHasher<buf_size> hasher1;
+  StaticSimpleHasherWithOffset<buf_size, 1> hasher2;
 
   sycl::cpu_selector device_selector;
   sycl::queue q(device_selector);
@@ -155,7 +155,7 @@ TEST(CuckooHashtable, fails_to_insert) {
       auto out_acc = out_buf.get_access(h);
 
       h.single_task([=]() {
-        CuckooHashtable<uint32_t, uint32_t, CuckooTest::Hasher1<buf_size>, CuckooTest::Hasher2<buf_size>> 
+        CuckooHashtable<uint32_t, uint32_t,  StaticSimpleHasher<buf_size>, StaticSimpleHasherWithOffset<buf_size, 1>> 
             ht(buf_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
                     bitmask_acc.get_pointer(), hasher1, hasher2, EMPTY_KEY);
         

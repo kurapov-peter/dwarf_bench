@@ -1,33 +1,8 @@
 #include <time.h> 
 #include <CL/sycl.hpp>
 
-// #define EMPTY_KEY 2147483647
+#include "hashfunctions.hpp"
 
-struct Hasher {
-
-    Hasher(size_t sz) {
-        _sz = sz;
-        p = possible_p[rand() % 14];
-        int k = possible_p[rand() % 14];
-    }
-
-    size_t operator()(const uint32_t &v) const {
-        uint32_t v_copy = v;
-        int res = 0;
-        int pow_p = p;
-        while(v_copy > 0){
-            res += ((v_copy % 10) * pow_p) % _sz;
-            res = res % _sz;
-            pow_p *= p;
-            v_copy /= 10;
-        }
-        return res;
-    }
-    private:
-        size_t _sz;
-        int p;
-        const int possible_p[14] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43};
-};
 
 template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashtable{
     private:
