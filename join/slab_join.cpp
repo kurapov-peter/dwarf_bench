@@ -28,11 +28,11 @@ void Join::_run(const size_t buf_size, Meter &meter) {
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
 
   // hash table
-  int work_size = ceil((float) buf_size / scale);
+  int work_size = ceil((float)buf_size / scale);
   sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * work_size,
                       SlabHash::SUBGROUP_SIZE};
 
-  SlabHash::AllocAdapter<pair<uint32_t, uint32_t>> data(
+  SlabHash::AllocAdapter<pair<uint32_t, uint32_t>> adap(
       SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
 
   // testing
@@ -43,13 +43,16 @@ void Join::_run(const size_t buf_size, Meter &meter) {
   auto expected = join_helpers::seq_join(table_a_keys, table_a_values,
                                          table_b_keys, table_b_values);
 
-    std::cout << "expected done\n";
+  std::cout << "expected done\n";
   Result result;
 
   {
-
+    sycl::buffer<uint32_t> lock_buf(adap._lock);
+    // std::cout << "LOCK CREATED\n";
+    sycl::buffer<SlabHash::Exp::HeapMaster<pair<uint32_t, uint32_t>>> heap_buf(
+        &adap._heap, sycl::range<1>{1});
     sycl::buffer<SlabHash::SlabList<pair<uint32_t, uint32_t>>> data_buf(
-        data._data);
+        adap._data);
     sycl::buffer<sycl::device_ptr<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>>
         its(work_size);
 
@@ -62,27 +65,30 @@ void Join::_run(const size_t buf_size, Meter &meter) {
     sycl::buffer<uint32_t> out_val1_b(val1_out);
     sycl::buffer<uint32_t> out_val2_b(val2_out);
 
-    //const size_t ht_size = buf_size;
-    //SimpleHasher<uint32_t> hasher(ht_size);
+    // const size_t ht_size = buf_size;
+    // SimpleHasher<uint32_t> hasher(ht_size);
 
     auto host_start = std::chrono::steady_clock::now();
     q.submit([&](sycl::handler &h) {
        auto key_a_acc = sycl::accessor(key_a, h, sycl::read_only);
        auto val_a_acc = sycl::accessor(val_a, h, sycl::read_only);
 
-
        // ht data accessors
        auto data_acc = sycl::accessor(data_buf, h, sycl::read_write);
        auto itrs = sycl::accessor(its, h, sycl::read_write);
+       auto heap_acc = sycl::accessor(heap_buf, h, sycl::read_write);
+       // std::cout << "HEAP ACCESSED\n";
+       auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
 
        h.parallel_for<class join_build>(r, [=](sycl::nd_item<1> it) {
          int idx = it.get_local_id();
          size_t ind = it.get_group().get_id();
          SlabHash::DefaultHasher<32, 48, 1031> h;
-         SlabHash::SlabHashTable<uint32_t, uint32_t,
-                                 SlabHash::DefaultHasher<32, 48, 1031>>
+         SlabHash::Exp::SlabHashTable<uint32_t, uint32_t,
+                                      SlabHash::DefaultHasher<32, 48, 1031>>
              ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
-                itrs[it.get_group().get_id()]);
+                itrs[it.get_group().get_id()], lock_acc.get_pointer(),
+                *heap_acc.get_pointer());
 
          // todo: pick smaller one
 
@@ -91,8 +97,7 @@ void Join::_run(const size_t buf_size, Meter &meter) {
            ht.insert(key_a_acc[i], val_a_acc[i]);
          }
        });
-     })
-        .wait();
+     }).wait();
     auto build_end = std::chrono::steady_clock::now();
     std::cout << "Builded\n";
     auto probe_start = std::chrono::steady_clock::now();
@@ -107,29 +112,32 @@ void Join::_run(const size_t buf_size, Meter &meter) {
        // ht data accessors
        auto data_acc = sycl::accessor(data_buf, h, sycl::read_write);
        auto itrs = sycl::accessor(its, h, sycl::read_write);
+       auto heap_acc = sycl::accessor(heap_buf, h, sycl::read_write);
+       // std::cout << "HEAP ACCESSED\n";
+       auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
 
        h.parallel_for<class join_probe>(r, [=](sycl::nd_item<1> it) {
-         //int idx = it.get_local_id();
+         // int idx = it.get_local_id();
          size_t ind = it.get_group().get_id();
          SlabHash::DefaultHasher<32, 48, 1031> h;
-         SlabHash::SlabHashTable<uint32_t, uint32_t,
-                                 SlabHash::DefaultHasher<32, 48, 1031>>
+         SlabHash::Exp::SlabHashTable<uint32_t, uint32_t,
+                                      SlabHash::DefaultHasher<32, 48, 1031>>
              ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
-                itrs[it.get_group().get_id()]);
+                itrs[it.get_group().get_id()], lock_acc.get_pointer(),
+                *heap_acc.get_pointer());
 
-        for (int idx = ind * scale; idx < ind * scale + scale && idx < buf_size;
-              idx++) {
-         auto ans = ht.find(key_b_acc[idx]);
+         for (int idx = ind * scale;
+              idx < ind * scale + scale && idx < buf_size; idx++) {
+           auto ans = ht.find(key_b_acc[idx]);
 
-         if (static_cast<bool>(ans)) {
-           out_key_a[idx] = key_b_acc[idx];
-           out_val1_a[idx] = ans.value_or(-1);
-           out_val2_a[idx] = val_b_acc[idx];
+           if (static_cast<bool>(ans)) {
+             out_key_a[idx] = key_b_acc[idx];
+             out_val1_a[idx] = ans.value_or(-1);
+             out_val2_a[idx] = val_b_acc[idx];
+           }
          }
-              }
        });
-     })
-        .wait();
+     }).wait();
     auto host_end = std::chrono::steady_clock::now();
 
     result.isJoin = true;

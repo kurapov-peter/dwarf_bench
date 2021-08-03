@@ -19,10 +19,7 @@ TEST(SlabHash, insert) {
         sycl::malloc_shared<SlabNode<pair<uint32_t, uint32_t>>>(CLUSTER_SIZE,
                                                                 q));
 
-    for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
-      *(e.root + i) = SlabNode<pair<uint32_t, uint32_t>>({EMPTY_UINT32_T, 0});
-      (e.root + i)->next = (e.root + i + 1);
-    }
+    *(e.root) = SlabNode<pair<uint32_t, uint32_t>>({EMPTY_UINT32_T, 0});
   }
 
   {
@@ -79,10 +76,7 @@ TEST(SlabHash, find) {
         sycl::malloc_shared<SlabNode<pair<uint32_t, uint32_t>>>(CLUSTER_SIZE,
                                                                 q));
 
-    for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
-      *(e.root + i) = SlabNode<pair<uint32_t, uint32_t>>({EMPTY_UINT32_T, 0});
-      (e.root + i)->next = (e.root + i + 1);
-    }
+    *(e.root) = SlabNode<pair<uint32_t, uint32_t>>({EMPTY_UINT32_T, 0});
   }
 
   std::vector<pair<uint32_t, uint32_t>> testUniv = {
@@ -147,9 +141,14 @@ TEST(SlabHash, find_and_insert_together) {
   sycl::queue q{sycl::gpu_selector()};
   sycl::nd_range<1> r{SUBGROUP_SIZE * 3, SUBGROUP_SIZE};
 
-  AllocAdapter<std::pair<uint32_t, uint32_t>> adap(BUCKETS_COUNT, {EMPTY_UINT32_T, 0}, q);
+  AllocAdapter<std::pair<uint32_t, uint32_t>> adap(BUCKETS_COUNT,
+                                                   {EMPTY_UINT32_T, 0}, q);
 
   {
+    sycl::buffer<uint32_t> lock_buf(adap._lock);
+    // std::cout << "LOCK CREATED\n";
+    sycl::buffer<SlabHash::Exp::HeapMaster<pair<uint32_t, uint32_t>>> heap_buf(
+        &adap._heap, sycl::range<1>{1});
     sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(adap._data);
     sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
@@ -159,13 +158,20 @@ TEST(SlabHash, find_and_insert_together) {
        auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
        auto itrs = sycl::accessor(its, cgh, sycl::read_write);
 
+       auto heap_acc = sycl::accessor(heap_buf, cgh, sycl::read_write);
+       // std::cout << "HEAP ACCESSED\n";
+       auto lock_acc = sycl::accessor(lock_buf, cgh, sycl::read_write);
+       // std::cout << "LOCK ACCESSED\n";
+
        cgh.parallel_for<class insert_test_slab_both>(
            r, [=](sycl::nd_item<1> it) {
              size_t ind = it.get_group().get_id();
              DefaultHasher<13, 24, 343> h;
-             SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
-                 EMPTY_UINT32_T, h, l.get_pointer(), it,
-                 itrs[it.get_group().get_id()]);
+             SlabHash::Exp::SlabHashTable<uint32_t, uint32_t,
+                                          SlabHash::DefaultHasher<13, 24, 343>>
+                 ht(SlabHash::EMPTY_UINT32_T, h, l.get_pointer(), it,
+                    itrs[it.get_group().get_id()], lock_acc.get_pointer(),
+                    *heap_acc.get_pointer());
 
              for (int i = ind * 2; i < ind * 2 + 2; i++) {
                ht.insert(tests[i].first, tests[i].second);
@@ -176,6 +182,10 @@ TEST(SlabHash, find_and_insert_together) {
 
   std::vector<pair<bool, bool>> checks(6);
   {
+    sycl::buffer<uint32_t> lock_buf(adap._lock);
+    // std::cout << "LOCK CREATED\n";
+    sycl::buffer<SlabHash::Exp::HeapMaster<pair<uint32_t, uint32_t>>> heap_buf(
+        &adap._heap, sycl::range<1>{1});
     sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(adap._data);
     sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
@@ -187,12 +197,19 @@ TEST(SlabHash, find_and_insert_together) {
        auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
        auto accChecks = sycl::accessor(buffChecks, cgh, sycl::write_only);
 
+       auto heap_acc = sycl::accessor(heap_buf, cgh, sycl::read_write);
+       // std::cout << "HEAP ACCESSED\n";
+       auto lock_acc = sycl::accessor(lock_buf, cgh, sycl::read_write);
+       // std::cout << "LOCK ACCESSED\n";
+
        cgh.parallel_for<class find_test_slab_both>(r, [=](sycl::nd_item<1> it) {
          size_t ind = it.get_group().get_id();
          DefaultHasher<13, 24, 343> h;
-         SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
-             EMPTY_UINT32_T, h, l.get_pointer(), it,
-             itrs[it.get_group().get_id()]);
+         SlabHash::Exp::SlabHashTable<uint32_t, uint32_t,
+                                      SlabHash::DefaultHasher<13, 24, 343>>
+             ht(SlabHash::EMPTY_UINT32_T, h, l.get_pointer(), it,
+                itrs[it.get_group().get_id()], lock_acc.get_pointer(),
+                *heap_acc.get_pointer());
 
          for (int i = ind * 2; i < ind * 2 + 2; i++) {
            auto ans = ht.find(tests[i].first);
@@ -221,14 +238,23 @@ TEST(SlabHash, find_and_insert_together_big) {
   sycl::queue q{sycl::gpu_selector()};
   sycl::nd_range<1> r{SUBGROUP_SIZE * 25, SUBGROUP_SIZE};
 
-  AllocAdapter<std::pair<uint32_t, uint32_t>> adap(BUCKETS_COUNT, {EMPTY_UINT32_T, 0}, q);
+  AllocAdapter<std::pair<uint32_t, uint32_t>> adap(BUCKETS_COUNT,
+                                                   {EMPTY_UINT32_T, 0}, q);
 
   {
+    sycl::buffer<uint32_t> lock_buf(adap._lock);
+    // std::cout << "LOCK CREATED\n";
+    sycl::buffer<SlabHash::Exp::HeapMaster<pair<uint32_t, uint32_t>>> heap_buf(
+        &adap._heap, sycl::range<1>{1});
     sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(adap._data);
     sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(25);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
 
     q.submit([&](sycl::handler &cgh) {
+       auto heap_acc = sycl::accessor(heap_buf, cgh, sycl::read_write);
+       // std::cout << "HEAP ACCESSED\n";
+       auto lock_acc = sycl::accessor(lock_buf, cgh, sycl::read_write);
+       // std::cout << "LOCK ACCESSED\n";
        auto l = sycl::accessor(ls, cgh, sycl::read_write);
        auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
        auto itrs = sycl::accessor(its, cgh, sycl::read_write);
@@ -237,9 +263,11 @@ TEST(SlabHash, find_and_insert_together_big) {
            r, [=](sycl::nd_item<1> it) {
              size_t ind = it.get_group().get_id();
              DefaultHasher<13, 24, 343> h;
-             SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
-                 EMPTY_UINT32_T, h, l.get_pointer(), it,
-                 itrs[it.get_group().get_id()]);
+             SlabHash::Exp::SlabHashTable<uint32_t, uint32_t,
+                                          SlabHash::DefaultHasher<13, 24, 343>>
+                 ht(SlabHash::EMPTY_UINT32_T, h, l.get_pointer(), it,
+                    itrs[it.get_group().get_id()], lock_acc.get_pointer(),
+                    *heap_acc.get_pointer());
 
              for (int i = ind * 40; i < ind * 40 + 40; i++) {
                ht.insert(tests[i].first, tests[i].second);
@@ -250,12 +278,20 @@ TEST(SlabHash, find_and_insert_together_big) {
 
   std::vector<pair<bool, bool>> checks(1000);
   {
+    sycl::buffer<uint32_t> lock_buf(adap._lock);
+    // std::cout << "LOCK CREATED\n";
+    sycl::buffer<SlabHash::Exp::HeapMaster<pair<uint32_t, uint32_t>>> heap_buf(
+        &adap._heap, sycl::range<1>{1});
     sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(adap._data);
     sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(25);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
     sycl::buffer<pair<bool, bool>> buffChecks(checks);
 
     q.submit([&](sycl::handler &cgh) {
+       auto heap_acc = sycl::accessor(heap_buf, cgh, sycl::read_write);
+       // std::cout << "HEAP ACCESSED\n";
+       auto lock_acc = sycl::accessor(lock_buf, cgh, sycl::read_write);
+       // std::cout << "LOCK ACCESSED\n";
        auto l = sycl::accessor(ls, cgh, sycl::read_write);
        auto itrs = sycl::accessor(its, cgh, sycl::read_write);
        auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
@@ -265,9 +301,11 @@ TEST(SlabHash, find_and_insert_together_big) {
            r, [=](sycl::nd_item<1> it) {
              size_t ind = it.get_group().get_id();
              DefaultHasher<13, 24, 343> h;
-             SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
-                 EMPTY_UINT32_T, h, l.get_pointer(), it,
-                 itrs[it.get_group().get_id()]);
+             SlabHash::Exp::SlabHashTable<uint32_t, uint32_t,
+                                          SlabHash::DefaultHasher<13, 24, 343>>
+                 ht(SlabHash::EMPTY_UINT32_T, h, l.get_pointer(), it,
+                    itrs[it.get_group().get_id()], lock_acc.get_pointer(),
+                    *heap_acc.get_pointer());
 
              for (int i = ind * 40; i < ind * 40 + 40; i++) {
                auto ans = ht.find(tests[i].first);

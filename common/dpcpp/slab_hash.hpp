@@ -3,8 +3,8 @@
 #include "dpcpp_common.hpp"
 #include <CL/sycl.hpp>
 #include <algorithm>
-#include <optional>
 #include <math.h>
+#include <optional>
 
 namespace SlabHash {
 constexpr size_t SUBGROUP_SIZE = 16;
@@ -17,13 +17,15 @@ constexpr size_t BUCKETS_COUNT = 512;
 
 constexpr size_t EMPTY_UINT32_T = std::numeric_limits<uint32_t>::max();
 
-template <size_t A, size_t B, size_t P> struct DefaultHasher {
+template <size_t A, size_t B, size_t P>
+struct DefaultHasher {
   size_t operator()(const uint32_t &k) {
     return ((A * k + B) % P) % BUCKETS_COUNT;
   };
 };
 
-template <typename T> struct SlabNode {
+template <typename T>
+struct SlabNode {
   SlabNode(T el) {
     for (int i = 0; i < SLAB_SIZE; i++) {
       data[i] = el;
@@ -34,7 +36,8 @@ template <typename T> struct SlabNode {
   sycl::device_ptr<SlabNode<T>> next = nullptr;
 };
 
-template <typename T> struct SlabList {
+template <typename T>
+struct SlabList {
   SlabList() = default;
   SlabList(T empty, sycl::queue &q) {
     auto tmp = sycl::device_ptr<SlabNode<T>>(
@@ -54,7 +57,8 @@ template <typename T> struct SlabList {
 };
 
 namespace Exp {
-template <typename T> struct HeapMaster {
+template <typename T>
+struct HeapMaster {
   HeapMaster(sycl::queue &q) : _q(q) {
     _heap = sycl::malloc_device<SlabNode<T>>(CLUSTER_SIZE, q);
   }
@@ -63,7 +67,8 @@ template <typename T> struct HeapMaster {
 
   sycl::device_ptr<SlabNode<T>> malloc_node() {
     sycl::device_ptr<SlabNode<T>> ret;
-    while (sycl::atomic<uint32_t>(sycl::global_ptr<uint32_t>(&_lock)).fetch_or(1)) {
+    while (sycl::atomic<uint32_t>(sycl::global_ptr<uint32_t>(&_lock))
+               .fetch_or(1)) {
     }
     ret = _heap;
     _heap++;
@@ -77,11 +82,12 @@ template <typename T> struct HeapMaster {
 };
 } // namespace Exp
 
-template <typename T> struct AllocAdapter {
+template <typename T>
+struct AllocAdapter {
   AllocAdapter(size_t bucket_size, T empty, sycl::queue &q) : _q(q), _heap(q) {
-    //std::cout << "BUCKET SIZE = " << bucket_size << std::endl;
+    // std::cout << "BUCKET SIZE = " << bucket_size << std::endl;
     _data.resize(bucket_size);
-    _lock.assign(ceil((float) bucket_size / sizeof(uint32_t)), 0);
+    _lock.assign(ceil((float)bucket_size / sizeof(uint32_t)), 0);
 
     for (auto &e : _data) {
       e = SlabList<T>(empty, q);
@@ -100,7 +106,8 @@ template <typename T> struct AllocAdapter {
   sycl::queue &_q;
 };
 
-template <typename K, typename T, typename Hash> class SlabHashTable {
+template <typename K, typename T, typename Hash>
+class SlabHashTable {
 public:
   SlabHashTable() = default;
   SlabHashTable(K empty, Hash hasher,
@@ -254,7 +261,8 @@ private:
 
 namespace Exp {
 
-template <typename K, typename T, typename Hash> class SlabHashTable {
+template <typename K, typename T, typename Hash>
+class SlabHashTable {
 public:
   SlabHashTable() = default;
   SlabHashTable(K empty, Hash hasher,
@@ -262,11 +270,10 @@ public:
                 sycl::nd_item<1> &it,
                 sycl::device_ptr<SlabNode<std::pair<K, T>>> &iter,
                 sycl::global_ptr<uint32_t> lock,
-                HeapMaster<std::pair<K, T>> &heap,
-                const sycl::stream &out)
+                HeapMaster<std::pair<K, T>> &heap)
       : _lists(lists), _gr(it.get_group()), _it(it), _empty(empty),
         _hasher(hasher), _iter(iter), _ind(_it.get_local_id()), _lock(lock),
-        _heap(heap), _out(out){};
+        _heap(heap){};
 
   void insert(K key, T val) {
     _key = key;
@@ -276,11 +283,11 @@ public:
       _iter = (_lists + _hasher(key))->root;
     }
     sycl::group_barrier(_gr);
-    //if (_ind == 0) _out << "ITER = " << _iter << sycl::endl;
+    // if (_ind == 0) _out << "ITER = " << _iter << sycl::endl;
 
     while (1) {
       while (_iter != nullptr) {
-       // _out << "IN CYCLE" << _ind << sycl::endl;
+        // _out << "IN CYCLE" << _ind << sycl::endl;
         if (insert_in_node()) {
           return;
         } else if (_ind == 0) {
@@ -291,8 +298,10 @@ public:
 
         sycl::group_barrier(_gr);
       }
-      if(_ind == 0) alloc_node();
-      //if (_hasher(_key) == 0 && _ind == 0) _out << "NODE ALLOCATED" << sycl::endl;
+      if (_ind == 0)
+        alloc_node();
+      // if (_hasher(_key) == 0 && _ind == 0) _out << "NODE ALLOCATED" <<
+      // sycl::endl;
 
       sycl::group_barrier(_gr);
     }
@@ -324,15 +333,14 @@ public:
 private:
   void alloc_node() {
     lock();
-    //if (_hasher(_key) == 0) _out << "LOCKED" << _gr.get_id() << sycl::endl;
+    // if (_hasher(_key) == 0) _out << "LOCKED" << _gr.get_id() << sycl::endl;
     if (_prev->next == nullptr) {
       _prev->next = _heap.malloc_node();
       *_prev->next = SlabNode<std::pair<K, T>>({_empty, T()});
     }
-    //if (_hasher(_key) == 0) _out << "UNLOCKED" << _gr.get_id() << sycl::endl;
+    // if (_hasher(_key) == 0) _out << "UNLOCKED" << _gr.get_id() << sycl::endl;
     unlock();
     _iter = _prev->next;
-    
   }
 
   void lock() {
@@ -434,7 +442,7 @@ private:
   sycl::device_ptr<SlabNode<std::pair<K, T>>> &_iter;
   sycl::device_ptr<SlabNode<std::pair<K, T>>> _prev;
   HeapMaster<std::pair<K, T>> &_heap;
-  const sycl::stream &_out;
+
   sycl::group<1> _gr;
   sycl::nd_item<1> &_it;
   size_t _ind;
