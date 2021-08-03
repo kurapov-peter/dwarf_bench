@@ -35,7 +35,7 @@ template <class T> std::vector<T> make_random(size_t size) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::vector<T> out(size);
-  std::uniform_int_distribution<T> dist(0, 10);
+  std::uniform_int_distribution<T> dist(0, 10000);
   std::generate(out.begin(), out.end(), [&]() { return dist(gen); });
   return out;
 }

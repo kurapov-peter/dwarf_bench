@@ -61,7 +61,7 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
          auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
          //std::cout << "LOCK ACCESSED\n";
 
-         sycl::stream out(100000, 100, h);
+         sycl::stream out(1000000, 1000, h);
          h.parallel_for<class slab_hash_build>(r, [=](sycl::nd_item<1> it) {
            size_t ind = it.get_group().get_id();
            SlabHash::DefaultHasher<32, 48, 1031> h;

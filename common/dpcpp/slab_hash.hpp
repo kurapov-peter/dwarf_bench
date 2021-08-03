@@ -13,7 +13,7 @@ constexpr size_t SLAB_SIZE = CONST * SUBGROUP_SIZE;
 
 constexpr size_t CLUSTER_SIZE = 1024;
 
-constexpr size_t BUCKETS_COUNT = 128;
+constexpr size_t BUCKETS_COUNT = 512;
 
 constexpr size_t EMPTY_UINT32_T = std::numeric_limits<uint32_t>::max();
 
@@ -292,7 +292,7 @@ public:
         sycl::group_barrier(_gr);
       }
       if(_ind == 0) alloc_node();
-      //if (_ind == 0) _out << "NODE ALLOCATED" << sycl::endl;
+      //if (_hasher(_key) == 0 && _ind == 0) _out << "NODE ALLOCATED" << sycl::endl;
 
       sycl::group_barrier(_gr);
     }
@@ -324,14 +324,15 @@ public:
 private:
   void alloc_node() {
     lock();
-    //_out << "LOCKED\n";
+    //if (_hasher(_key) == 0) _out << "LOCKED" << _gr.get_id() << sycl::endl;
     if (_prev->next == nullptr) {
       _prev->next = _heap.malloc_node();
       *_prev->next = SlabNode<std::pair<K, T>>({_empty, T()});
     }
+    //if (_hasher(_key) == 0) _out << "UNLOCKED" << _gr.get_id() << sycl::endl;
     unlock();
     _iter = _prev->next;
-    //_out << "UNLOCKED\n";
+    
   }
 
   void lock() {
