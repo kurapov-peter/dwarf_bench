@@ -19,7 +19,7 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
                                 sycl::global_ptr<uint32_t> bitmask, Hasher1 hasher1, Hasher2 hasher2, const Key EMPTY_KEY):
             _size(size), _keys(keys), _vals(vals), _bitmask(bitmask), _hasher1(hasher1), _hasher2(hasher2), _EMPTY_KEY(EMPTY_KEY){}
         
-        const std::pair<Val, bool> at(Key key) {
+        const std::pair<Val, bool> at(Key key) const {
             auto pos1 = _hasher1(key);
             auto pos2 = _hasher2(key);
             if (_keys[pos1] == key)
@@ -29,7 +29,7 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
             return {{}, false};
         }
 
-        const bool has(Key key) {
+        bool has(Key key) const {
              if (_keys[_hasher1(key)] == key || _keys[_hasher2(key)] == key)
                 return true;
             return false;
