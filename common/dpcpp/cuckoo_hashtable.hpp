@@ -37,50 +37,45 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
             // TODO: change loop detection
             size_t cnt = 0;
             while (cnt < _size) {
-
-                uint32_t mask, present, major_idx;
-
                 size_t pos[] = {_hasher1(key), _hasher2(key)};
 
                 for (size_t i = 0; i < 2; i++) {
-
-                    major_idx = pos[i] / elem_sz;
-                    uint8_t minor_idx = pos[i] % elem_sz;
-                    mask = uint32_t(1) << minor_idx;
-
-                    lock(present, _bitmask + major_idx, mask);
+                    lock(pos[i]);
 
                     if (_keys[pos[i]] == _EMPTY_KEY) {
                         _keys[pos[i]] = key;
                         _vals[pos[i]] = value;
 
-                        unlock(_bitmask + major_idx, mask);
+                        unlock(pos[i]);
                         return true;
                     }
-
-                    unlock(_bitmask + major_idx, mask);
+                    unlock(pos[i]);
                 }
-                
-                lock(present, _bitmask + major_idx, mask);
+                lock(pos[0]);
 
                 std::swap(key, _keys[pos[1]]);
                 std::swap(value, _vals[pos[1]]);
 
-                unlock(_bitmask + major_idx, mask);
-
+                unlock(pos[0]);
                 cnt++;
             }
             return false;
         }
 
-        void lock(uint32_t &present, sycl::global_ptr<uint32_t> atomic_var, uint32_t &mask) {
+        void lock(size_t pos) {
+            uint32_t present;
+            uint32_t major_idx = pos / elem_sz;
+            uint8_t minor_idx = pos % elem_sz;
+            uint32_t mask = uint32_t(1) << minor_idx;
             do {
-                present = sycl::atomic<uint32_t>(atomic_var).fetch_or(mask);
+                present = sycl::atomic<uint32_t>(_bitmask + major_idx).fetch_or(mask);
             } while (present & mask);
         }
 
-        void unlock(sycl::global_ptr<uint32_t> atomic_var, uint32_t &mask) {
-            sycl::atomic<uint32_t>(atomic_var).fetch_and(~mask);
-
+        void unlock(size_t pos) {
+            uint32_t major_idx = pos / elem_sz;
+            uint8_t minor_idx = pos % elem_sz;
+            uint32_t mask = uint32_t(1) << minor_idx;
+            sycl::atomic<uint32_t>(_bitmask + major_idx).fetch_and(~mask);
         }
 };
