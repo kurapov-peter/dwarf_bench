@@ -45,7 +45,7 @@ struct SlabList {
 
     q.parallel_for(1, [=](auto &i) {
        *(tmp + i) = SlabNode<T>(empty);
-       (tmp + i)->next = (tmp + i + 1);
+
      }).wait();
 
     root = tmp;
@@ -284,7 +284,7 @@ public:
         _heap(heap), _out(out){};
 
   void insert(K key, T val) {
-    
+    if (_ind == 0) _out << "HASH = " << key << ' ' << _gr.get_id() << ' ' << _hasher(key) << sycl::endl;
     _key = key;
     _val = val;
 
@@ -323,6 +323,7 @@ public:
       _iter = (_lists + _hasher(key))->root;
     }
     sycl::group_barrier(_gr);
+    if (_ind == 0) _out << "ITER = " << _iter << ' ' << _gr.get_id() << sycl::endl;
 
     while (_iter != nullptr) {
       if (find_in_node()) {
@@ -345,10 +346,12 @@ private:
     if (_prev->next == nullptr) {
       _prev->next = _heap.malloc_node(_out);
       *_prev->next = SlabNode<std::pair<K, T>>({_empty, T()});
+      _out << "ALLOCATED " << _prev->next << " FOR " << _prev << sycl::endl;
     }
     _out << "UNLOCKED " << _gr.get_id() << " " << _hasher(_key) << sycl::endl;
     unlock();
     _iter = _prev->next;
+
   }
 
   void lock() {

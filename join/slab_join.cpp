@@ -79,6 +79,7 @@ void Join::_run(const size_t buf_size, Meter &meter) {
        auto heap_acc = sycl::accessor(heap_buf, h, sycl::read_write);
        // std::cout << "HEAP ACCESSED\n";
        auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
+       sycl::stream out(1000000, 1000, h);
 
        h.parallel_for<class join_build>(r, [=](sycl::nd_item<1> it) {
          int idx = it.get_local_id();
@@ -88,7 +89,7 @@ void Join::_run(const size_t buf_size, Meter &meter) {
                                       SlabHash::DefaultHasher<32, 48, 1031>>
              ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
                 itrs[it.get_group().get_id()], lock_acc.get_pointer(),
-                *heap_acc.get_pointer());
+                *heap_acc.get_pointer(), out);
 
          // todo: pick smaller one
 
@@ -115,6 +116,7 @@ void Join::_run(const size_t buf_size, Meter &meter) {
        auto heap_acc = sycl::accessor(heap_buf, h, sycl::read_write);
        // std::cout << "HEAP ACCESSED\n";
        auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
+       sycl::stream out(1000000, 1000, h);
 
        h.parallel_for<class join_probe>(r, [=](sycl::nd_item<1> it) {
          // int idx = it.get_local_id();
@@ -124,7 +126,7 @@ void Join::_run(const size_t buf_size, Meter &meter) {
                                       SlabHash::DefaultHasher<32, 48, 1031>>
              ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
                 itrs[it.get_group().get_id()], lock_acc.get_pointer(),
-                *heap_acc.get_pointer());
+                *heap_acc.get_pointer(), out);
 
          for (int idx = ind * scale;
               idx < ind * scale + scale && idx < buf_size; idx++) {
