@@ -11,7 +11,7 @@ constexpr size_t SUBGROUP_SIZE = 16;
 constexpr size_t CONST = 64;
 constexpr size_t SLAB_SIZE = CONST * SUBGROUP_SIZE;
 
-constexpr size_t CLUSTER_SIZE = 1048576;
+constexpr size_t CLUSTER_SIZE = 1024;
 
 constexpr size_t BUCKETS_COUNT = 128;
 
