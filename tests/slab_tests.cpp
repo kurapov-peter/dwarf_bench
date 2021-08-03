@@ -161,6 +161,7 @@ TEST(SlabHash, find_and_insert_together) {
        auto heap_acc = sycl::accessor(heap_buf, cgh, sycl::read_write);
        // std::cout << "HEAP ACCESSED\n";
        auto lock_acc = sycl::accessor(lock_buf, cgh, sycl::read_write);
+       sycl::stream out(1000000, 1000, cgh);
        // std::cout << "LOCK ACCESSED\n";
 
        cgh.parallel_for<class insert_test_slab_both>(
@@ -171,7 +172,7 @@ TEST(SlabHash, find_and_insert_together) {
                                           SlabHash::DefaultHasher<13, 24, 343>>
                  ht(SlabHash::EMPTY_UINT32_T, h, l.get_pointer(), it,
                     itrs[it.get_group().get_id()], lock_acc.get_pointer(),
-                    *heap_acc.get_pointer());
+                    *heap_acc.get_pointer(), out );
 
              for (int i = ind * 2; i < ind * 2 + 2; i++) {
                ht.insert(tests[i].first, tests[i].second);
@@ -201,6 +202,7 @@ TEST(SlabHash, find_and_insert_together) {
        // std::cout << "HEAP ACCESSED\n";
        auto lock_acc = sycl::accessor(lock_buf, cgh, sycl::read_write);
        // std::cout << "LOCK ACCESSED\n";
+       sycl::stream out(1000000, 1000, cgh);
 
        cgh.parallel_for<class find_test_slab_both>(r, [=](sycl::nd_item<1> it) {
          size_t ind = it.get_group().get_id();
@@ -209,7 +211,7 @@ TEST(SlabHash, find_and_insert_together) {
                                       SlabHash::DefaultHasher<13, 24, 343>>
              ht(SlabHash::EMPTY_UINT32_T, h, l.get_pointer(), it,
                 itrs[it.get_group().get_id()], lock_acc.get_pointer(),
-                *heap_acc.get_pointer());
+                *heap_acc.get_pointer(), out);
 
          for (int i = ind * 2; i < ind * 2 + 2; i++) {
            auto ans = ht.find(tests[i].first);
@@ -258,6 +260,7 @@ TEST(SlabHash, find_and_insert_together_big) {
        auto l = sycl::accessor(ls, cgh, sycl::read_write);
        auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
        auto itrs = sycl::accessor(its, cgh, sycl::read_write);
+       sycl::stream out(1000000, 1000, cgh);
 
        cgh.parallel_for<class insert_test_slab_both_big>(
            r, [=](sycl::nd_item<1> it) {
@@ -267,7 +270,7 @@ TEST(SlabHash, find_and_insert_together_big) {
                                           SlabHash::DefaultHasher<13, 24, 343>>
                  ht(SlabHash::EMPTY_UINT32_T, h, l.get_pointer(), it,
                     itrs[it.get_group().get_id()], lock_acc.get_pointer(),
-                    *heap_acc.get_pointer());
+                    *heap_acc.get_pointer(), out);
 
              for (int i = ind * 40; i < ind * 40 + 40; i++) {
                ht.insert(tests[i].first, tests[i].second);
@@ -296,6 +299,7 @@ TEST(SlabHash, find_and_insert_together_big) {
        auto itrs = sycl::accessor(its, cgh, sycl::read_write);
        auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
        auto accChecks = sycl::accessor(buffChecks, cgh, sycl::write_only);
+       sycl::stream out(1000000, 1000, cgh);
 
        cgh.parallel_for<class find_test_slab_both_big>(
            r, [=](sycl::nd_item<1> it) {
@@ -305,7 +309,7 @@ TEST(SlabHash, find_and_insert_together_big) {
                                           SlabHash::DefaultHasher<13, 24, 343>>
                  ht(SlabHash::EMPTY_UINT32_T, h, l.get_pointer(), it,
                     itrs[it.get_group().get_id()], lock_acc.get_pointer(),
-                    *heap_acc.get_pointer());
+                    *heap_acc.get_pointer(), out);
 
              for (int i = ind * 40; i < ind * 40 + 40; i++) {
                auto ans = ht.find(tests[i].first);
