@@ -33,8 +33,9 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
              return _keys[_hasher1(key)] == key || _keys[_hasher2(key)] == key;
         }
 
-        bool insert(Key key, Val value, size_t cnt) {
+        bool insert(Key key, Val value) {
             // TODO: change loop detection
+            size_t cnt = 0;
             while (cnt < _size) {
 
                 uint32_t mask, present, major_idx;

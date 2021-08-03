@@ -33,9 +33,9 @@ TEST(CuckooHashTable, insert) {
             ht(buf_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
                     bitmask_acc.get_pointer(), hasher1, hasher2, EMPTY_KEY);
         
-        ht.insert(5, 5, 0);
-        ht.insert(15, 15, 0);
-        ht.insert(2, 2, 0);
+        ht.insert(5, 5);
+        ht.insert(15, 15);
+        ht.insert(2, 2);
       });
     });
 
@@ -82,11 +82,11 @@ TEST(CuckooHashtable, at) {
             ht(buf_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
                     bitmask_acc.get_pointer(), hasher1, hasher2, EMPTY_KEY);
         
-        ht.insert(5, 5, 0);
-        ht.insert(15, 15, 0);
-        ht.insert(2, 2, 0);
-        ht.insert(258, 258, 0);
-        ht.insert(6, 6, 0);
+        ht.insert(5, 5);
+        ht.insert(15, 15);
+        ht.insert(2, 2);
+        ht.insert(258, 258);
+        ht.insert(6, 6);
 
         out_acc[0] = ht.at(5);
         out_acc[1] = ht.at(4);
@@ -149,10 +149,10 @@ TEST(CuckooHashtable, fails_to_insert) {
             ht(buf_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
                     bitmask_acc.get_pointer(), hasher1, hasher2, EMPTY_KEY);
         
-        out_acc[0] = ht.insert(5, 5, 0);
-        out_acc[1] = ht.insert(15, 15, 0);
-        out_acc[2] = ht.insert(20, 20, 0);
-        out_acc[3] = ht.insert(0, 0, 0);
+        out_acc[0] = ht.insert(5, 5);
+        out_acc[1] = ht.insert(15, 15);
+        out_acc[2] = ht.insert(20, 20);
+        out_acc[3] = ht.insert(0, 0);
       });
     });
 
