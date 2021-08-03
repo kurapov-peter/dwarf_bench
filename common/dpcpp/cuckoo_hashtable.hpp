@@ -1,8 +1,6 @@
-#include <time.h> 
 #include <CL/sycl.hpp>
 
 #include "hashfunctions.hpp"
-
 
 template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashtable{
     private:
@@ -38,6 +36,7 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
         }
 
         bool insert(Key key, Val value, size_t cnt) {
+            // TODO: change loop detection
             while (cnt < _size) {
 
                 uint32_t mask, present, major_idx;

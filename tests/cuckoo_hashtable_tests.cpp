@@ -2,16 +2,6 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-// namespace CuckooTest{
-//     template <size_t Size> struct Hasher1 {
-//         size_t operator()(const uint32_t &v) const { return v % Size; }
-//     };
-    
-//     template <size_t Size> struct Hasher2 {
-//         size_t operator()(const uint32_t &v) const { return (v % Size + 1) % Size; }
-//     };
-// }
-
 #define EMPTY_KEY 2147483647
 
 TEST(CuckooHashTable, insert) {
