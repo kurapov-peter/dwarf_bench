@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#define EMPTY_KEY 2147483647
+#define EMPTY_KEY std::numeric_limits<uint32_t>::max()
 
 TEST(CuckooHashTable, insert) {
   const size_t buf_size = 10;
@@ -31,7 +31,7 @@ TEST(CuckooHashTable, insert) {
       h.single_task([=]() {
         CuckooHashtable<uint32_t, uint32_t, StaticSimpleHasher<buf_size>, StaticSimpleHasherWithOffset<buf_size, 1>> 
             ht(buf_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
-                    bitmask_acc.get_pointer(), hasher1, hasher2, EMPTY_KEY);
+                    bitmask_acc.get_pointer(), hasher1, hasher2);
         
         ht.insert(5, 5);
         ht.insert(15, 15);
@@ -80,7 +80,7 @@ TEST(CuckooHashtable, at) {
       h.single_task([=]() {
         CuckooHashtable<uint32_t, uint32_t,  StaticSimpleHasher<buf_size>, StaticSimpleHasherWithOffset<buf_size, 1>> 
             ht(buf_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
-                    bitmask_acc.get_pointer(), hasher1, hasher2, EMPTY_KEY);
+                    bitmask_acc.get_pointer(), hasher1, hasher2);
         
         ht.insert(5, 5);
         ht.insert(15, 15);
@@ -147,7 +147,7 @@ TEST(CuckooHashtable, fails_to_insert) {
       h.single_task([=]() {
         CuckooHashtable<uint32_t, uint32_t,  StaticSimpleHasher<buf_size>, StaticSimpleHasherWithOffset<buf_size, 1>> 
             ht(buf_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
-                    bitmask_acc.get_pointer(), hasher1, hasher2, EMPTY_KEY);
+                    bitmask_acc.get_pointer(), hasher1, hasher2);
         
         out_acc[0] = ht.insert(5, 5);
         out_acc[1] = ht.insert(15, 15);
