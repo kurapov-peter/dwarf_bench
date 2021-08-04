@@ -130,8 +130,6 @@ TEST(CuckooHashtable, fails_to_insert) {
   std::array<bool, output_size> out;
   std::fill_n(out.begin(), output_size, false);
   
-  //std::vector<bool> out(output_size, false);
-  
   {
     sycl::buffer<uint32_t> keys_buf(keys);
     sycl::buffer<uint32_t> vals_buf(vals);
