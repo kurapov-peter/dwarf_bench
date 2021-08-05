@@ -58,13 +58,11 @@ struct SlabList {
 template <typename T>
 struct HeapMaster {
   HeapMaster(sycl::queue &q) : _q(q) {
-    _tmp = sycl::malloc_device<uint32_t>(45, q);
     _heap = sycl::malloc_device<SlabNode<T>>(CLUSTER_SIZE, q);
-    _end = _heap + (CLUSTER_SIZE * sizeof(SlabNode<T>));
     _head = _heap;
   }
 
-  ~HeapMaster() { sycl::free(_heap, _q); sycl::free(_tmp, _q); }
+  ~HeapMaster() { sycl::free(_heap, _q); }
 
   sycl::device_ptr<SlabNode<T>> malloc_node() {
     sycl::device_ptr<SlabNode<T>> ret;
@@ -77,12 +75,10 @@ struct HeapMaster {
     return ret;
   }
 
-  mutable uint32_t _lock = 0;
+  uint32_t _lock = 0;
   sycl::device_ptr<SlabNode<T>> _heap;
   sycl::device_ptr<SlabNode<T>> _head;
-  sycl::device_ptr<SlabNode<T>> _end;
   sycl::queue &_q;
-  sycl::device_ptr<uint32_t> _tmp;
 };
 
 
