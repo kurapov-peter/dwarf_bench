@@ -1,8 +1,13 @@
+#include <random>
+
 struct PolynomialHasher {
     PolynomialHasher(size_t sz) {
         _sz = sz;
-        p = possible_p[rand() % 14];
-        int k = possible_p[rand() % 14];
+        
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> dist(0, 13);
+        p = possible_p[dist(gen)];
     }
 
     size_t operator()(const uint32_t &v) const {
