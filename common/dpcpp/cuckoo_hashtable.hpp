@@ -1,5 +1,6 @@
 #include <CL/sycl.hpp>
 
+#include "dpcpp_common.hpp"
 #include "hashfunctions.hpp"
 
 template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashtable{
