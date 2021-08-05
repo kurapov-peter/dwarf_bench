@@ -1,3 +1,3 @@
 if(ENABLE_DPCPP)
-    add_dpcpp_lib(join slab_join.cpp)
+    add_dpcpp_lib(join nested_join.cpp)
 endif()
