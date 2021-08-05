@@ -12,14 +12,14 @@ void Join::_run(const size_t buf_size, Meter &meter) {
 
   // todo: sizes
   const std::vector<uint32_t> table_a_keys =
-      helpers::make_unique_random(buf_size);
+      helpers::make_random<uint32_t>(buf_size);
   const std::vector<uint32_t> table_a_values =
-      helpers::make_unique_random(table_a_keys.size());
+      helpers::make_random<uint32_t>(table_a_keys.size());
 
   const std::vector<uint32_t> table_b_keys =
-      helpers::make_unique_random(buf_size);
+      helpers::make_random<uint32_t>(buf_size);
   const std::vector<uint32_t> table_b_values =
-      helpers::make_unique_random(table_b_keys.size());
+      helpers::make_random<uint32_t>(table_b_keys.size());
 
   auto sel = get_device_selector(opts);
   sycl::queue q{*sel};
