@@ -177,6 +177,55 @@ TEST(HashTable, Has) {
   ASSERT_EQ(outer[5], 1);
 }
 
+
+TEST(HashTable, BigBuild) {
+  using namespace sycl;
+  gpu_selector sel;
+  queue q{sel};
+
+  constexpr int buf_size = 500;
+
+  std::vector<uint32_t> host_src_tmp;
+  for (int i = 0; i < buf_size; i++) {
+    host_src_tmp.push_back(i);
+  }
+  std::vector<uint32_t> host_src(host_src_tmp.begin(), host_src_tmp.end());
+
+  StaticSimpleHasher<buf_size> hasher;
+  size_t bitmask_sz = (buf_size / 32) ? (buf_size / 32) : 1;
+  std::vector<uint32_t> bitmask(bitmask_sz, 0);
+  std::vector<uint32_t> data(buf_size, 0);
+  std::vector<uint32_t> keys(buf_size, 0);
+
+  {
+    sycl::buffer<uint32_t> bitmask_buf(bitmask);
+    sycl::buffer<uint32_t> data_buf(data);
+    sycl::buffer<uint32_t> keys_buf(keys);
+    sycl::buffer<uint32_t> src(host_src);
+
+    q.submit([&](sycl::handler &h) {
+       auto s = sycl::accessor(src, h, sycl::read_write);
+
+       auto bitmask_acc = sycl::accessor(bitmask_buf, h, sycl::read_write);
+       auto data_acc = sycl::accessor(data_buf, h, sycl::read_write);
+       auto keys_acc = sycl::accessor(keys_buf, h, sycl::read_write);
+
+       h.parallel_for<class hash_big_build_test>(buf_size, [=](auto &idx) {
+         SimpleNonOwningHashTable<uint32_t, uint32_t,
+                                  StaticSimpleHasher<buf_size>>
+             ht(buf_size, keys_acc.get_pointer(), data_acc.get_pointer(),
+                bitmask_acc.get_pointer(), hasher);
+
+         ht.insert(s[idx], s[idx]);
+       });
+     }).wait();
+  }
+
+  std::set<uint32_t> s(data.begin(), data.end());
+  std::cout << s.size() << std::endl;
+  ASSERT_EQ(s.size(), host_src.size());
+}
+
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
