@@ -157,7 +157,6 @@ public:
       if (find_in_node()) {
         break;
       } else if (_ind == 0) {
-        _prev = _iter;
         _iter = _iter->next;
       }
 
@@ -238,16 +237,12 @@ private:
 
   bool find_in_node() {
     bool find = false;
-    bool empty = true;
-    bool total_empty = true;
     bool total_found = false;
 
     for (int i = _ind; i <= _ind + SUBGROUP_SIZE * (CONST - 1);
          i += SUBGROUP_SIZE) {
       find = ((_iter->data[i].first) == _key);
-      empty = ((_iter->data[i].first) != _empty);
       sycl::group_barrier(_gr);
-
       total_found = sycl::any_of_group(_gr, find);
 
 
