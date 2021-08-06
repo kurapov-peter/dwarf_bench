@@ -47,6 +47,7 @@ add_subdirectory(radix)
 add_subdirectory(reduce)
 add_subdirectory(hash)
 add_subdirectory(join)
+add_subdirectory(probe)
 
 set(bench_libs 
   common
@@ -65,6 +66,7 @@ if(ENABLE_DPCPP)
     hash_build
     slab_hash_build
     slab_join
+    slab_probe
   )
   if(ENABLE_CUDA)
   list(APPEND bench_libs

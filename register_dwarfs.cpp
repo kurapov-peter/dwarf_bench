@@ -7,7 +7,7 @@
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
 #include "hash/slab_hash_build.hpp"
-
+#include "probe/slab_probe.hpp"
 #include "join/slab_join.hpp"
 
 void populate_registry() {
@@ -26,6 +26,7 @@ void populate_registry() {
   //registry->registerd(new Join());
   //registry->registerd(new NestedLoopJoin());
   registry->registerd(new SlabJoin());
+  registry->registerd(new SlabProbe());
 #ifdef CUDA_ENABLED
   registry->registerd(new ConstantExampleDPCPPCuda());
   registry->registerd(new DPLScanCuda());
