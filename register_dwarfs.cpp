@@ -7,7 +7,8 @@
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
 #include "hash/slab_hash_build.hpp"
-#include "join/join.hpp"
+
+#include "join/slab_join.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();
@@ -22,7 +23,9 @@ void populate_registry() {
   registry->registerd(new ReduceDPCPP());
   registry->registerd(new HashBuild());
   registry->registerd(new SlabHashBuild());
-  registry->registerd(new Join());
+  //registry->registerd(new Join());
+  //registry->registerd(new NestedLoopJoin());
+  registry->registerd(new SlabJoin());
 #ifdef CUDA_ENABLED
   registry->registerd(new ConstantExampleDPCPPCuda());
   registry->registerd(new DPLScanCuda());

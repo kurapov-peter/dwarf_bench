@@ -64,7 +64,7 @@ if(ENABLE_DPCPP)
     reduce
     hash_build
     slab_hash_build
-    join
+    slab_join
   )
   if(ENABLE_CUDA)
   list(APPEND bench_libs

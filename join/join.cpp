@@ -1,11 +1,11 @@
 #include "join.hpp"
-
 #include "common/dpcpp/hashtable.hpp"
-using namespace join_helpers;
+
+
 Join::Join() : Dwarf("Join") {}
 
 void Join::_run(const size_t buf_size, Meter &meter) {
-  auto opts = meter.opts();
+  /*auto opts = meter.opts();
 
   // todo: sizes
   const std::vector<uint32_t> table_a_keys =
@@ -40,7 +40,7 @@ void Join::_run(const size_t buf_size, Meter &meter) {
 
   
 
-  auto expected = join_helpers::seq_join(table_a_keys, table_a_values,
+  auto expected = seq_join(table_a_keys, table_a_values,
                                          table_b_keys, table_b_values);
 
   std::cout << expected << '\n';
@@ -143,7 +143,7 @@ void Join::_run(const size_t buf_size, Meter &meter) {
     }
   }
 
-  join_helpers::ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = {res_k, {res1, res2}};
+  ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = {res_k, {res1, res2}};
 
   std::cout << output << '\n';
 
@@ -154,7 +154,7 @@ void Join::_run(const size_t buf_size, Meter &meter) {
 
     DwarfParams params{{"buf_size", std::to_string(buf_size)}};
     meter.add_result(std::move(params), std::move(result));
-  // todo: scale factor?
+  // todo: scale factor?*/
 }
 
 void Join::run(const RunOptions &opts) {

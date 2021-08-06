@@ -1,13 +1,13 @@
-#include "join.hpp"
-
+#include "slab_join.hpp"
 #include "common/dpcpp/slab_hash.hpp"
 #include <math.h>
 
+
 using std::pair;
 using namespace join_helpers;
-Join::Join() : Dwarf("Join") {}
+SlabJoin::SlabJoin() : Dwarf("SlabJoin") {}
 
-void Join::_run(const size_t buf_size, Meter &meter) {
+void SlabJoin::_run(const size_t buf_size, Meter &meter) {
   const int scale = 16;
   auto opts = meter.opts();
 
@@ -171,12 +171,12 @@ void Join::_run(const size_t buf_size, Meter &meter) {
   }
 }
 
-void Join::run(const RunOptions &opts) {
+void SlabJoin::run(const RunOptions &opts) {
   for (auto size : opts.input_size) {
     _run(size, meter());
   }
 }
-void Join::init(const RunOptions &opts) {
+void SlabJoin::init(const RunOptions &opts) {
   meter().set_opts(opts);
   DwarfParams params = {{"device_type", to_string(opts.device_ty)}};
   meter().set_params(params);

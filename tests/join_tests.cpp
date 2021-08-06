@@ -1,4 +1,4 @@
-#include "join/join.hpp"
+#include "join/slab_join.hpp"
 
 #include <gtest/gtest.h>
 #include <iostream>

@@ -1,13 +1,12 @@
-#include "join.hpp"
-
+#include "nested_join.hpp"
 #include "common/dpcpp/slab_hash.hpp"
 #include <math.h>
 
 using std::pair;
 using namespace join_helpers;
-Join::Join() : Dwarf("Join") {}
+NestedJoin::NestedJoin() : Dwarf("NestedJoin") {}
 
-void Join::_run(const size_t buf_size, Meter &meter) {
+void NestedJoin::_run(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
 
   // todo: sizes
@@ -103,12 +102,12 @@ void Join::_run(const size_t buf_size, Meter &meter) {
   meter.add_result(std::move(params), std::move(result));
 }
 
-void Join::run(const RunOptions &opts) {
+void NestedJoin::run(const RunOptions &opts) {
   for (auto size : opts.input_size) {
     _run(size, meter());
   }
 }
-void Join::init(const RunOptions &opts) {
+void JoNestedJoinin::init(const RunOptions &opts) {
   meter().set_opts(opts);
   DwarfParams params = {{"device_type", to_string(opts.device_ty)}};
   meter().set_params(params);
