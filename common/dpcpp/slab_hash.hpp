@@ -8,14 +8,15 @@
 
 namespace SlabHash {
 constexpr size_t SUBGROUP_SIZE = 16;
-constexpr size_t CONST = 64;
-constexpr size_t SLAB_SIZE = CONST * SUBGROUP_SIZE;
+constexpr size_t SLAB_SIZE_MULTIPLIER = 64;
+constexpr size_t SLAB_SIZE = SLAB_SIZE_MULTIPLIER * SUBGROUP_SIZE;
 
 constexpr size_t CLUSTER_SIZE = 2048;
 
 constexpr size_t BUCKETS_COUNT = 512;
 
 constexpr size_t EMPTY_UINT32_T = std::numeric_limits<uint32_t>::max();
+
 
 template <size_t A, size_t B, size_t P>
 struct DefaultHasher {
@@ -41,7 +42,7 @@ struct SlabList {
   SlabList() = default;
   SlabList(T empty, sycl::queue &q) {
     auto tmp = sycl::device_ptr<SlabNode<T>>(
-        sycl::malloc_device<SlabNode<T>>(CLUSTER_SIZE, q));
+        sycl::malloc_device<SlabNode<T>>(1, q));
 
     q.parallel_for(1, [=](auto &i) {
        *(tmp + i) = SlabNode<T>(empty);
@@ -195,7 +196,7 @@ private:
     bool total_found = false;
     bool find = false;
 
-    for (int i = _ind; i <= _ind + SUBGROUP_SIZE * (CONST - 1);
+    for (int i = _ind; i <= _ind + SUBGROUP_SIZE * (SLAB_SIZE_MULTIPLIER - 1);
          i += SUBGROUP_SIZE) {
       find = ((_iter->data[i].first) == _empty);
       sycl::group_barrier(_gr);
@@ -239,7 +240,7 @@ private:
     bool find = false;
     bool total_found = false;
 
-    for (int i = _ind; i <= _ind + SUBGROUP_SIZE * (CONST - 1);
+    for (int i = _ind; i <= _ind + SUBGROUP_SIZE * (SLAB_SIZE_MULTIPLIER - 1);
          i += SUBGROUP_SIZE) {
       find = ((_iter->data[i].first) == _key);
       sycl::group_barrier(_gr);
