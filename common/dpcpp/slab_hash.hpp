@@ -272,4 +272,218 @@ private:
   std::optional<T> _ans;
 };
 
+namespace exp {
+template <typename T> struct AllocAdapter {
+  AllocAdapter(size_t bucket_size, T empty, sycl::queue &q) : _q(q), _heap(q) {
+    sycl::device_ptr<SlabList<T>> _data_tmp = sycl::malloc_device<SlabList<T>>(bucket_size, q);
+    sycl::device_ptr<uint32_t> _lock_tmp = sycl::malloc_device<uint32_t>(ceil((float)bucket_size / sizeof(uint32_t)), q);
+
+    q.parallel_for(bucket_size, [=](auto &i) {
+      *(_data_tmp + i) = SlabList<T>();
+      *(_lock_tmp + i) = 0;
+    });
+
+    _data = _data_tmp;
+    _lock = _lock_tmp;
+  }
+
+  ~AllocAdapter() {
+    sycl::free(_data, _q);
+    sycl::free(_lock, _q);
+  }
+
+  sycl::device_ptr<SlabList<T>> _data;
+  sycl::device_ptr<uint32_t> _lock;
+  HeapMaster<T> _heap;
+  sycl::queue &_q;
+};
+
+template <typename K, typename T, typename Hash> class SlabHashTable {
+public:
+  SlabHashTable() = default;
+  SlabHashTable(K empty, Hash hasher,
+                sycl::device_ptr<SlabList<std::pair<K, T>>> lists,
+                sycl::nd_item<1> &it,
+                sycl::device_ptr<SlabNode<std::pair<K, T>>> &iter,
+                sycl::device_ptr<uint32_t> lock,
+                HeapMaster<std::pair<K, T>> &heap)
+      : _lists(lists), _gr(it.get_group()), _it(it), _empty(empty),
+        _hasher(hasher), _iter(iter), _ind(_it.get_local_id()), _lock(lock),
+        _heap(heap){};
+
+  void insert(K key, T val) {
+    _key = key;
+    _val = val;
+
+    if (_ind == 0) {
+      if ((_lists + _hasher(key))->root == nullptr) {
+        alloc_node((_lists + _hasher(key))->root);
+      } else {
+        _iter = (_lists + _hasher(key))->root;
+      }
+    }
+    sycl::group_barrier(_gr);
+
+    while (1) {
+      while (_iter != nullptr) {
+        if (insert_in_node()) {
+          return;
+        } else if (_ind == 0) {
+          _prev = _iter;
+          _iter = _iter->next;
+        }
+
+        sycl::group_barrier(_gr);
+      }
+      if (_ind == 0)
+        alloc_node(_prev->next);
+      sycl::group_barrier(_gr);
+    }
+  }
+
+  std::optional<T> find(K key) {
+    _key = key;
+    _ans = std::nullopt;
+
+    if (_ind == 0) {
+      _iter = (_lists + _hasher(key))->root;
+    }
+    sycl::group_barrier(_gr);
+
+    while (_iter != nullptr) {
+      if (find_in_node()) {
+        break;
+      } else if (_ind == 0) {
+        _iter = _iter->next;
+      }
+
+      sycl::group_barrier(_gr);
+    }
+    return _ans;
+  }
+
+private:
+  void alloc_node(sycl::device_ptr<SlabNode<std::pair<K, T>>> &src) {
+    lock();
+    if (src == nullptr) {
+      auto tmp = _heap.malloc_node();
+      *tmp = SlabNode<std::pair<K, T>>({_empty, T()}); //!!!!!!
+      src = tmp;
+    }
+    unlock();
+    _iter = src;
+  }
+
+  void lock() {
+    auto tmp = _hasher(_key);
+    int i = 0;
+    while (
+        sycl::atomic<uint32_t, sycl::access::address_space::global_device_space>((_lock + (tmp / (CHAR_BIT * sizeof(uint32_t)))))
+            .fetch_or(1 << (tmp % (CHAR_BIT * sizeof(uint32_t)))) &
+        (1 << (tmp % (CHAR_BIT * sizeof(uint32_t))))) {
+    }
+  }
+
+  void unlock() {
+    auto tmp = _hasher(_key);
+    sycl::atomic<uint32_t, sycl::access::address_space::global_device_space>((_lock + (tmp / (CHAR_BIT * sizeof(uint32_t)))))
+        .fetch_and(~(1 << (tmp % (CHAR_BIT * sizeof(uint32_t)))));
+  }
+
+  bool insert_in_node() {
+    bool total_found = false;
+    bool find = false;
+
+    for (int i = _ind; i <= _ind + SUBGROUP_SIZE * (SLAB_SIZE_MULTIPLIER - 1);
+         i += SUBGROUP_SIZE) {
+      find = ((_iter->data[i].first) == _empty);
+      sycl::group_barrier(_gr);
+      total_found = sycl::any_of_group(_gr, find);
+
+      if (total_found) {
+        if (insert_in_subgroup(find, i)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  bool insert_in_subgroup(bool find, int i) {
+    for (int j = 0; j < SUBGROUP_SIZE; j++) {
+      if (cl::sycl::group_broadcast(_gr, find, j)) {
+        K tmp_empty = _empty;
+        bool done = _ind == j
+                        ? sycl::ext::oneapi::atomic_ref<
+                              K, sycl::ext::oneapi::memory_order::acq_rel,
+                              sycl::ext::oneapi::memory_scope::device,
+                              sycl::access::address_space::global_device_space>(
+                              _iter->data[i].first)
+                              .compare_exchange_strong(tmp_empty, _key)
+                        : false;
+        sycl::group_barrier(_gr);
+        if (done) {
+          _iter->data[i].second = _val;
+        }
+        if (cl::sycl::group_broadcast(_gr, done, j)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  bool find_in_node() {
+    bool find = false;
+    bool total_found = false;
+
+    for (int i = _ind; i <= _ind + SUBGROUP_SIZE * (SLAB_SIZE_MULTIPLIER - 1);
+         i += SUBGROUP_SIZE) {
+      find = ((_iter->data[i].first) == _key);
+      sycl::group_barrier(_gr);
+      total_found = sycl::any_of_group(_gr, find);
+
+      if (total_found) {
+        find_in_subgroup(find, i);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  void find_in_subgroup(bool find, int i) {
+    for (int j = 0; j < SUBGROUP_SIZE; j++) {
+      if (cl::sycl::group_broadcast(_gr, find, j)) {
+        T tmp;
+        if (_ind == j)
+          tmp = _iter->data[i].second; // todo index shuffle
+
+        _ans = std::optional<T>{cl::sycl::group_broadcast(_gr, tmp, j)};
+        break;
+      }
+    }
+  }
+
+  sycl::device_ptr<SlabList<std::pair<K, T>>> _lists;
+  sycl::device_ptr<uint32_t> _lock;
+  sycl::device_ptr<SlabNode<std::pair<K, T>>> &_iter;
+  sycl::device_ptr<SlabNode<std::pair<K, T>>> _prev;
+  HeapMaster<std::pair<K, T>> &_heap;
+  sycl::group<1> _gr;
+  sycl::nd_item<1> &_it;
+  size_t _ind;
+
+  K _empty;
+  Hash _hasher;
+
+  K _key;
+  T _val;
+
+  std::optional<T> _ans;
+};
+} // namespace exp
+
 } // namespace SlabHash
