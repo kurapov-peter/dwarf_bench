@@ -2,7 +2,6 @@
 #include "common/dpcpp/slab_hash.hpp"
 #include <math.h>
 
-
 using std::pair;
 using namespace join_helpers;
 SlabJoin::SlabJoin() : Dwarf("SlabJoin") {}
@@ -97,7 +96,8 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
              ht.insert(key_a_acc[i], val_a_acc[i]);
            }
          });
-       }).wait();
+       })
+          .wait();
       auto build_end = std::chrono::steady_clock::now();
       std::cout << "Builded\n";
       auto probe_start = std::chrono::steady_clock::now();
@@ -135,7 +135,8 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
              }
            }
          });
-       }).wait();
+       })
+          .wait();
       auto host_end = std::chrono::steady_clock::now();
 
       result.isJoin = true;

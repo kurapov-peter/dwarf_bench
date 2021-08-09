@@ -34,7 +34,7 @@ void NestedJoin::_run(const size_t buf_size, Meter &meter) {
   auto expected = join_helpers::seq_join(table_a_keys, table_a_values,
                                          table_b_keys, table_b_values);
 
-    std::cout << "Expected done\n";
+  std::cout << "Expected done\n";
   Result result;
 
   {
@@ -56,24 +56,23 @@ void NestedJoin::_run(const size_t buf_size, Meter &meter) {
        auto val_b_acc = sycl::accessor(val_b, h, sycl::read_only);
 
        auto out_key_acc = sycl::accessor(out_key_b, h, sycl::read_write);
-        auto out_val1_acc = sycl::accessor(out_val1_b, h, sycl::read_write);
-        auto out_val2_acc = sycl::accessor(out_val2_b, h, sycl::read_write);
+       auto out_val1_acc = sycl::accessor(out_val1_b, h, sycl::read_write);
+       auto out_val2_acc = sycl::accessor(out_val2_b, h, sycl::read_write);
 
        h.parallel_for<class nested_join>(buf_size, [=](auto &it) {
          uint32_t key = key_a_acc[it];
          uint32_t val = val_a_acc[it];
          for (int i = 0; i < buf_size; i++) {
-             if (key_b_acc[i] == key) {
-                out_key_acc[it] = key;
-                out_val1_acc[it] = val;
-                out_val2_acc[it] = val_b_acc[i];
-             }
+           if (key_b_acc[i] == key) {
+             out_key_acc[it] = key;
+             out_val1_acc[it] = val;
+             out_val2_acc[it] = val_b_acc[i];
+           }
          }
        });
      })
-        .wait();  
+        .wait();
     auto host_end = std::chrono::steady_clock::now();
-
 
     result.host_time = host_end - host_start;
   }

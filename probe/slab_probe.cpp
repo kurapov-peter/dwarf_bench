@@ -1,5 +1,5 @@
-#include "common/dpcpp/slab_hash.hpp"
 #include "slab_probe.hpp"
+#include "common/dpcpp/slab_hash.hpp"
 #include <math.h>
 
 using std::pair;
@@ -61,7 +61,8 @@ void SlabProbe::_run(const size_t buf_size, Meter &meter) {
              ht.insert(s[i], s[i]);
            }
          });
-       }).wait();
+       })
+          .wait();
 
       sycl::buffer<uint32_t> out_buf(output);
       auto host_start = std::chrono::steady_clock::now();
@@ -91,7 +92,8 @@ void SlabProbe::_run(const size_t buf_size, Meter &meter) {
                  }
                }
              });
-       }).wait();
+       })
+          .wait();
 
       auto host_end = std::chrono::steady_clock::now();
       auto host_exe_time =
