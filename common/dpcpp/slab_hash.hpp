@@ -274,9 +274,10 @@ private:
 
 namespace exp {
 template <typename T> struct AllocAdapter {
-  AllocAdapter(size_t bucket_size, T empty, sycl::queue &q) : _q(q), _heap(q) {
+  AllocAdapter(size_t bucket_size, T empty, sycl::queue &q, int work_size) : _q(q), _heap(q) {
     sycl::device_ptr<SlabList<T>> _data_tmp = sycl::malloc_device<SlabList<T>>(bucket_size, q);
     sycl::device_ptr<uint32_t> _lock_tmp = sycl::malloc_device<uint32_t>(ceil((float)bucket_size / sizeof(uint32_t)), q);
+    _its = sycl::malloc_device<sycl::device_ptr<SlabHash::SlabNode<std::pair<uint32_t, uint32_t>>>>(work_size, q);
 
     q.parallel_for(bucket_size, [=](auto &i) {
       *(_data_tmp + i) = SlabList<T>();
@@ -295,21 +296,20 @@ template <typename T> struct AllocAdapter {
   sycl::device_ptr<SlabList<T>> _data;
   sycl::device_ptr<uint32_t> _lock;
   HeapMaster<T> _heap;
+  sycl::device_ptr<sycl::device_ptr<SlabHash::SlabNode<std::pair<uint32_t, uint32_t>>>>
+          _its;
   sycl::queue &_q;
 };
 
 template <typename K, typename T, typename Hash> class SlabHashTable {
 public:
   SlabHashTable() = default;
-  SlabHashTable(K empty, Hash hasher,
-                sycl::device_ptr<SlabList<std::pair<K, T>>> lists,
+  SlabHashTable(K empty,
                 sycl::nd_item<1> &it,
-                sycl::device_ptr<SlabNode<std::pair<K, T>>> &iter,
-                sycl::device_ptr<uint32_t> lock,
-                HeapMaster<std::pair<K, T>> &heap)
-      : _lists(lists), _gr(it.get_group()), _it(it), _empty(empty),
-        _hasher(hasher), _iter(iter), _ind(_it.get_local_id()), _lock(lock),
-        _heap(heap){};
+                SlabHash::exp::AllocAdapter<std::pair<K, T>> &adap)
+      : _lists(adap._data), _gr(it.get_group()), _it(it), _empty(empty),
+         _iter(adap._its[it.get_group().get_id()]), _ind(_it.get_local_id()), _lock(adap._lock),
+        _heap(adap._heap){};
 
   void insert(K key, T val) {
     _key = key;
