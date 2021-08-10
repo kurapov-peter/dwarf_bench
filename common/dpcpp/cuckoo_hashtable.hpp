@@ -1,5 +1,6 @@
 #include <CL/sycl.hpp>
-
+#include <thread>
+#include <chrono>
 #include "dpcpp_common.hpp"
 #include "hashfunctions.hpp"
 
@@ -74,7 +75,7 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
             return false;
         }
 
-        void lock(size_t pos, Key &key){
+        /*void lock(size_t pos, Key &key){
             uint32_t present;
             uint32_t counter = 0;
             uint32_t old_bitmask = _bitmask[pos];
@@ -93,25 +94,27 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
 
         void unlock(size_t pos, Key &key){
             sycl::atomic<uint32_t>(_bitmask + pos).fetch_and(0);
-        }
+        }*/
 
-        /*void lock(size_t pos, Key &key) {
+        void lock(size_t pos, Key &key) {      
             uint32_t present;
             uint32_t major_idx = pos / elem_sz;
             uint8_t minor_idx = pos % elem_sz;
             uint32_t mask = uint32_t(1) << minor_idx;
             uint32_t counter = 0;
-            uint32_t old_bitmask = _bitmask[0];
+            //uint32_t old_bitmask = _bitmask[0];
             do {
                 present = sycl::atomic<uint32_t>(_bitmask + major_idx).fetch_or(mask);
-                if (key == 71)
+                /*if (key == 71)
                     if (old_bitmask != _bitmask[0]){
                         _out << _bitmask[0] << " ";
                         old_bitmask = _bitmask[0];
-                    }
+                    }*/
 
-                if (counter == 10000000)
-                    break;
+                /*if (counter == 10000000) {
+                _out << "break key: " << key << " " << " pos:" << pos << sycl::endl;
+                   break;
+                }*/
                 //_out << "before lock " << present << sycl::endl;
                 counter++;
 
@@ -123,7 +126,7 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
                         else _out << _keys[i] << " ";
                     _out << sycl::endl;
                     break;
-                }
+                }*/
             } while (present & mask);
             //_out << "before lock " << present <<  " key: " << key << " " << " pos:" << pos << sycl::endl;
         }
@@ -133,6 +136,7 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
             uint8_t minor_idx = pos % elem_sz;
             uint32_t mask = uint32_t(1) << minor_idx;
             uint32_t present = sycl::atomic<uint32_t>(_bitmask + major_idx).fetch_and(~mask);
-            _out << "before unlock " << present << " key: " << key << " " << " pos:" << pos << sycl::endl;
-        }*/
+
+          // _out << "before unlock " << present << " key: " << key << " " << " pos:" << pos << sycl::endl;
+        }
 };
