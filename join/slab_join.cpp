@@ -40,7 +40,7 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
 
     std::cout << "Start adap" << std::endl;
     SlabHash::AllocAdapter<pair<uint32_t, uint32_t>> adap(
-        SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
+        SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q, work_size);
     std::cout << "End adap" << std::endl;
     // testing
     std::vector<uint32_t> key_out(buf_size, 0);
@@ -50,15 +50,9 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
     Result result;
 
     {
-      sycl::buffer<uint32_t> lock_buf(adap._lock);
-      // std::cout << "LOCK CREATED\n";
-      sycl::buffer<SlabHash::HeapMaster<pair<uint32_t, uint32_t>>> heap_buf(
-          &adap._heap, sycl::range<1>{1});
-      sycl::buffer<SlabHash::SlabList<pair<uint32_t, uint32_t>>> data_buf(
-          adap._data);
-      sycl::buffer<
-          sycl::device_ptr<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>>
-          its(work_size);
+      sycl::buffer<SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>>>
+          adap_buf(&adap, sycl::range<1>{1});
+      
 
       sycl::buffer<uint32_t> key_a(table_a_keys);
       sycl::buffer<uint32_t> val_a(table_a_values);
@@ -71,24 +65,17 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
 
       auto host_start = std::chrono::steady_clock::now();
       q.submit([&](sycl::handler &h) {
+        auto adap_acc = sycl::accessor(adap_buf, h, sycl::read_write);
          auto key_a_acc = sycl::accessor(key_a, h, sycl::read_only);
          auto val_a_acc = sycl::accessor(val_a, h, sycl::read_only);
 
-         // ht data accessors
-         auto data_acc = sycl::accessor(data_buf, h, sycl::read_write);
-         auto itrs = sycl::accessor(its, h, sycl::read_write);
-         auto heap_acc = sycl::accessor(heap_buf, h, sycl::read_write);
-         auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
 
          h.parallel_for<class join_build>(r, [=](sycl::nd_item<1> it) {
            int idx = it.get_local_id();
            size_t ind = it.get_group().get_id();
-           SlabHash::DefaultHasher<32, 48, 1031> h;
            SlabHash::SlabHashTable<uint32_t, uint32_t,
                                    SlabHash::DefaultHasher<32, 48, 1031>>
-               ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
-                  itrs[it.get_group().get_id()], lock_acc.get_pointer(),
-                  *heap_acc.get_pointer());
+               ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
 
            // todo: pick smaller one
            for (int i = ind * scale; i < ind * scale + scale && i < buf_size;
@@ -109,20 +96,13 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
          auto out_val1_a = out_val1_b.get_access(h);
          auto out_val2_a = out_val2_b.get_access(h);
 
-         // ht data accessors
-         auto data_acc = sycl::accessor(data_buf, h, sycl::read_write);
-         auto itrs = sycl::accessor(its, h, sycl::read_write);
-         auto heap_acc = sycl::accessor(heap_buf, h, sycl::read_write);
-         auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
+         auto adap_acc = sycl::accessor(adap_buf, h, sycl::read_write);
 
          h.parallel_for<class join_probe>(r, [=](sycl::nd_item<1> it) {
            size_t ind = it.get_group().get_id();
-           SlabHash::DefaultHasher<32, 48, 1031> h;
            SlabHash::SlabHashTable<uint32_t, uint32_t,
                                    SlabHash::DefaultHasher<32, 48, 1031>>
-               ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
-                  itrs[it.get_group().get_id()], lock_acc.get_pointer(),
-                  *heap_acc.get_pointer());
+               ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
 
            for (int idx = ind * scale;
                 idx < ind * scale + scale && idx < buf_size; idx++) {

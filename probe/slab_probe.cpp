@@ -23,38 +23,27 @@ void SlabProbe::_run(const size_t buf_size, Meter &meter) {
     sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * work_size,
                         SlabHash::SUBGROUP_SIZE};
     SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(
-        SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
+        SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q, work_size);
 
     std::vector<uint32_t> output(buf_size, 0);
     std::vector<uint32_t> expected(buf_size, 1);
 
     {
-      sycl::buffer<SlabHash::SlabList<pair<uint32_t, uint32_t>>> data_buf(
-          adap._data);
-      sycl::buffer<uint32_t> lock_buf(adap._lock);
-      sycl::buffer<SlabHash::HeapMaster<pair<uint32_t, uint32_t>>> heap_buf(
-          &adap._heap, sycl::range<1>{1});
-      sycl::buffer<
-          sycl::device_ptr<SlabHash::SlabNode<pair<uint32_t, uint32_t>>>>
-          its(work_size);
+      sycl::buffer<SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>>>
+          adap_buf(&adap, sycl::range<1>{1});
       sycl::buffer<uint32_t> src(host_src);
 
       q.submit([&](sycl::handler &h) {
-         auto data_acc = sycl::accessor(data_buf, h, sycl::read_write);
-         auto itrs = sycl::accessor(its, h, sycl::read_write);
          auto s = sycl::accessor(src, h, sycl::read_only);
-         auto heap_acc = sycl::accessor(heap_buf, h, sycl::read_write);
-         auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
+         
+         auto adap_acc = sycl::accessor(adap_buf, h, sycl::read_write);
 
          h.parallel_for<class slab_hash_build>(r, [=](sycl::nd_item<1> it) {
            size_t ind = it.get_group().get_id();
 
-           SlabHash::DefaultHasher<5, 11, 1031> h;
            SlabHash::SlabHashTable<uint32_t, uint32_t,
                                    SlabHash::DefaultHasher<5, 11, 1031>>
-               ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
-                  itrs[it.get_group().get_id()], lock_acc.get_pointer(),
-                  *heap_acc.get_pointer());
+               ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
 
            for (int i = ind * scale; i < ind * scale + scale && i < buf_size;
                 i++) {
@@ -67,22 +56,17 @@ void SlabProbe::_run(const size_t buf_size, Meter &meter) {
       sycl::buffer<uint32_t> out_buf(output);
       auto host_start = std::chrono::steady_clock::now();
       q.submit([&](sycl::handler &h) {
-         auto data_acc = sycl::accessor(data_buf, h, sycl::read_write);
-         auto itrs = sycl::accessor(its, h, sycl::read_write);
          auto s = sycl::accessor(src, h, sycl::read_only);
          auto o = sycl::accessor(out_buf, h, sycl::read_write);
-         auto heap_acc = sycl::accessor(heap_buf, h, sycl::read_write);
-         auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
+         auto adap_acc = sycl::accessor(adap_buf, h, sycl::read_write);
 
          h.parallel_for<class slab_hash_build_check>(
              r, [=](sycl::nd_item<1> it) {
                size_t ind = it.get_group().get_id();
                SlabHash::DefaultHasher<5, 11, 1031> h;
                SlabHash::SlabHashTable<uint32_t, uint32_t,
-                                       SlabHash::DefaultHasher<5, 11, 1031>>
-                   ht(SlabHash::EMPTY_UINT32_T, h, data_acc.get_pointer(), it,
-                      itrs[it.get_group().get_id()], lock_acc.get_pointer(),
-                      *heap_acc.get_pointer());
+                                   SlabHash::DefaultHasher<5, 11, 1031>>
+               ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
 
                for (int i = ind * scale;
                     i < ind * scale + scale && i < buf_size; i++) {
