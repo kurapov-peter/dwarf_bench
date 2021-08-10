@@ -43,7 +43,6 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
          h.parallel_for<class slab_hash_build>(r, [=](sycl::nd_item<1> it) {
            size_t ind = it.get_group().get_id();
 
-           SlabHash::DefaultHasher<5, 11, 1031> h;
            SlabHash::SlabHashTable<uint32_t, uint32_t,
                                    SlabHash::DefaultHasher<5, 11, 1031>>
                ht(SlabHash::EMPTY_UINT32_T, it, *(adap_acc.get_pointer()));
