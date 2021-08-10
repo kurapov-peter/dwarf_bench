@@ -13,7 +13,7 @@ private:
 
 
 
-namespace join_helpers {
+namespace join_helpers_slab {
 
 template <class Key, class Val1, class Val2>
 using ColJoinedTableTy =

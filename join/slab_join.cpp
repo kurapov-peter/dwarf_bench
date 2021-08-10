@@ -3,7 +3,7 @@
 #include <math.h>
 
 using std::pair;
-using namespace join_helpers;
+using namespace join_helpers_slab;
 SlabJoin::SlabJoin() : Dwarf("SlabJoin") {}
 
 void SlabJoin::_run(const size_t buf_size, Meter &meter) {
@@ -28,7 +28,7 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
 
   // hash table
 
-  auto expected = join_helpers::seq_join(table_a_keys, table_a_values,
+  auto expected = join_helpers_slab::seq_join(table_a_keys, table_a_values,
                                          table_b_keys, table_b_values);
 
   std::cout << "Expected done\n";
@@ -138,7 +138,7 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
       }
     }
 
-    join_helpers::ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = {
+    join_helpers_slab::ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = {
         res_k, {res1, res2}};
 
     if (output != expected) {

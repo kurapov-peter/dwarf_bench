@@ -11,7 +11,7 @@ private:
   void _run(const size_t buffer_size, Meter &meter);
 };
 
-namespace join_helpers {
+namespace join_helpers_nested {
 
 template <class Key, class Val1, class Val2>
 using ColJoinedTableTy =

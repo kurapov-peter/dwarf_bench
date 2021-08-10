@@ -3,10 +3,10 @@
 #include <math.h>
 
 using std::pair;
-using namespace join_helpers;
-NestedJoin::NestedJoin() : Dwarf("NestedJoin") {}
+using namespace join_helpers_nested;
+NestedLoopJoin::NestedLoopJoin() : Dwarf("NestedLoopJoin") {}
 
-void NestedJoin::_run(const size_t buf_size, Meter &meter) {
+void NestedLoopJoin::_run(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
 
   // todo: sizes
@@ -27,11 +27,11 @@ void NestedJoin::_run(const size_t buf_size, Meter &meter) {
 
   // hash table
   // testing
-  std::vector<uint32_t> key_out(buf_size, 0);
-  std::vector<uint32_t> val1_out(buf_size, -1);
-  std::vector<uint32_t> val2_out(buf_size, -1);
+  std::vector<uint32_t> key_out(buf_size * buf_size, 0);
+  std::vector<uint32_t> val1_out(buf_size * buf_size, -1);
+  std::vector<uint32_t> val2_out(buf_size * buf_size, -1);
 
-  auto expected = join_helpers::seq_join(table_a_keys, table_a_values,
+  auto expected = join_helpers_nested::seq_join(table_a_keys, table_a_values,
                                          table_b_keys, table_b_values);
 
   std::cout << "Expected done\n";
@@ -64,9 +64,9 @@ void NestedJoin::_run(const size_t buf_size, Meter &meter) {
          uint32_t val = val_a_acc[it];
          for (int i = 0; i < buf_size; i++) {
            if (key_b_acc[i] == key) {
-             out_key_acc[it] = key;
-             out_val1_acc[it] = val;
-             out_val2_acc[it] = val_b_acc[i];
+             out_key_acc[it * buf_size + i] = key;
+             out_val1_acc[it * buf_size + i] = val;
+             out_val2_acc[it * buf_size + i] = val_b_acc[i];
            }
          }
        });
@@ -81,7 +81,7 @@ void NestedJoin::_run(const size_t buf_size, Meter &meter) {
   std::vector<uint32_t> res1;
   std::vector<uint32_t> res2;
 
-  for (int i = 0; i < buf_size; i++) {
+  for (int i = 0; i < buf_size * buf_size; i++) {
     if (key_out[i] != ((uint32_t)0)) {
       res_k.push_back(key_out[i]);
       res1.push_back(val1_out[i]);
@@ -89,7 +89,7 @@ void NestedJoin::_run(const size_t buf_size, Meter &meter) {
     }
   }
 
-  join_helpers::ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = {
+  join_helpers_nested::ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = {
       res_k, {res1, res2}};
 
   if (output != expected) {
@@ -101,12 +101,12 @@ void NestedJoin::_run(const size_t buf_size, Meter &meter) {
   meter.add_result(std::move(params), std::move(result));
 }
 
-void NestedJoin::run(const RunOptions &opts) {
+void NestedLoopJoin::run(const RunOptions &opts) {
   for (auto size : opts.input_size) {
     _run(size, meter());
   }
 }
-void JoNestedJoinin::init(const RunOptions &opts) {
+void NestedLoopJoin::init(const RunOptions &opts) {
   meter().set_opts(opts);
   DwarfParams params = {{"device_type", to_string(opts.device_ty)}};
   meter().set_params(params);

@@ -67,6 +67,8 @@ if(ENABLE_DPCPP)
     slab_hash_build
     slab_join
     slab_probe
+    join
+    nested_loop_join
   )
   if(ENABLE_CUDA)
   list(APPEND bench_libs
