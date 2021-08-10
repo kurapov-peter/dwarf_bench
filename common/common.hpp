@@ -36,6 +36,7 @@ template <class T> std::vector<T> make_random(size_t size) {
 }
 
 std::vector<uint32_t> make_unique_random(size_t size);
+uint32_t make_random();
 std::vector<int> make_random_uniform_binary(size_t size);
 std::string get_kernels_root_env(const char *argv0);
 void set_dpcpp_filter_env_no_overwrite(const char *filter);

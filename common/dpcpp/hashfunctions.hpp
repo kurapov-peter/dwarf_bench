@@ -43,3 +43,12 @@ template <class Integral> struct SimpleHasher {
 private:
   size_t _sz;
 };
+
+struct SimpleHasherWithOffset {
+  SimpleHasherWithOffset(size_t sz, size_t offset) : _sz(sz), _offset(offset % sz) {}
+  size_t operator()(const uint32_t &v) const { return (v % _sz + _offset) % _sz; }
+  size_t get_offset(){return _offset;}
+  private:
+    size_t _sz;
+    size_t _offset;
+};

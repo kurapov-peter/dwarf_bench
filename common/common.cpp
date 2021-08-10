@@ -14,6 +14,13 @@ std::vector<int> make_random_uniform_binary(size_t size) {
   return out;
 }
 
+uint32_t make_random() {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> dist(1, 1000);
+  return dist(gen);
+}
+
 std::vector<uint32_t> make_unique_random(size_t size) {
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -25,6 +32,7 @@ std::vector<uint32_t> make_unique_random(size_t size) {
   }
   return std::vector<uint32_t>(s.begin(), s.end());
 }
+
 
 std::string get_kernels_root_env(const char *argv0) {
   auto *val = std::getenv("DWARF_BENCH_ROOT");
