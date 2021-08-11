@@ -14,23 +14,23 @@ TEST(SlabHash, insert) {
   sycl::nd_range<1> r{SUBGROUP_SIZE * 3, SUBGROUP_SIZE};
 
   SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(
-        SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q, 3);
+      SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q, 3);
 
   std::vector<uint8_t> checks(6, 0);
 
   {
     sycl::buffer<SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>>>
-          adap_buf(&adap, sycl::range<1>{1});
+        adap_buf(&adap, sycl::range<1>{1});
     sycl::buffer<uint8_t> checks_buf(checks);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
 
     q.submit([&](sycl::handler &cgh) {
        auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
        auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
-        
-        cgh.parallel_for<class insert_test_slab>(r, [=](sycl::nd_item<1> it) {
+
+       cgh.parallel_for<class insert_test_slab>(r, [=](sycl::nd_item<1> it) {
          size_t ind = it.get_group().get_id();
- 
+
          SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
              SlabHash::EMPTY_UINT32_T, it, *(adap_acc.get_pointer()));
 
@@ -38,17 +38,18 @@ TEST(SlabHash, insert) {
            ht.insert(tests[i].first, tests[i].second);
          }
        });
-     }).wait();
+     })
+        .wait();
 
-     q.submit([&](sycl::handler &cgh) {
+    q.submit([&](sycl::handler &cgh) {
        auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
        auto checks = sycl::accessor(checks_buf, cgh, sycl::read_write);
-        auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
+       auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
 
-        cgh.parallel_for<class insert_test_slab_check>(6, [=](auto &it) {
+       cgh.parallel_for<class insert_test_slab_check>(6, [=](auto &it) {
          size_t ind = it;
- 
-          DefaultHasher<13,24,343> h;
+
+         DefaultHasher<13, 24, 343> h;
          auto list = (*(adap_acc.get_pointer()))._data[h(tests[ind].first)];
          for (int i = 0; i < SLAB_SIZE; i++) {
            if (list.root->data[i] == tests[ind]) {
@@ -57,71 +58,69 @@ TEST(SlabHash, insert) {
            }
          }
        });
-     }).wait();
+     })
+        .wait();
   }
 
-  
-  for (auto e: checks) {
+  for (auto e : checks) {
     EXPECT_EQ(e, 1);
   }
 }
-/*
+
 TEST(SlabHash, find) {
-  sycl::queue q{sycl::gpu_selector()};
-  sycl::nd_range<1> r{SUBGROUP_SIZE * 3, SUBGROUP_SIZE};
-
-  std::vector<SlabList<pair<uint32_t, uint32_t>>> lists(BUCKETS_COUNT);
-  for (auto &e : lists) {
-    e.root = sycl::global_ptr<SlabNode<pair<uint32_t, uint32_t>>>(
-        sycl::malloc_shared<SlabNode<pair<uint32_t, uint32_t>>>(CLUSTER_SIZE,
-                                                                q));
-
-    *(e.root) = SlabNode<pair<uint32_t, uint32_t>>({EMPTY_UINT32_T, 0});
-  }
-
   std::vector<pair<uint32_t, uint32_t>> testUniv = {
       {1, 2}, {5, 2}, {101, 3}, {21312, 5}, {3, 0}, {10, 10}};
 
-  DefaultHasher<13, 24, 343> h;
+  sycl::queue q{sycl::gpu_selector()};
+  sycl::nd_range<1> r{SUBGROUP_SIZE * 3, SUBGROUP_SIZE};
 
-  for (auto &e : testUniv) {
-    auto r = lists[h(e.first)].root;
+  SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(
+      SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q, 3);
 
-    for (int i = 0; i < SLAB_SIZE; i++) {
-      if (r->data[i].first == EMPTY_UINT32_T) {
-        r->data[i] = e;
-        break;
-      }
-    }
-  }
+  std::vector<pair<bool, bool>> checks(6, {false, false});
 
-  HeapMaster<pair<uint32_t, uint32_t>> heap(q);
-  std::vector<uint32_t> lock(6);
-
-  std::vector<pair<bool, bool>> checks(6);
   {
-    sycl::buffer<SlabList<pair<uint32_t, uint32_t>>> ls(lists);
-    sycl::buffer<SlabHash::HeapMaster<pair<uint32_t, uint32_t>>>
-          heap_buf(&heap, sycl::range<1> {1});
-    sycl::buffer<sycl::device_ptr<SlabNode<pair<uint32_t, uint32_t>>>> its(3);
+    sycl::buffer<SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>>>
+        adap_buf(&adap, sycl::range<1>{1});
+    sycl::buffer<pair<bool, bool>> checks_buf(checks);
     sycl::buffer<pair<uint32_t, uint32_t>> buffTestUniv(testUniv);
-    sycl::buffer<pair<bool, bool>> buffChecks(checks);
-    sycl::buffer<uint32_t> lock_buf(lock);
 
     q.submit([&](sycl::handler &cgh) {
-       auto l = sycl::accessor(ls, cgh, sycl::read_write);
-       auto itrs = sycl::accessor(its, cgh, sycl::read_write);
        auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
-       auto accChecks = sycl::accessor(buffChecks, cgh, sycl::write_only);
-       auto heap_acc = sycl::accessor(heap_buf, cgh, sycl::read_write);
-       auto lock_acc = sycl::accessor(lock_buf, cgh, sycl::read_write);
+       auto checks = sycl::accessor(checks_buf, cgh, sycl::read_write);
+       auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
+       cgh.single_task<class find_test_slab_check>([=]() {
+         DefaultHasher<13, 24, 343> h;
+
+         
+         for (int j = 0; j < 6; j++) {
+           auto e = tests[j];
+           auto list = &((*(adap_acc.get_pointer()))._data[h(e.first)]);
+           if (list->root == nullptr) {
+             list->root = (*(adap_acc.get_pointer()))._heap.malloc_node();
+             *list->root = SlabNode<pair<uint32_t, uint32_t>>({SlabHash::EMPTY_UINT32_T, 0});
+           }
+           for (int i = 0; i < SLAB_SIZE; i++) {
+             if (list->root->data[i].first == EMPTY_UINT32_T) {
+               list->root->data[i] = e;
+               break;
+             }
+           }
+         }
+       });
+     })
+        .wait();
+
+    q.submit([&](sycl::handler &cgh) {
+       auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
+       auto accChecks = sycl::accessor(checks_buf, cgh, sycl::write_only);
+       auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
 
        cgh.parallel_for<class find_test_slab>(r, [=](sycl::nd_item<1> it) {
          size_t ind = it.get_group().get_id();
-         DefaultHasher<13, 24, 343> h;
+
          SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
-             EMPTY_UINT32_T, h, l.get_pointer(), it,
-             itrs[it.get_group().get_id()], lock_acc.get_pointer(), *heap_acc.get_pointer());
+             SlabHash::EMPTY_UINT32_T, it, *(adap_acc.get_pointer()));
 
          for (int i = ind * 2; i < ind * 2 + 2; i++) {
            auto ans = ht.find(tests[i].first);
@@ -131,18 +130,15 @@ TEST(SlabHash, find) {
                              ans.value_or(-1) == tests[i].second};
          }
        });
-     }).wait();
+     })
+        .wait();
   }
 
   for (int i = 0; i < 6; i++) {
     EXPECT_TRUE(checks[i].first && checks[i].second);
   }
-
-  for (auto &e : lists) {
-    sycl::free(e.root, q);
-  }
 }
-
+/*
 TEST(SlabHash, find_and_insert_together) {
   std::vector<pair<uint32_t, uint32_t>> testUniv = {
       {1, 2}, {5, 2}, {101, 3}, {10932, 5}, {3, 0}, {10, 10}};
