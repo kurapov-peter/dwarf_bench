@@ -33,6 +33,7 @@ void DPLScan::run_scan(const size_t buf_size, Meter &meter) {
   sycl::queue q{*sel};
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
+  
   auto dev_policy =
       oneapi::dpl::execution::device_policy<class Dev_Policy_Kernel>{*sel};
 

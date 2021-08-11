@@ -1,17 +1,6 @@
 #pragma once
 #include "dpcpp_common.hpp"
-
-template <size_t Size> struct StaticSimpleHasher {
-  size_t operator()(const uint32_t &v) const { return v % Size; }
-};
-
-template <class Integral> struct SimpleHasher {
-  SimpleHasher(size_t sz) : _sz(sz) {}
-  size_t operator()(const Integral &v) const { return v % _sz; }
-
-private:
-  size_t _sz;
-};
+#include "hashfunctions.hpp"
 
 template <class Key, class T, class Hash> class SimpleNonOwningHashTable {
 public:
