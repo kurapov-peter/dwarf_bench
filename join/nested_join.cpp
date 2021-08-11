@@ -1,9 +1,10 @@
 #include "nested_join.hpp"
 #include "common/dpcpp/slab_hash.hpp"
 #include <math.h>
+#include "join_helpers/join_helpers.hpp"
 
 using std::pair;
-using namespace join_helpers_nested;
+using namespace join_helpers;
 NestedLoopJoin::NestedLoopJoin() : Dwarf("NestedLoopJoin") {}
 
 void NestedLoopJoin::_run(const size_t buf_size, Meter &meter) {
@@ -31,7 +32,7 @@ void NestedLoopJoin::_run(const size_t buf_size, Meter &meter) {
   std::vector<uint32_t> val1_out(buf_size * buf_size, -1);
   std::vector<uint32_t> val2_out(buf_size * buf_size, -1);
 
-  auto expected = join_helpers_nested::seq_join(table_a_keys, table_a_values,
+  auto expected = join_helpers::seq_join(table_a_keys, table_a_values,
                                          table_b_keys, table_b_values);
 
   std::cout << "Expected done\n";
@@ -89,7 +90,7 @@ void NestedLoopJoin::_run(const size_t buf_size, Meter &meter) {
     }
   }
 
-  join_helpers_nested::ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = {
+  join_helpers::ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = {
       res_k, {res1, res2}};
 
   if (output != expected) {

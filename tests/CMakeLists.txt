@@ -10,7 +10,7 @@ add_executable(slab_tests slab_tests.cpp)
 target_link_libraries(scan_tests gtest standalone_scan oclhelpers::oclhelpers)
 target_link_libraries(hash_table_tests dpcpp_common sycl GTest::gtest)
 target_link_libraries(slab_tests dpcpp_common sycl GTest::gtest)
-target_link_libraries(join_tests join sycl GTest::gtest)
+target_link_libraries(join_tests join_helpers_lib sycl GTest::gtest)
 
 target_include_directories(scan_tests PRIVATE ${PROJECT_SOURCE_DIR})
 target_include_directories(hash_table_tests PRIVATE ${PROJECT_SOURCE_DIR})
