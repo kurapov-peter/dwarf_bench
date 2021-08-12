@@ -7,6 +7,13 @@
 #include <optional>
 
 namespace SlabHash {
+using sycl::ext::oneapi::memory_order::acq_rel;
+using sycl::ext::oneapi::memory_scope::device;
+using sycl::access::address_space::global_device_space;
+
+template <typename K>
+using atomic_ref_device = sycl::ext::oneapi::atomic_ref<K, acq_rel, device, global_device_space>;
+
 constexpr size_t SUBGROUP_SIZE = 32;
 constexpr size_t SLAB_SIZE_MULTIPLIER = 8;
 constexpr size_t SLAB_SIZE = SLAB_SIZE_MULTIPLIER * SUBGROUP_SIZE;
@@ -214,11 +221,7 @@ private:
       if (cl::sycl::group_broadcast(_gr, find, j)) {
         K tmp_empty = _empty;
         bool done = _ind == j
-                        ? sycl::ext::oneapi::atomic_ref<
-                              K, sycl::ext::oneapi::memory_order::acq_rel,
-                              sycl::ext::oneapi::memory_scope::device,
-                              sycl::access::address_space::global_device_space>(
-                              _iter->data[i].first)
+                        ? atomic_ref_device<K> (_iter->data[i].first)
                               .compare_exchange_strong(tmp_empty, _key)
                         : false;
         sycl::group_barrier(_gr);
