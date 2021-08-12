@@ -48,7 +48,6 @@ add_subdirectory(reduce)
 add_subdirectory(hash)
 add_subdirectory(join)
 add_subdirectory(probe)
-add_subdirectory(join/join_helpers)
 
 set(bench_libs 
   common
