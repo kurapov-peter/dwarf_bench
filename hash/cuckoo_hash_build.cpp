@@ -5,6 +5,7 @@
 
 CuckooHashBuild::CuckooHashBuild() : Dwarf("CuckooHashBuild") {}
 const uint32_t EMPTY_KEY = std::numeric_limits<uint32_t>::max();
+const uint32_t WORKGROUP_SIZE = 1;
 
 void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
@@ -16,12 +17,12 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
   for (int i = 0; i < buf_size; i++)
     std::cout << host_src[i] << " ";
   std::cout << std::endl;
-  const size_t ht_size = buf_size * 2;
+  const size_t ht_size = buf_size * 3;
   
-  //auto sel = get_device_selector(opts);
-  cl::sycl::cpu_selector sel;
-  sycl::queue q(sel);
-  //sycl::queue q{*sel};
+  auto sel = get_device_selector(opts);
+  //cl::sycl::cpu_selector sel;
+  //sycl::queue q(sel);
+  sycl::queue q{*sel};
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
   // std::cout << host_src.size() << "\n";
@@ -47,13 +48,6 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
       sycl::buffer<uint32_t> keys_buf(keys);
       sycl::buffer<uint32_t> src(host_src);
       sycl::buffer<bool, 1>insertion_result_buf{sycl::range{buf_size}}; 
-
-      /*std::cout << "\n" << "iter : " << it << "\n";
-      std::cout << host_src.size() << " " << src.get_size() << "\n"
-                << bitmask.size() << " " << bitmask_buf.get_size() << "\n"
-                << keys.size() << " " << keys_buf.get_size() << "\n"
-                << vals.size() << " " << vals_buf.get_size() << "\n"
-                << insertion_result_buf.get_size() << "\n";*/
      
 
       auto host_start = std::chrono::steady_clock::now();
@@ -73,14 +67,13 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
 
           h.parallel_for<class clear_keys>(ht_size, [=](auto &idx) {
             keys_acc[idx] = EMPTY_KEY;
-            //bitmask_acc[idx] = 0;
           });
         });
 
         auto clear_bitmask = q.submit([&](sycl::handler &h) {
           auto bitmask_acc = bitmask_buf.get_access(h);
           h.parallel_for<class clear_bitmask>(bitmask_sz, [=](auto &idx) {
-            bitmask_acc[idx] = false;
+            bitmask_acc[idx] = 0;
           });
         });
 
@@ -94,18 +87,13 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
           
           sycl::stream out(10240, 2560, h);
 
-          h.parallel_for<class hash_build>(buf_size, [=](sycl::id<1> idx) {
-
+          h.parallel_for<class hash_build>(sycl::nd_range<1>{buf_size, WORKGROUP_SIZE}, [=](sycl::nd_item<1> it) {
             CuckooHashtable<uint32_t, uint32_t,  SimpleHasherWithOffset,  SimpleHasherWithOffset> 
             ht(ht_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
                     bitmask_acc.get_pointer(), hasher1, hasher2, out);
 
-            insertion_acc[idx] = ht.insert(s[idx], s[idx], (size_t) idx);
-            /*insertion_acc[idx * 5] = ht.insert(s[idx * 5], s[idx * 5], (size_t) idx * 5);
-            insertion_acc[idx * 5 + 1] = ht.insert(s[idx * 5 + 1], s[idx * 5 + 1], (size_t) idx * 5 + 1);
-            insertion_acc[idx * 5 + 2] = ht.insert(s[idx * 5 + 2], s[idx * 5 + 2], (size_t) idx * 5 + 2);
-            insertion_acc[idx * 5 + 3] = ht.insert(s[idx * 5 + 3], s[idx * 5 + 3], (size_t) idx * 5 + 3);
-            insertion_acc[idx * 5 + 4] = ht.insert(s[idx * 5 + 4], s[idx * 5 + 4], (size_t) idx * 5 + 4);*/
+            size_t idx = it.get_global_id();
+            insertion_acc[idx] = ht.insert(s[idx], s[idx]);
           });
         }).wait();
         
