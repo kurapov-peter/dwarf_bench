@@ -1,5 +1,4 @@
-#ifndef COMMON_HPP
-#define COMMON_HPP
+#pragma once 
 
 #include <algorithm>
 #include <cstdlib>
@@ -55,5 +54,3 @@ bool check_first(const T &v1, const U &v2, size_t sz) {
 }
 
 } // namespace helpers
-
-#endif
