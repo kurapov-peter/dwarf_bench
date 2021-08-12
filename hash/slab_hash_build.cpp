@@ -40,7 +40,7 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
          auto adap_acc = sycl::accessor(adap_buf, h, sycl::read_write);
          auto s = sycl::accessor(src, h, sycl::read_only);
 
-         h.parallel_for<class slab_hash_build>(r, [=](sycl::nd_item<1> it) {
+         h.parallel_for<class slab_hash_build>(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(32)]] {
            size_t ind = it.get_group().get_id();
 
            SlabHash::SlabHashTable<uint32_t, uint32_t,
@@ -72,7 +72,7 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
          auto o = sycl::accessor(out_buf, h, sycl::read_write);
 
          h.parallel_for<class slab_hash_build_check>(
-             r, [=](sycl::nd_item<1> it) {
+             r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(32)]] {
                size_t ind = it.get_group().get_id();
                SlabHash::DefaultHasher<5, 11, 1031> h;
                SlabHash::SlabHashTable<uint32_t, uint32_t,

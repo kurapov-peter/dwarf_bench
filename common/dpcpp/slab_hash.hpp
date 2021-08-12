@@ -7,8 +7,8 @@
 #include <optional>
 
 namespace SlabHash {
-constexpr size_t SUBGROUP_SIZE = 16;
-constexpr size_t SLAB_SIZE_MULTIPLIER = 16;
+constexpr size_t SUBGROUP_SIZE = 32;
+constexpr size_t SLAB_SIZE_MULTIPLIER = 8;
 constexpr size_t SLAB_SIZE = SLAB_SIZE_MULTIPLIER * SUBGROUP_SIZE;
 
 constexpr size_t CLUSTER_SIZE = 20480;
@@ -106,7 +106,7 @@ public:
   SlabHashTable(K empty,
                 sycl::nd_item<1> &it,
                 SlabHash::AllocAdapter<std::pair<K, T>> &adap)
-      : _lists(adap._data), _gr(it.get_group()), _it(it), _empty(empty),
+      : _lists(adap._data), _gr(it.get_sub_group()), _it(it), _empty(empty),
          _iter(adap._its[it.get_group().get_id()]), _ind(_it.get_local_id()), _lock(adap._lock),
         _heap(adap._heap){};
 
@@ -271,7 +271,7 @@ private:
   sycl::device_ptr<SlabNode<std::pair<K, T>>> &_iter;
   sycl::device_ptr<SlabNode<std::pair<K, T>>> _prev;
   HeapMaster<std::pair<K, T>> &_heap;
-  sycl::group<1> _gr;
+  sycl::sub_group _gr;
   sycl::nd_item<1> &_it;
   size_t _ind;
 
