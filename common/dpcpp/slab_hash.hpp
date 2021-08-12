@@ -200,7 +200,7 @@ private:
     bool total_found = false;
     bool find = false;
 
-    for (int i = _ind; i <= _ind + SUBGROUP_SIZE * (SLAB_SIZE_MULTIPLIER - 1);
+    for (int i = _ind; i < SUBGROUP_SIZE * SLAB_SIZE_MULTIPLIER;
          i += SUBGROUP_SIZE) {
       find = ((_iter->data[i].first) == _empty);
       sycl::group_barrier(_gr);
@@ -241,7 +241,7 @@ private:
     bool find = false;
     bool total_found = false;
 
-    for (int i = _ind; i <= _ind + SUBGROUP_SIZE * (SLAB_SIZE_MULTIPLIER - 1);
+    for (int i = _ind; i < SUBGROUP_SIZE * SLAB_SIZE_MULTIPLIER;
          i += SUBGROUP_SIZE) {
       find = ((_iter->data[i].first) == _key);
       sycl::group_barrier(_gr);
