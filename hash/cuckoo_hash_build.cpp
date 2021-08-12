@@ -1,8 +1,6 @@
 #include "cuckoo_hash_build.hpp"
 #include "common/dpcpp/cuckoo_hashtable.hpp"
 
-#include <algorithm>
-
 CuckooHashBuild::CuckooHashBuild() : Dwarf("CuckooHashBuild") {}
 const uint32_t EMPTY_KEY = std::numeric_limits<uint32_t>::max();
 const uint32_t WORKGROUP_SIZE = 1;
@@ -48,8 +46,6 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
         hasher1 = MurmurHash3_x86_32(ht_size, 4, hasher1_offset);
         hasher2 = MurmurHash3_x86_32(ht_size, 4, hasher2_offset);
 
-        //std::cout << "hasher offsets: " << hasher1.get_offset() << " " << hasher2.get_offset() << std::endl;
-        
         auto clear_keys = q.submit([&](sycl::handler &h) {
           auto keys_acc = keys_buf.get_access(h);
           auto bitmask_acc = bitmask_buf.get_access(h);
@@ -58,13 +54,6 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
             keys_acc[idx] = EMPTY_KEY;
           });
         });
-
-        // auto clear_bitmask = q.submit([&](sycl::handler &h) {
-        //   auto bitmask_acc = bitmask_buf.get_access(h);
-        //   h.parallel_for<class clear_bitmask>(bitmask_sz, [=](auto &idx) {
-        //     bitmask_acc[idx] = 0;
-        //   });
-        // });
 
         q.submit([&](sycl::handler &h) {
           h.depends_on(clear_keys);
@@ -85,26 +74,16 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
           });
         }).wait();
         
-       /*auto ht_keys = keys_buf.get_access<sycl::access::mode::read>();
-        std::cout << "table : ";
-        for (int i = 0; i < ht_size; i++)
-           if(ht_keys[i] == EMPTY_KEY)
-                  std::cout << "." << " ";
-            else std::cout << ht_keys[i] << " ";
-        std::cout << std::endl;*/
-        
         auto result = insertion_result_buf.get_access<sycl::access::mode::read>();
 
-        bool pr = false;
+        bool flag = false;
         for (int i = 0; i < buf_size; i++){
           if (result[i] == false){
-            pr = true;
+            flag = true;
             break;
           }
-          //std::cout << result[i] << " ";
         }
-        //std::cout << std::endl;
-        if (!pr) break;
+        if (!flag) break;
       }
       auto host_end = std::chrono::steady_clock::now();
       auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
