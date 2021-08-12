@@ -22,8 +22,8 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
             _size(size), _keys(keys), _vals(vals), _bitmask(bitmask), _hasher1(hasher1), _hasher2(hasher2){}
         
         const std::pair<Val, bool> at(Key key) const {
-            auto pos1 = _hasher1(&key);
-            auto pos2 = _hasher2(&key);
+            auto pos1 = _hasher1(key);
+            auto pos2 = _hasher2(key);
             if (_keys[pos1] == key)
                 return {_vals[pos1], true};
             if (_keys[pos2] == key)
@@ -32,11 +32,11 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
         }
 
         bool has(Key key) const {
-             return _keys[_hasher1(&key)] == key || _keys[_hasher2(&key)] == key;
+             return _keys[_hasher1(key)] == key || _keys[_hasher2(key)] == key;
         }
 
         bool insert(Key key, Val value) {
-            size_t pos = _hasher1(&key);
+            size_t pos = _hasher1(key);
             for (int cnt = 0; cnt < _size / 3; cnt++) {
                 lock(pos, key);
                 if (_keys[pos] == _EMPTY_KEY) {
@@ -49,16 +49,16 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
                 std::swap(key, _keys[pos]);
                 std::swap(value, _vals[pos]);
                 unlock(pos, key);
-                if (pos == _hasher1(&key))
-                    pos = _hasher2(&key);
+                if (pos == _hasher1(key))
+                    pos = _hasher2(key);
                 else 
-                    pos = _hasher1(&key);
+                    pos = _hasher1(key);
             }
             return false;
         }
 
 
-        void lock(size_t pos, Key &key) {      
+        void lock(size_t pos, Key key) {      
             uint32_t present;
             uint32_t major_idx = pos / elem_sz;
             uint8_t minor_idx = pos % elem_sz;
@@ -69,7 +69,7 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
             } while (present & mask);
         }
 
-        void unlock(size_t pos, Key &key) {
+        void unlock(size_t pos, Key key) {
             uint32_t major_idx = pos / elem_sz;
             uint8_t minor_idx = pos % elem_sz;
             uint32_t mask = uint32_t(1) << minor_idx;

@@ -81,7 +81,8 @@ struct MurmurHash3_x86_32 {
     return h;
   }
 
-  size_t operator()(const void * key) const {
+  size_t operator()(const uint32_t &v) const {
+    const void * key = &v;
     const uint8_t * data = (const uint8_t*)key;
     const int nblocks = _len / 4;
 
