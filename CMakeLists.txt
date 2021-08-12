@@ -67,7 +67,7 @@ if(ENABLE_DPCPP)
     slab_hash_build
     slab_join
     slab_probe
-    join
+    #join
     nested_loop_join
     join_helpers_lib
   )

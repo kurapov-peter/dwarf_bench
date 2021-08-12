@@ -10,7 +10,7 @@
 #include "probe/slab_probe.hpp"
 #include "join/slab_join.hpp"
 #include "join/nested_join.hpp"
-#include "join/join.hpp"
+//#include "join/join.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();
@@ -25,7 +25,7 @@ void populate_registry() {
   registry->registerd(new ReduceDPCPP());
   registry->registerd(new HashBuild());
   registry->registerd(new SlabHashBuild());
-  registry->registerd(new Join());
+  //registry->registerd(new Join());
   registry->registerd(new NestedLoopJoin());
   registry->registerd(new SlabJoin());
   registry->registerd(new SlabProbe());

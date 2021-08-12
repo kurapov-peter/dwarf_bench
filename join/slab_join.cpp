@@ -32,17 +32,13 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
   auto expected = join_helpers::seq_join(table_a_keys, table_a_values,
                                          table_b_keys, table_b_values);
 
-  std::cout << "Expected done\n";
-
   for (auto it = 0; it < opts.iterations; ++it) {
     int work_size = ceil((float)buf_size / scale);
     sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * work_size,
                         SlabHash::SUBGROUP_SIZE};
 
-    std::cout << "Start adap" << std::endl;
     SlabHash::AllocAdapter<pair<uint32_t, uint32_t>> adap(
         SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q, work_size);
-    std::cout << "End adap" << std::endl;
     // testing
     std::vector<uint32_t> key_out(buf_size, 0);
     std::vector<uint32_t> val1_out(buf_size, -1);
@@ -87,7 +83,6 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
        })
           .wait();
       auto build_end = std::chrono::steady_clock::now();
-      std::cout << "Builded\n";
       auto probe_start = std::chrono::steady_clock::now();
       q.submit([&](sycl::handler &h) {
          auto key_b_acc = key_b.get_access(h);
@@ -124,7 +119,6 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
       result.host_time = host_end - host_start;
       result.build_time = build_end - host_start;
       result.probe_time = host_end - probe_start;
-      std::cout << "End\n";
     }
 
     std::vector<uint32_t> res_k;

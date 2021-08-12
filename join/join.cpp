@@ -6,7 +6,7 @@
 Join::Join() : Dwarf("Join") {}
 
 void Join::_run(const size_t buf_size, Meter &meter) {
-  /*auto opts = meter.opts();
+  auto opts = meter.opts();
 
   // todo: sizes
   const std::vector<uint32_t> table_a_keys =
@@ -155,7 +155,7 @@ void Join::_run(const size_t buf_size, Meter &meter) {
 
     DwarfParams params{{"buf_size", std::to_string(buf_size)}};
     meter.add_result(std::move(params), std::move(result));
-  // todo: scale factor?*/
+  // todo: scale factor?
 }
 
 void Join::run(const RunOptions &opts) {

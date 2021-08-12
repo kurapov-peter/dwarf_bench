@@ -33,7 +33,6 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
       sycl::buffer<SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>>>
           adap_buf(&adap, sycl::range<1>{1});
       sycl::buffer<uint32_t> src(host_src);
-      std::cout << "STARTED" << std::endl;
       auto host_start = std::chrono::steady_clock::now();
 
       q.submit([&](sycl::handler &h) {
@@ -56,7 +55,6 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
           .wait();
 
       auto host_end = std::chrono::steady_clock::now();
-      std::cout << "END" << std::endl;
       auto host_exe_time =
           std::chrono::duration_cast<std::chrono::microseconds>(host_end -
                                                                 host_start)

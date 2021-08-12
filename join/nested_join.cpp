@@ -35,7 +35,6 @@ void NestedLoopJoin::_run(const size_t buf_size, Meter &meter) {
   auto expected = join_helpers::seq_join(table_a_keys, table_a_values,
                                          table_b_keys, table_b_values);
 
-  std::cout << "Expected done\n";
   Result result;
 
   {
