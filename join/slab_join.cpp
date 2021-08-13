@@ -67,7 +67,7 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
          auto val_a_acc = sycl::accessor(val_a, h, sycl::read_only);
 
 
-         h.parallel_for<class join_build>(r, [=](sycl::nd_item<1> it) {
+         h.parallel_for<class join_build>(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
            int idx = it.get_local_id();
            size_t ind = it.get_group().get_id();
            SlabHash::SlabHashTable<uint32_t, uint32_t,
@@ -94,7 +94,7 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
 
          auto adap_acc = sycl::accessor(adap_buf, h, sycl::read_write);
 
-         h.parallel_for<class join_probe>(r, [=](sycl::nd_item<1> it) {
+         h.parallel_for<class join_probe>(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
            size_t ind = it.get_group().get_id();
            SlabHash::SlabHashTable<uint32_t, uint32_t,
                                    SlabHash::DefaultHasher<32, 48, 1031>>
