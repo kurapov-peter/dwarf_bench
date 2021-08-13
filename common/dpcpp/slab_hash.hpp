@@ -14,6 +14,8 @@ using sycl::access::address_space::global_device_space;
 template <typename K>
 using atomic_ref_device = sycl::ext::oneapi::atomic_ref<K, acq_rel, device, global_device_space>;
 
+constexpr size_t UINT32_T_BIT = CHAR_BIT * sizeof(uint32_t);
+
 constexpr size_t SUBGROUP_SIZE = 32;
 constexpr size_t SLAB_SIZE_MULTIPLIER = 8;
 constexpr size_t SLAB_SIZE = SLAB_SIZE_MULTIPLIER * SUBGROUP_SIZE;
@@ -120,7 +122,7 @@ public:
   void insert(K key, T val) {
     _key = key;
     _val = val;
-
+    
     if (_ind == 0) {
       if ((_lists + _hasher(key))->root == nullptr) {
         alloc_node((_lists + _hasher(key))->root);
@@ -172,28 +174,28 @@ private:
   void alloc_node(sycl::device_ptr<SlabNode<std::pair<K, T>>> &src) {
     lock();
     if (src == nullptr) {
-      auto tmp = _heap.malloc_node();
-      *tmp = SlabNode<std::pair<K, T>>({_empty, T()}); //!!!!!!
-      src = tmp;
+      auto allocated_pointer = _heap.malloc_node();
+      *allocated_pointer = SlabNode<std::pair<K, T>>({_empty, T()}); //!!!!!!
+
+      src = allocated_pointer;
     }
     unlock();
     _iter = src;
   }
 
   void lock() {
-    auto tmp = _hasher(_key);
-    int i = 0;
+    auto list_index = _hasher(_key);
     while (
-        sycl::atomic<uint32_t, sycl::access::address_space::global_device_space>((_lock + (tmp / (CHAR_BIT * sizeof(uint32_t)))))
-            .fetch_or(1 << (tmp % (CHAR_BIT * sizeof(uint32_t)))) &
-        (1 << (tmp % (CHAR_BIT * sizeof(uint32_t))))) {
+        sycl::atomic<uint32_t, sycl::access::address_space::global_device_space>((_lock + (list_index / (UINT32_T_BIT))))
+            .fetch_or(1 << (list_index % (UINT32_T_BIT))) &
+        (1 << (list_index % (UINT32_T_BIT)))) {
     }
   }
 
   void unlock() {
-    auto tmp = _hasher(_key);
-    sycl::atomic<uint32_t, sycl::access::address_space::global_device_space>((_lock + (tmp / (CHAR_BIT * sizeof(uint32_t)))))
-        .fetch_and(~(1 << (tmp % (CHAR_BIT * sizeof(uint32_t)))));
+    auto list_index = _hasher(_key);
+    sycl::atomic<uint32_t, sycl::access::address_space::global_device_space>((_lock + (list_index / (UINT32_T_BIT))))
+        .fetch_and(~(1 << (list_index % (UINT32_T_BIT))));
   }
 
   bool insert_in_node() {
