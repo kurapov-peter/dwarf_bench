@@ -1,4 +1,5 @@
 #include <CL/sycl.hpp>
+#include <algorithm>
 #include <thread>
 #include <chrono>
 #include "dpcpp_common.hpp"
@@ -37,7 +38,7 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
 
         bool insert(Key key, Val value) {
             size_t pos = _hasher1(key);
-            for (int cnt = 0; cnt < _size / 3; cnt++) {
+            for (int cnt = 0; cnt < std::min(_size / 4, (size_t) 1000000); cnt++) {
                 lock(pos, key);
                 if (_keys[pos] == _EMPTY_KEY) {
                     _keys[pos] = key;
@@ -57,6 +58,36 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
             return false;
         }
 
+        // bool insert(Key key, Val value) {
+        //     // TODO: change loop detection
+        //     size_t cnt = 0;
+        //     while (cnt < _size) {
+        //         size_t pos[] = {_hasher1(key), _hasher2(key)};
+
+        //         for (size_t i = 0; i < 2; i++) {
+        //             lock(pos[i], key);
+
+        //             if (_keys[pos[i]] == _EMPTY_KEY) {
+        //                 _keys[pos[i]] = key;
+        //                 _vals[pos[i]] = value;
+
+        //                 unlock(pos[i], key);
+        //                 return true;
+        //             }
+        //             unlock(pos[i], key);
+        //         }
+        //         lock(pos[0], key);
+
+        //         std::swap(key, _keys[pos[0]]);
+        //         std::swap(value, _vals[pos[0]]);
+
+        //         unlock(pos[0], key);
+        //         cnt++;
+        //     }
+        //     return false;
+        // }
+
+
 
         void lock(size_t pos, Key key) {      
             uint32_t present;
@@ -66,6 +97,9 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
             uint32_t counter = 0;
             do {
                 present = sycl::atomic<uint32_t>(_bitmask + major_idx).fetch_or(mask);
+                counter++;
+                // if (counter == 10000000)
+                //     break;
             } while (present & mask);
         }
 
