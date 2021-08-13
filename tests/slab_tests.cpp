@@ -13,8 +13,8 @@ TEST(SlabHash, insert) {
   sycl::queue q{sycl::gpu_selector()};
   sycl::nd_range<1> r{SUBGROUP_SIZE * 3, SUBGROUP_SIZE};
 
-  SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(
-      SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q, 3);
+  SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(SlabHash::CLUSTER_SIZE, 3,
+        SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
 
   std::vector<uint8_t> checks(6, 0);
 
@@ -28,7 +28,7 @@ TEST(SlabHash, insert) {
        auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
        auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
 
-       cgh.parallel_for<class insert_test_slab>(r, [=](sycl::nd_item<1> it) {
+       cgh.parallel_for<class insert_test_slab>(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
          size_t ind = it.get_group().get_id();
 
          SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
@@ -74,8 +74,8 @@ TEST(SlabHash, find) {
   sycl::queue q{sycl::gpu_selector()};
   sycl::nd_range<1> r{SUBGROUP_SIZE * 3, SUBGROUP_SIZE};
 
-  SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(
-      SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q, 3);
+  SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(SlabHash::CLUSTER_SIZE, 3,
+        SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
 
   std::vector<pair<bool, bool>> checks(6, {false, false});
 
@@ -116,7 +116,7 @@ TEST(SlabHash, find) {
        auto accChecks = sycl::accessor(checks_buf, cgh, sycl::write_only);
        auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
 
-       cgh.parallel_for<class find_test_slab>(r, [=](sycl::nd_item<1> it) {
+       cgh.parallel_for<class find_test_slab>(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
          size_t ind = it.get_group().get_id();
 
          SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
@@ -146,8 +146,8 @@ TEST(SlabHash, find_and_insert_together) {
   sycl::queue q{sycl::gpu_selector()};
   sycl::nd_range<1> r{SUBGROUP_SIZE * 3, SUBGROUP_SIZE};
 
-  SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(
-      SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q, 3);
+  SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(SlabHash::CLUSTER_SIZE, 3,
+        SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
   std::vector<pair<bool, bool>> checks(6);
 
   {
@@ -163,7 +163,7 @@ TEST(SlabHash, find_and_insert_together) {
        auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
 
        cgh.parallel_for<class insert_test_slab_both>(
-           r, [=](sycl::nd_item<1> it) {
+           r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
              size_t ind = it.get_group().get_id();
 
              SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
@@ -181,7 +181,7 @@ TEST(SlabHash, find_and_insert_together) {
        auto accChecks = sycl::accessor(checks_buf, cgh, sycl::write_only);
        auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
 
-       cgh.parallel_for<class find_test_slab_both>(r, [=](sycl::nd_item<1> it) {
+       cgh.parallel_for<class find_test_slab_both>(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
          size_t ind = it.get_group().get_id();
 
          SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
@@ -215,8 +215,8 @@ TEST(SlabHash, find_and_insert_together_big) {
   sycl::queue q{sycl::gpu_selector()};
   sycl::nd_range<1> r{SUBGROUP_SIZE * 25, SUBGROUP_SIZE};
 
-  SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(
-      SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q, 25);
+  SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(SlabHash::CLUSTER_SIZE, 25,
+        SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
 
   std::vector<pair<bool, bool>> checks(1000);
 
@@ -233,7 +233,7 @@ TEST(SlabHash, find_and_insert_together_big) {
        auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
 
        cgh.parallel_for<class insert_test_slab_both_big>(
-           r, [=](sycl::nd_item<1> it) {
+           r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
              size_t ind = it.get_group().get_id();
 
              SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
@@ -252,7 +252,7 @@ TEST(SlabHash, find_and_insert_together_big) {
        auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
 
        cgh.parallel_for<class find_test_slab_both_big>(
-           r, [=](sycl::nd_item<1> it) {
+           r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
              size_t ind = it.get_group().get_id();
 
              SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(

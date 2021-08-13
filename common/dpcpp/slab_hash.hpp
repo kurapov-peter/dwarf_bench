@@ -51,8 +51,8 @@ template <typename T> struct SlabList {
 
 namespace detail {
 template <typename T> struct HeapMaster {
-  HeapMaster(sycl::queue &q) : _q(q) {
-    _heap = sycl::malloc_device<SlabNode<T>>(CLUSTER_SIZE, q);
+  HeapMaster(size_t cluster_size, sycl::queue &q) : _q(q) {
+    _heap = sycl::malloc_device<SlabNode<T>>(cluster_size, q);
     _head = _heap;
     sycl::device_ptr<uint32_t> tmp_lock = sycl::malloc_device<uint32_t>(1, q);
 
@@ -86,7 +86,7 @@ template <typename T> struct HeapMaster {
 
 
 template <typename T> struct AllocAdapter {
-  AllocAdapter(size_t bucket_size, T empty, sycl::queue &q, int work_size) : _q(q), _heap(q) {
+  AllocAdapter(size_t cluster_size, size_t work_size, size_t bucket_size, T empty, sycl::queue &q) : _q(q), _heap(cluster_size, q) {
     sycl::device_ptr<SlabList<T>> _data_tmp = sycl::malloc_device<SlabList<T>>(bucket_size, q);
     sycl::device_ptr<uint32_t> _lock_tmp = sycl::malloc_device<uint32_t>(ceil((float)bucket_size / sizeof(uint32_t)), q);
     _its = sycl::malloc_device<sycl::device_ptr<SlabHash::SlabNode<std::pair<uint32_t, uint32_t>>>>(work_size, q);

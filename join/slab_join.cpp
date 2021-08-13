@@ -37,8 +37,8 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
     sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * work_size,
                         SlabHash::SUBGROUP_SIZE};
 
-    SlabHash::AllocAdapter<pair<uint32_t, uint32_t>> adap(
-        SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q, work_size);
+    SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(SlabHash::CLUSTER_SIZE, work_size,
+        SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
     // testing
     std::vector<uint32_t> key_out(buf_size, 0);
     std::vector<uint32_t> val1_out(buf_size, -1);
