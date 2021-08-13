@@ -49,6 +49,7 @@ template <typename T> struct SlabList {
   sycl::device_ptr<SlabNode<T>> root;
 };
 
+namespace detail {
 template <typename T> struct HeapMaster {
   HeapMaster(sycl::queue &q) : _q(q) {
     _heap = sycl::malloc_device<SlabNode<T>>(CLUSTER_SIZE, q);
@@ -81,6 +82,9 @@ template <typename T> struct HeapMaster {
   sycl::device_ptr<SlabNode<T>> _head;
   sycl::queue &_q;
 };
+}
+
+
 template <typename T> struct AllocAdapter {
   AllocAdapter(size_t bucket_size, T empty, sycl::queue &q, int work_size) : _q(q), _heap(q) {
     sycl::device_ptr<SlabList<T>> _data_tmp = sycl::malloc_device<SlabList<T>>(bucket_size, q);
@@ -103,7 +107,7 @@ template <typename T> struct AllocAdapter {
 
   sycl::device_ptr<SlabList<T>> _data;
   sycl::device_ptr<uint32_t> _lock;
-  HeapMaster<T> _heap;
+  detail::HeapMaster<T> _heap;
   sycl::device_ptr<sycl::device_ptr<SlabHash::SlabNode<std::pair<uint32_t, uint32_t>>>>
           _its;
   sycl::queue &_q;
@@ -275,7 +279,7 @@ private:
   sycl::device_ptr<uint32_t> _lock;
   sycl::device_ptr<SlabNode<std::pair<K, T>>> &_iter;
   sycl::device_ptr<SlabNode<std::pair<K, T>>> _prev;
-  HeapMaster<std::pair<K, T>> &_heap;
+  detail::HeapMaster<std::pair<K, T>> &_heap;
   sycl::sub_group _gr;
   sycl::nd_item<1> &_it;
   size_t _ind;
