@@ -40,12 +40,14 @@ void SlabProbe::_run(const size_t buf_size, Meter &meter) {
 
          h.parallel_for<class slab_hash_build>(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
            size_t ind = it.get_group().get_id();
+           std::pair<size_t, size_t> group_work_range = {ind * scale, (ind + 1) * scale};
 
            SlabHash::SlabHashTable<uint32_t, uint32_t,
                                    SlabHash::DefaultHasher<5, 11, 1031>>
                ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
 
-           for (int i = ind * scale; i < ind * scale + scale && i < buf_size;
+
+           for (int i = group_work_range.first; i < group_work_range.second && i < buf_size;
                 i++) {
              ht.insert(s[i], s[i]);
            }
@@ -63,13 +65,16 @@ void SlabProbe::_run(const size_t buf_size, Meter &meter) {
          h.parallel_for<class slab_hash_build_check>(
              r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
                size_t ind = it.get_group().get_id();
+               std::pair<size_t, size_t> group_work_range = {ind * scale, (ind + 1) * scale};
+
+
                SlabHash::DefaultHasher<5, 11, 1031> h;
                SlabHash::SlabHashTable<uint32_t, uint32_t,
                                    SlabHash::DefaultHasher<5, 11, 1031>>
                ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
 
-               for (int i = ind * scale;
-                    i < ind * scale + scale && i < buf_size; i++) {
+               for (int i = group_work_range.first; i < group_work_range.second && i < buf_size;
+                i++) {
                  auto ans = ht.find(s[i]);
                  if (it.get_local_id() == 0) {
                    o[i] = static_cast<bool>(ans);

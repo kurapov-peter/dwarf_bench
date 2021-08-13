@@ -70,12 +70,14 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
          h.parallel_for<class join_build>(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
            int idx = it.get_local_id();
            size_t ind = it.get_group().get_id();
+           std::pair<size_t, size_t> group_work_range = {ind * scale, (ind + 1) * scale};
+
            SlabHash::SlabHashTable<uint32_t, uint32_t,
                                    SlabHash::DefaultHasher<32, 48, 1031>>
                ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
 
            // todo: pick smaller one
-           for (int i = ind * scale; i < ind * scale + scale && i < buf_size;
+           for (int i = group_work_range.first; i < group_work_range.second && i < buf_size;
                 i++) {
              ht.insert(key_a_acc[i], val_a_acc[i]);
            }
@@ -96,18 +98,20 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
 
          h.parallel_for<class join_probe>(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
            size_t ind = it.get_group().get_id();
+           std::pair<size_t, size_t> group_work_range = {ind * scale, (ind + 1) * scale};
+
            SlabHash::SlabHashTable<uint32_t, uint32_t,
                                    SlabHash::DefaultHasher<32, 48, 1031>>
                ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
 
-           for (int idx = ind * scale;
-                idx < ind * scale + scale && idx < buf_size; idx++) {
-             auto ans = ht.find(key_b_acc[idx]);
+           for (int i = group_work_range.first; i < group_work_range.second && i < buf_size;
+                i++) {
+             auto ans = ht.find(key_b_acc[i]);
 
              if (static_cast<bool>(ans)) {
-               out_key_a[idx] = key_b_acc[idx];
-               out_val1_a[idx] = ans.value_or(-1);
-               out_val2_a[idx] = val_b_acc[idx];
+               out_key_a[i] = key_b_acc[i];
+               out_val1_a[i] = ans.value_or(-1);
+               out_val2_a[i] = val_b_acc[i];
              }
            }
          });
