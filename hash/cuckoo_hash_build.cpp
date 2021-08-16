@@ -9,7 +9,7 @@ const uint32_t SCALE = 2;
 void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
   
-  const std::vector<uint32_t> host_src = /*{1, 32, 55, 58, 81, 86, 92, 93, 95, 96};*/
+  const std::vector<uint32_t> host_src = 
      helpers::make_unique_random(buf_size);
 
   const size_t ht_size = buf_size * 4;
@@ -21,10 +21,12 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
  
   for (auto it = 0; it < opts.iterations; ++it) {
 
-      MurmurHash3_x86_32 hasher1(ht_size, 4, helpers::make_random()), hasher2(ht_size, 4,helpers::make_random());
+      MurmurHash3_x86_32 hasher1(ht_size, sizeof(uint32_t), helpers::make_random()), 
+                          hasher2(ht_size, sizeof(uint32_t),helpers::make_random());
 
-      std::vector<uint32_t> output(buf_size, 0); //?
-      std::vector<uint32_t> expected(buf_size, 1); //?
+      std::vector<uint32_t> output(buf_size, 0);
+      std::vector<uint32_t> expected(buf_size, 1);
+
       size_t bitmask_sz = (ht_size / 32) ? (ht_size / 32) : 1;
       std::vector<uint32_t> bitmask(bitmask_sz, 0);
       std::vector<uint32_t> keys(ht_size, EMPTY_KEY);
@@ -40,17 +42,11 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
       auto host_start = std::chrono::steady_clock::now();
       
       while (true) {
-
-        uint32_t hasher1_offset = /*643;*/ helpers::make_random();
-        uint32_t hasher2_offset = /*808;*/ helpers::make_random();
+        uint32_t hasher1_offset = helpers::make_random();
+        uint32_t hasher2_offset = helpers::make_random();
      
-        hasher1 = MurmurHash3_x86_32(ht_size, 4, hasher1_offset);
-        hasher2 = MurmurHash3_x86_32(ht_size, 4, hasher2_offset);
-
-        // std::cout << "seed1:" << hasher1_offset << " seed2:" << hasher2_offset << std::endl;
-        // for (int i = 0; i < buf_size; i++){
-        // std::cout << host_src[i] << " pos1:" << hasher1(host_src[i]) << " pos2: " << hasher2(host_src[i]) << std::endl; 
-        // }
+        hasher1 = MurmurHash3_x86_32(ht_size, sizeof(uint32_t), hasher1_offset);
+        hasher2 = MurmurHash3_x86_32(ht_size, sizeof(uint32_t), hasher2_offset);
 
         auto clear_keys = q.submit([&](sycl::handler &h) {
           auto keys_acc = keys_buf.get_access(h);
