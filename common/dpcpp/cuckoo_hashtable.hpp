@@ -18,7 +18,7 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
         
     public:
         explicit CuckooHashtable(const size_t size, sycl::global_ptr<Key> keys, sycl::global_ptr<Val> vals, 
-                                sycl::global_ptr<uint32_t> bitmask, Hasher1 hasher1, Hasher2 hasher2 /*const sycl::stream &out*/):
+                                sycl::global_ptr<uint32_t> bitmask, Hasher1 hasher1, Hasher2 hasher2):
             _size(size), _keys(keys), _vals(vals), _bitmask(bitmask), _hasher1(hasher1), _hasher2(hasher2){}
         
         const std::pair<Val, bool> at(Key key) const {
@@ -53,11 +53,11 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
                     pos = _hasher2(key);
                 else 
                     pos = _hasher1(key);
-            }
+           }
             return false;
         }
 
-        void lock(size_t pos) {      
+        void lock(size_t pos) {
             uint32_t present;
             uint32_t major_idx = pos / elem_sz;
             uint8_t minor_idx = pos % elem_sz;
@@ -71,6 +71,6 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
             uint32_t major_idx = pos / elem_sz;
             uint8_t minor_idx = pos % elem_sz;
             uint32_t mask = uint32_t(1) << minor_idx;
-            uint32_t present = sycl::atomic<uint32_t>(_bitmask + major_idx).fetch_and(~mask);
+            sycl::atomic<uint32_t>(_bitmask + major_idx).fetch_and(~mask);
         }
 };
