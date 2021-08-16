@@ -44,13 +44,20 @@ TEST(CuckooHashTable, insert) {
   for (int i = 0; i < buf_size; i++)
     std::cout << keys[i] << " " << vals[i] << "\n";
   
-  ASSERT_EQ(keys[5], 5);
-  ASSERT_EQ(keys[6], 15);
-  ASSERT_EQ(keys[2], 2);
+  int counter = 0;
+  for (int i = 0; i < buf_size; i++){
+    if (keys[i] == 5)
+      counter++;
+    if (keys[i] == 15)
+      counter++;
+    if (keys[i] == 2)
+      counter++;  
+  }
+  ASSERT_EQ(counter, 3);
 }
 
 TEST(CuckooHashtable, at) {
-  const size_t buf_size = 10;
+  const size_t buf_size = 20;
   const size_t output_size = 7;
   size_t bitmask_sz = (buf_size / 32) ? (buf_size / 32) : 1;
   
@@ -114,12 +121,12 @@ TEST(CuckooHashtable, at) {
 }
 
 TEST(CuckooHashtable, fails_to_insert) {
-  const size_t buf_size = 5;
+  const size_t buf_size = 16;
   const size_t output_size = 4;
   size_t bitmask_sz = (buf_size / 32) ? (buf_size / 32) : 1;
   
   StaticSimpleHasher<buf_size> hasher1;
-  StaticSimpleHasherWithOffset<buf_size, 1> hasher2;
+  StaticSimpleHasherWithOffset<buf_size, 0> hasher2;
 
   sycl::cpu_selector device_selector;
   sycl::queue q(device_selector);
@@ -143,12 +150,12 @@ TEST(CuckooHashtable, fails_to_insert) {
       auto out_acc = out_buf.get_access(h);
 
       h.single_task([=]() {
-        CuckooHashtable<uint32_t, uint32_t,  StaticSimpleHasher<buf_size>, StaticSimpleHasherWithOffset<buf_size, 1>> 
+        CuckooHashtable<uint32_t, uint32_t,  StaticSimpleHasher<buf_size>, StaticSimpleHasherWithOffset<buf_size, 0>> 
             ht(buf_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
                     bitmask_acc.get_pointer(), hasher1, hasher2);
         
-        out_acc[0] = ht.insert(5, 5);
-        out_acc[1] = ht.insert(15, 15);
+        out_acc[0] = ht.insert(16, 16);
+        out_acc[1] = ht.insert(4, 4);
         out_acc[2] = ht.insert(20, 20);
         out_acc[3] = ht.insert(0, 0);
       });
@@ -163,7 +170,7 @@ TEST(CuckooHashtable, fails_to_insert) {
 }
 
 TEST(CuckooHashtable, parallel_insertion) {
-  const size_t buf_size = 10;
+  const size_t buf_size = 20;
   const size_t output_size = 5;
   size_t bitmask_sz = (buf_size / 32) ? (buf_size / 32) : 1;
   
