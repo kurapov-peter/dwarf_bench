@@ -10,7 +10,6 @@ NestedLoopJoin::NestedLoopJoin() : Dwarf("NestedLoopJoin") {}
 void NestedLoopJoin::_run(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
 
-  // todo: sizes
   const std::vector<uint32_t> table_a_keys =
       helpers::make_random<uint32_t>(buf_size);
   const std::vector<uint32_t> table_a_values =
@@ -26,8 +25,7 @@ void NestedLoopJoin::_run(const size_t buf_size, Meter &meter) {
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
 
-  // hash table
-  // testing
+
   std::vector<uint32_t> key_out(buf_size * buf_size, 0);
   std::vector<uint32_t> val1_out(buf_size * buf_size, -1);
   std::vector<uint32_t> val2_out(buf_size * buf_size, -1);
