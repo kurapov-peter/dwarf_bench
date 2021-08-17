@@ -18,11 +18,11 @@ void SlabProbe::_run(const size_t buf_size, Meter &meter) {
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
 
   for (auto it = 0; it < opts.iterations; ++it) {
-    int work_size = ceil((float)buf_size / scale);
+    int num_of_groups = ceil((float)buf_size / scale);
 
-    sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * work_size,
+    sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * num_of_groups,
                         SlabHash::SUBGROUP_SIZE};
-    SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(SlabHash::CLUSTER_SIZE, work_size,
+    SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(SlabHash::CLUSTER_SIZE, num_of_groups,
         SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
 
     std::vector<uint32_t> output(buf_size, 0);
