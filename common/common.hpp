@@ -6,7 +6,6 @@
 #include <random>
 #include <string>
 #include <vector>
-#include <set>
 
 #include "dwarf.hpp"
 #include "meter.hpp"

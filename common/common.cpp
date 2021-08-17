@@ -24,7 +24,8 @@ uint32_t make_random() {
 std::vector<uint32_t> make_unique_random(size_t size) {
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_int_distribution<int> dist(1, std::min((long) size * 10, (long) ((uint32_t) -1)));
+  std::uniform_int_distribution<int> dist(1, 
+            std::min((long) size * 10, (long) (std::numeric_limits<uint32_t>::max() - 1)));
 
   std::set<uint32_t> s;
   while (s.size() < size) {
