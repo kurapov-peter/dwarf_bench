@@ -1,6 +1,6 @@
 #include "slab_hash_build.hpp"
 #include "common/dpcpp/slab_hash.hpp"
-#include <math.h>
+#include <cmath>
 
 using std::pair;
 
@@ -80,13 +80,16 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
                                        SlabHash::DefaultHasher<5, 11, 1031>>
                    ht(SlabHash::EMPTY_UINT32_T, it, *(adap_acc.get_pointer()));
 
+
+              
                for (int i = group_work_range.first; i < group_work_range.second && i < buf_size;
                 i++) {
-                 auto ans = ht.find(s[i]);
+                  auto ans = ht.find(s[i]);
                  if (it.get_local_id() == 0) {
                    o[i] = static_cast<bool>(ans);
                  }
                }
+              
              });
        })
           .wait();

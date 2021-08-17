@@ -3,7 +3,7 @@
 #include "dpcpp_common.hpp"
 #include <CL/sycl.hpp>
 #include <algorithm>
-#include <math.h>
+#include <cmath>
 #include <optional>
 
 namespace SlabHash {
