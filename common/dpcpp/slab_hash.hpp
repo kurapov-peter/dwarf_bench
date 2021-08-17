@@ -130,9 +130,8 @@ public:
     if (_ind == 0) {
       if ((_lists + _hasher(key))->root == nullptr) {
         alloc_node((_lists + _hasher(key))->root);
-      } else {
-        _iter = (_lists + _hasher(key))->root;
       }
+      _iter = (_lists + _hasher(key))->root;
     }
     sycl::group_barrier(_gr);
 
@@ -147,8 +146,11 @@ public:
 
         sycl::group_barrier(_gr);
       }
-      if (_ind == 0)
-        alloc_node(_prev->next);
+      if (_ind == 0) {
+          alloc_node(_prev->next);
+          _iter = _prev->next;
+      }
+        
       sycl::group_barrier(_gr);
     }
   }
@@ -184,7 +186,6 @@ private:
       src = allocated_pointer;
     }
     unlock();
-    _iter = src;
   }
 
   void lock() {
