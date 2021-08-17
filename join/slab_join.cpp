@@ -1,7 +1,7 @@
 #include "slab_join.hpp"
 #include "common/dpcpp/slab_hash.hpp"
-#include <math.h>
 #include "join_helpers/join_helpers.hpp"
+#include <math.h>
 
 using std::pair;
 using namespace join_helpers;
@@ -37,8 +37,9 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
     sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * num_of_groups,
                         SlabHash::SUBGROUP_SIZE};
 
-    SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(SlabHash::CLUSTER_SIZE, num_of_groups,
-        SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
+    SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(
+        SlabHash::CLUSTER_SIZE, num_of_groups, SlabHash::BUCKETS_COUNT,
+        {SlabHash::EMPTY_UINT32_T, 0}, q);
     // testing
     std::vector<uint32_t> key_out(buf_size, 0);
     std::vector<uint32_t> val1_out(buf_size, -1);
@@ -49,7 +50,6 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
     {
       sycl::buffer<SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>>>
           adap_buf(&adap, sycl::range<1>{1});
-      
 
       sycl::buffer<uint32_t> key_a(table_a_keys);
       sycl::buffer<uint32_t> val_a(table_a_values);
@@ -62,27 +62,27 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
 
       auto host_start = std::chrono::steady_clock::now();
       q.submit([&](sycl::handler &h) {
-        auto adap_acc = sycl::accessor(adap_buf, h, sycl::read_write);
+         auto adap_acc = sycl::accessor(adap_buf, h, sycl::read_write);
          auto key_a_acc = sycl::accessor(key_a, h, sycl::read_only);
          auto val_a_acc = sycl::accessor(val_a, h, sycl::read_only);
 
+         h.parallel_for<class join_build>(
+             r, [=](sycl::nd_item<1> it)[
+                    [intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
+               int idx = it.get_local_id();
+               size_t ind = it.get_group().get_id();
 
-         h.parallel_for<class join_build>(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
-           int idx = it.get_local_id();
-           size_t ind = it.get_group().get_id();
+               SlabHash::SlabHashTable<uint32_t, uint32_t,
+                                       SlabHash::DefaultHasher<32, 48, 1031>>
+                   ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
 
-           SlabHash::SlabHashTable<uint32_t, uint32_t,
-                                   SlabHash::DefaultHasher<32, 48, 1031>>
-               ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
-
-           // todo: pick smaller one
-           for (int i = ind * scale; i < (ind + 1) * scale && i < buf_size;
-                i++) {
-             ht.insert(key_a_acc[i], val_a_acc[i]);
-           }
-         });
-       })
-          .wait();
+               // todo: pick smaller one
+               for (int i = ind * scale; i < (ind + 1) * scale && i < buf_size;
+                    i++) {
+                 ht.insert(key_a_acc[i], val_a_acc[i]);
+               }
+             });
+       }).wait();
       auto build_end = std::chrono::steady_clock::now();
       auto probe_start = std::chrono::steady_clock::now();
       q.submit([&](sycl::handler &h) {
@@ -95,26 +95,27 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
 
          auto adap_acc = sycl::accessor(adap_buf, h, sycl::read_write);
 
-         h.parallel_for<class join_probe>(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
-           size_t ind = it.get_group().get_id();
+         h.parallel_for<class join_probe>(
+             r, [=](sycl::nd_item<1> it)[
+                    [intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
+               size_t ind = it.get_group().get_id();
 
-           SlabHash::SlabHashTable<uint32_t, uint32_t,
-                                   SlabHash::DefaultHasher<32, 48, 1031>>
-               ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
+               SlabHash::SlabHashTable<uint32_t, uint32_t,
+                                       SlabHash::DefaultHasher<32, 48, 1031>>
+                   ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
 
-           for (int i = ind * scale; i < (ind + 1) * scale && i < buf_size;
-                i++) {
-             auto ans = ht.find(key_b_acc[i]);
+               for (int i = ind * scale; i < (ind + 1) * scale && i < buf_size;
+                    i++) {
+                 auto ans = ht.find(key_b_acc[i]);
 
-             if (static_cast<bool>(ans)) {
-               out_key_a[i] = key_b_acc[i];
-               out_val1_a[i] = ans.value_or(-1);
-               out_val2_a[i] = val_b_acc[i];
-             }
-           }
-         });
-       })
-          .wait();
+                 if (static_cast<bool>(ans)) {
+                   out_key_a[i] = key_b_acc[i];
+                   out_val1_a[i] = ans.value_or(-1);
+                   out_val2_a[i] = val_b_acc[i];
+                 }
+               }
+             });
+       }).wait();
       auto host_end = std::chrono::steady_clock::now();
 
       result.isJoin = true;

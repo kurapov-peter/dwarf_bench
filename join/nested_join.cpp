@@ -1,7 +1,7 @@
 #include "nested_join.hpp"
 #include "common/dpcpp/slab_hash.hpp"
-#include <math.h>
 #include "join_helpers/join_helpers.hpp"
+#include <math.h>
 
 using std::pair;
 using namespace join_helpers;
@@ -24,7 +24,6 @@ void NestedLoopJoin::_run(const size_t buf_size, Meter &meter) {
   sycl::queue q{*sel};
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
-
 
   std::vector<uint32_t> key_out(buf_size * buf_size, 0);
   std::vector<uint32_t> val1_out(buf_size * buf_size, -1);
@@ -68,8 +67,7 @@ void NestedLoopJoin::_run(const size_t buf_size, Meter &meter) {
            }
          }
        });
-     })
-        .wait();
+     }).wait();
     auto host_end = std::chrono::steady_clock::now();
 
     result.host_time = host_end - host_start;

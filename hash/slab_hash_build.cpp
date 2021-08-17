@@ -23,8 +23,9 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
 
     sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * num_of_groups,
                         SlabHash::SUBGROUP_SIZE};
-    SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(SlabHash::CLUSTER_SIZE, num_of_groups,
-        SlabHash::BUCKETS_COUNT, {SlabHash::EMPTY_UINT32_T, 0}, q);
+    SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(
+        SlabHash::CLUSTER_SIZE, num_of_groups, SlabHash::BUCKETS_COUNT,
+        {SlabHash::EMPTY_UINT32_T, 0}, q);
 
     std::vector<uint32_t> output(buf_size, 0);
     std::vector<uint32_t> expected(buf_size, 1);
@@ -39,21 +40,21 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
          auto adap_acc = sycl::accessor(adap_buf, h, sycl::read_write);
          auto s = sycl::accessor(src, h, sycl::read_only);
 
-         h.parallel_for<class slab_hash_build>(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
-           size_t ind = it.get_group().get_id();
-           
+         h.parallel_for<class slab_hash_build>(
+             r, [=](sycl::nd_item<1> it)[
+                    [intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
+               size_t ind = it.get_group().get_id();
 
-           SlabHash::SlabHashTable<uint32_t, uint32_t,
-                                   SlabHash::DefaultHasher<5, 11, 1031>>
-               ht(SlabHash::EMPTY_UINT32_T, it, *(adap_acc.get_pointer()));
+               SlabHash::SlabHashTable<uint32_t, uint32_t,
+                                       SlabHash::DefaultHasher<5, 11, 1031>>
+                   ht(SlabHash::EMPTY_UINT32_T, it, *(adap_acc.get_pointer()));
 
-           for (int i = ind * scale; i < (ind + 1) * scale && i < buf_size;
-                i++) {
-             ht.insert(s[i], s[i]);
-           }
-         });
-       })
-          .wait();
+               for (int i = ind * scale; i < (ind + 1) * scale && i < buf_size;
+                    i++) {
+                 ht.insert(s[i], s[i]);
+               }
+             });
+       }).wait();
 
       auto host_end = std::chrono::steady_clock::now();
       auto host_exe_time =
@@ -71,26 +72,23 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
          auto o = sycl::accessor(out_buf, h, sycl::read_write);
 
          h.parallel_for<class slab_hash_build_check>(
-             r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
+             r, [=](sycl::nd_item<1> it)[
+                    [intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
                size_t ind = it.get_group().get_id();
 
                SlabHash::SlabHashTable<uint32_t, uint32_t,
                                        SlabHash::DefaultHasher<5, 11, 1031>>
                    ht(SlabHash::EMPTY_UINT32_T, it, *(adap_acc.get_pointer()));
 
-
-              
                for (int i = ind * scale; i < (ind + 1) * scale && i < buf_size;
-                i++) {
-                  auto ans = ht.find(s[i]);
+                    i++) {
+                 auto ans = ht.find(s[i]);
                  if (it.get_local_id() == 0) {
                    o[i] = static_cast<bool>(ans);
                  }
                }
-              
              });
-       })
-          .wait();
+       }).wait();
 
       out_buf.get_access<sycl::access::mode::read>();
       if (output != expected) {
