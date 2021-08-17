@@ -2,12 +2,22 @@
 #include <fstream>
 
 std::ostream &operator<<(std::ostream &os, const Result &res) {
-  os << "Kernel duration: " << ((double)res.kernel_time) / 1000.0 << " us\n"
-     << "Host duration:   " << res.host_time.count() << " us\n";
-  if (res.isJoin) {
-    os << "Build time: " << res.build_time.count() << " us\n"
-       << "Probe time: " << res.probe_time.count() << " us\n";
-  }
+  return res.format(os);
+}
+
+std::ostream &Result::format(std::ostream &os) const {
+  os << "Kernel duration: " << ((double)kernel_time) / 1000.0 << " us\n"
+     << "Host duration:   " << host_time.count() << " us\n";
+
+  return os;
+}
+
+std::ostream &HashJoinResult::format(std::ostream &os) const {
+  Result::format(os);
+
+  os << "Build time: " << build_time.count() << " us\n"
+       << "Probe time: " << probe_time.count() << " us\n";
+
   return os;
 }
 
@@ -19,7 +29,7 @@ MeasureResults::const_iterator MeasureResults::end() const {
   return results_.end();
 }
 
-void MeasureResults::add_result(DwarfParams params, Result &&result) {
+void MeasureResults::add_result(DwarfParams params, std::unique_ptr<Result> &&result) {
   results_.push_back({params, std::move(result)});
 }
 
@@ -32,8 +42,8 @@ void MeasureResults::write_csv(const std::string &filename) const {
     for (const auto &res : results_) {
       of << res.params.at("device_type") << ","
          << std::stoi(res.params.at("buf_size")) * 4 << ",";
-      of << res.result.host_time.count() / 1000.0 << ","
-         << ((double)res.result.kernel_time) / (1000.0 * 1000.0) << "\n";
+      of << res.result->host_time.count() / 1000.0 << ","
+         << ((double)res.result->kernel_time) / (1000.0 * 1000.0) << "\n";
     }
   } else {
     throw std::runtime_error("Could not open the file at " + filename);

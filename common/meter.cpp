@@ -6,7 +6,7 @@ DwarfParams concat(const DwarfParams &stable, DwarfParams &&incoming) {
   return out;
 }
 
-void Meter::add_result(DwarfParams &&params, Result &&result) {
+void Meter::add_result(DwarfParams &&params, std::unique_ptr<Result> &&result) {
   result_.add_result(concat(params_, std::move(params)), std::move(result));
 }
 

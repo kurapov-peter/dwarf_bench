@@ -32,7 +32,7 @@ void NestedLoopJoin::_run(const size_t buf_size, Meter &meter) {
   auto expected = join_helpers::seq_join(table_a_keys, table_a_values,
                                          table_b_keys, table_b_values);
 
-  Result result;
+  std::unique_ptr<Result> result = std::make_unique<Result>();
 
   {
     sycl::buffer<uint32_t> key_a(table_a_keys);
@@ -70,7 +70,7 @@ void NestedLoopJoin::_run(const size_t buf_size, Meter &meter) {
      }).wait();
     auto host_end = std::chrono::steady_clock::now();
 
-    result.host_time = host_end - host_start;
+    result->host_time = host_end - host_start;
   }
 
   std::vector<uint32_t> res_k;
@@ -90,7 +90,7 @@ void NestedLoopJoin::_run(const size_t buf_size, Meter &meter) {
 
   if (output != expected) {
     std::cerr << "Incorrect results" << std::endl;
-    result.valid = false;
+    result->valid = false;
   }
 
   DwarfParams params{{"buf_size", std::to_string(buf_size)}};

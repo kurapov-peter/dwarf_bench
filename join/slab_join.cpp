@@ -11,7 +11,6 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
   const int scale = 16;
   auto opts = meter.opts();
 
-  // todo: sizes
   const std::vector<uint32_t> table_a_keys =
       helpers::make_unique_random(buf_size);
   const std::vector<uint32_t> table_a_values =
@@ -27,8 +26,6 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
 
-  // hash table
-
   auto expected = join_helpers::seq_join(table_a_keys, table_a_values,
                                          table_b_keys, table_b_values);
 
@@ -40,12 +37,11 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
     SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(
         SlabHash::CLUSTER_SIZE, num_of_groups, SlabHash::BUCKETS_COUNT,
         {SlabHash::EMPTY_UINT32_T, 0}, q);
-    // testing
     std::vector<uint32_t> key_out(buf_size, 0);
     std::vector<uint32_t> val1_out(buf_size, -1);
     std::vector<uint32_t> val2_out(buf_size, -1);
 
-    Result result;
+    std::unique_ptr<HashJoinResult> result = std::make_unique<HashJoinResult>();
 
     {
       sycl::buffer<SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>>>
@@ -118,10 +114,9 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
        }).wait();
       auto host_end = std::chrono::steady_clock::now();
 
-      result.isJoin = true;
-      result.host_time = host_end - host_start;
-      result.build_time = build_end - host_start;
-      result.probe_time = host_end - probe_start;
+      result->host_time = host_end - host_start;
+      result->build_time = build_end - host_start;
+      result->probe_time = host_end - probe_start;
     }
 
     std::vector<uint32_t> res_k;
@@ -141,7 +136,7 @@ void SlabJoin::_run(const size_t buf_size, Meter &meter) {
 
     if (output != expected) {
       std::cerr << "Incorrect results" << std::endl;
-      result.valid = false;
+      result->valid = false;
     }
 
     DwarfParams params{{"buf_size", std::to_string(buf_size)}};
