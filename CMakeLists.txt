@@ -69,6 +69,7 @@ if(ENABLE_DPCPP)
     slab_probe
     nested_loop_join
     join_helpers_lib
+    join
   )
   if(ENABLE_CUDA)
   list(APPEND bench_libs
