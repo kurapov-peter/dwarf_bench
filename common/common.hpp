@@ -12,8 +12,6 @@
 #include "meter.hpp"
 #include "options.hpp"
 
-#include <set>
-
 template <class Collection>
 void dump_collection(const Collection &c, std::ostream &os = std::cout) {
   bool first = true;

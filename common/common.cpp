@@ -1,6 +1,7 @@
 #include "common.hpp"
 #include "boost/dll.hpp"
 #include <cstdlib>
+#include <set>
 
 namespace helpers {
 std::vector<uint32_t> make_unique_random(size_t size) {
