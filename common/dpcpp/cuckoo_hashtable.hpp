@@ -9,17 +9,18 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
         sycl::global_ptr<Key> _keys;
         sycl::global_ptr<Val> _vals;
 
-        const size_t _size;
+        const size_t _input_size;
         Hasher1 _hasher1;
         Hasher2 _hasher2;
         const Key _EMPTY_KEY = std::numeric_limits<Key>::max();
         sycl::global_ptr<uint32_t> _bitmask;
         static constexpr uint32_t elem_sz = CHAR_BIT * sizeof(uint32_t);
+        const size_t max_iter = 1e5;
         
     public:
-        explicit CuckooHashtable(const size_t size, sycl::global_ptr<Key> keys, sycl::global_ptr<Val> vals, 
+        explicit CuckooHashtable(const size_t input_size, sycl::global_ptr<Key> keys, sycl::global_ptr<Val> vals, 
                                 sycl::global_ptr<uint32_t> bitmask, Hasher1 hasher1, Hasher2 hasher2):
-            _size(size), _keys(keys), _vals(vals), _bitmask(bitmask), _hasher1(hasher1), _hasher2(hasher2){}
+            _input_size(input_size), _keys(keys), _vals(vals), _bitmask(bitmask), _hasher1(hasher1), _hasher2(hasher2){}
         
         const std::pair<Val, bool> at(Key key) const {
             auto pos1 = _hasher1(key);
@@ -37,7 +38,7 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
 
         bool insert(Key key, Val value) {
             size_t pos = _hasher1(key);
-            for (int cnt = 0; cnt < std::min(_size / 4, (size_t) 1000000); cnt++) {
+            for (int cnt = 0; cnt < std::min(_input_size, max_iter); cnt++) {
                 lock(pos);
                 if (_keys[pos] == _EMPTY_KEY) {
                     _keys[pos] = key;

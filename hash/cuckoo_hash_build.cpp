@@ -68,7 +68,7 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
 
           h.parallel_for<class hash_build>(sycl::nd_range<1>{buf_size, WORKGROUP_SIZE}, [=](sycl::nd_item<1> it) {
             CuckooHashtable<uint32_t, uint32_t,  MurmurHash3_x86_32,  MurmurHash3_x86_32> 
-            ht(ht_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
+            ht(buf_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
                     bitmask_acc.get_pointer(), hasher1, hasher2);
 
             size_t idx = it.get_global_id();
@@ -105,7 +105,7 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
        auto keys_acc = keys_buf.get_access(h);
        h.parallel_for<class hash_build_check>(buf_size, [=](auto &idx) {
          CuckooHashtable<uint32_t, uint32_t,  MurmurHash3_x86_32,  MurmurHash3_x86_32> 
-            ht(ht_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
+            ht(buf_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
                     bitmask_acc.get_pointer(), hasher1, hasher2);
          o[idx] = ht.has(s[idx]);
        });
