@@ -9,8 +9,8 @@ const uint32_t SCALE = 2;
 void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
   
-  const std::vector<uint32_t> host_src = 
-     helpers::make_unique_random(buf_size);
+  const std::vector<uint32_t> host_src = {35, 39, 46, 60, 67, 74, 77, 79, 91, 93};
+ //    helpers::make_unique_random(buf_size);
 
   const size_t ht_size = buf_size * 4;
   
@@ -42,8 +42,8 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
       auto host_start = std::chrono::steady_clock::now();
       
       while (true) {
-        uint32_t hasher1_offset = helpers::make_random();
-        uint32_t hasher2_offset = helpers::make_random();
+        uint32_t hasher1_offset = 95;//helpers::make_random();
+        uint32_t hasher2_offset = 763;//helpers::make_random();
      
         hasher1 = MurmurHash3_x86_32(ht_size, sizeof(uint32_t), hasher1_offset);
         hasher2 = MurmurHash3_x86_32(ht_size, sizeof(uint32_t), hasher2_offset);

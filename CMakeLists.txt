@@ -65,6 +65,7 @@ if(ENABLE_DPCPP)
     hash_build
     slab_hash_build
     cuckoo_hash_build
+    cuckoo_join
     join
   )
   if(ENABLE_CUDA)

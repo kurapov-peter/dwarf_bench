@@ -7,6 +7,7 @@
 #include "radix/radix.hpp"
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
+#include "join/cuckoo_join.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();
@@ -22,6 +23,7 @@ void populate_registry() {
   registry->registerd(new HashBuild());
   registry->registerd(new SlabHashBuild());
   registry->registerd(new CuckooHashBuild());
+  registry->registerd(new CuckooJoin());
 #ifdef CUDA_ENABLED
   registry->registerd(new ConstantExampleDPCPPCuda());
   registry->registerd(new DPLScanCuda());
