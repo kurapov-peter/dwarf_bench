@@ -20,14 +20,14 @@ struct Result {
   bool valid = true;
 
 protected:
-  virtual std::ostream &format(std::ostream &os) const;
+  virtual std::ostream &print_to_stream(std::ostream &os) const;
   friend std::ostream& operator << (std::ostream& out, const Result& instance);
 };
 
 struct HashJoinResult : public Result {
   Duration probe_time;
   Duration build_time;
-  std::ostream &format(std::ostream &os) const override;
+  std::ostream &print_to_stream(std::ostream &os) const override;
 };
 
 std::ostream &operator<<(std::ostream &os, const Result &res);

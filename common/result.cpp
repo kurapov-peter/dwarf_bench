@@ -2,18 +2,18 @@
 #include <fstream>
 
 std::ostream &operator<<(std::ostream &os, const Result &res) {
-  return res.format(os);
+  return res.print_to_stream(os);
 }
 
-std::ostream &Result::format(std::ostream &os) const {
+std::ostream &Result::print_to_stream(std::ostream &os) const {
   os << "Kernel duration: " << ((double)kernel_time) / 1000.0 << " us\n"
      << "Host duration:   " << host_time.count() << " us\n";
 
   return os;
 }
 
-std::ostream &HashJoinResult::format(std::ostream &os) const {
-  Result::format(os);
+std::ostream &HashJoinResult::print_to_stream(std::ostream &os) const {
+  Result::print_to_stream(os);
 
   os << "Build time: " << build_time.count() << " us\n"
        << "Probe time: " << probe_time.count() << " us\n";
