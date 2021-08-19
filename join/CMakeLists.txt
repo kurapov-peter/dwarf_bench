@@ -1,5 +1,6 @@
-add_subdirectory(join_helpers)
 if(ENABLE_DPCPP)
+    add_subdirectory(join_helpers)
+
     add_dpcpp_lib(slab_join slab_join.cpp)
     target_link_libraries(slab_join PRIVATE join_helpers_lib)
 
