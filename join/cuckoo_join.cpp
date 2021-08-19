@@ -12,19 +12,9 @@ void CuckooJoin::_run(const size_t buf_size, Meter &meter) {
   const std::vector<uint32_t> table_a_keys = helpers::make_unique_random(buf_size);
   const std::vector<uint32_t> table_a_values = helpers::make_random<uint32_t>(buf_size);
 
-  // std::cout << "table a" << std::endl;
-  // for (int i = 0; i < buf_size; i++)
-  //   std::cout << table_a_keys[i] << " " << table_a_values[i] << std::endl;
-  // std::cout << std::endl;
-
   const std::vector<uint32_t> table_b_keys = helpers::make_unique_random(buf_size);
   const std::vector<uint32_t> table_b_values = helpers::make_random<uint32_t>(buf_size);
 
-  // std::cout << "table b" << std::endl;
-  // for (int i = 0; i < buf_size; i++)
-  //   std::cout << table_b_keys[i] << " " << table_b_values[i] << std::endl;
-  // std::cout << std::endl;
-  
   std::vector<uint32_t> probe_keys(buf_size, 0);
   std::vector<uint32_t> probe_a_values(buf_size, 0);
   std::vector<uint32_t> probe_b_values(buf_size, 0);
@@ -69,7 +59,6 @@ void CuckooJoin::_run(const size_t buf_size, Meter &meter) {
       auto host_start = std::chrono::steady_clock::now();
       
       while (true) {
-        std::cout << "here1\n";
         uint32_t hasher1_offset = helpers::make_random();
         uint32_t hasher2_offset = helpers::make_random();
      
@@ -107,7 +96,6 @@ void CuckooJoin::_run(const size_t buf_size, Meter &meter) {
             }
           });
         });
-        std::cout << "here2\n";
         auto result = insertion_result_buf.get_access<sycl::access::mode::read>();
 
         bool flag = false;
@@ -151,18 +139,11 @@ void CuckooJoin::_run(const size_t buf_size, Meter &meter) {
             });
 
           }).wait();
-          std::cout << "here3\n";
           break;
         }
       }
 
       auto host_end = std::chrono::steady_clock::now();
-
-      
-      //auto host_end = std::chrono::steady_clock::now();
-      auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
-                             host_end - host_start)
-                             .count();
       Result result;
       result.host_time = host_end - host_start;
 
@@ -187,17 +168,6 @@ void CuckooJoin::_run(const size_t buf_size, Meter &meter) {
       
       join_helpers::ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = 
         {res_keys, {res_a_values, res_b_values}};
-
-      // std::cout << "EXPECTED" << std::endl;
-
-      // for (int i = 0; i < expected.first.size(); i++)
-      //   std::cout << expected.first[i] << " : " << expected.second.first[i] << " " << expected.second.second[i] << std::endl;
-
-      // std::cout << "\nOUTPUT" << std::endl;
-
-      // for (int i = 0; i < output.first.size(); i++)
-      //   std::cout << output.first[i] << " : " << output.second.first[i] << " " << output.second.second[i] << std::endl;
-         
       
       if (output != expected) {
         std::cerr << "Incorrect results" << std::endl;
