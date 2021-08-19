@@ -8,6 +8,7 @@
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
 #include "join/cuckoo_join.hpp"
+#include "join/sort_join.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();
@@ -24,6 +25,7 @@ void populate_registry() {
   registry->registerd(new SlabHashBuild());
   registry->registerd(new CuckooHashBuild());
   registry->registerd(new CuckooJoin());
+  registry->registerd(new SortJoin());
 #ifdef CUDA_ENABLED
   registry->registerd(new ConstantExampleDPCPPCuda());
   registry->registerd(new DPLScanCuda());
