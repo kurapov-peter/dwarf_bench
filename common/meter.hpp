@@ -6,7 +6,7 @@ class Meter {
 public:
   Meter(const std::string &dwarf_name, MeasureResults &result)
       : dwarf_name_(dwarf_name), result_(result) {}
-  void add_result(DwarfParams &&params, std::unique_ptr<Result> &&result);
+  void add_result(DwarfParams &&params, std::unique_ptr<Result> result);
   void set_params(DwarfParams params);
   void set_opts(const RunOptions &opts);
   const RunOptions &opts() const;

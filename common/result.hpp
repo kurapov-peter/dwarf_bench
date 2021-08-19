@@ -43,7 +43,7 @@ public:
   using const_iterator = SingleRunResults::const_iterator;
   MeasureResults(const std::string &name) : name_(name) {}
 
-  void add_result(DwarfParams params, std::unique_ptr<Result> &&result);
+  void add_result(DwarfParams params, std::unique_ptr<Result> result);
 
   const_iterator begin() const;
   const_iterator end() const;

@@ -29,7 +29,7 @@ MeasureResults::const_iterator MeasureResults::end() const {
   return results_.end();
 }
 
-void MeasureResults::add_result(DwarfParams params, std::unique_ptr<Result> &&result) {
+void MeasureResults::add_result(DwarfParams params, std::unique_ptr<Result> result) {
   results_.push_back({params, std::move(result)});
 }
 
