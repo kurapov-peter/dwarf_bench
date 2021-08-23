@@ -1,9 +1,9 @@
 #pragma once
 #include "common/common.hpp"
 
-class Join : public Dwarf {
+class NestedLoopJoin : public Dwarf {
 public:
-  Join();
+  NestedLoopJoin();
   void run(const RunOptions &opts) override;
   void init(const RunOptions &opts) override;
 

@@ -1,8 +1,22 @@
 #include "common.hpp"
 #include "boost/dll.hpp"
 #include <cstdlib>
+#include <set>
 
 namespace helpers {
+std::vector<uint32_t> make_unique_random(size_t size) {
+  constexpr size_t size_multiplier = 10;
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> dist(1, std::min((long) (size * size_multiplier), (long) ((uint32_t) -1)));
+
+  std::set<uint32_t> s;
+  while (s.size() < size) {
+    s.insert(dist(gen) % (size * 10));
+  }
+  return std::vector<uint32_t>(s.begin(), s.end());
+}
 
 std::vector<int> make_random_uniform_binary(size_t size) {
   std::random_device rd;

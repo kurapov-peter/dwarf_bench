@@ -1,9 +1,10 @@
 #pragma once
+
 #include "common/common.hpp"
 
-class Join : public Dwarf {
+class SlabProbe : public Dwarf {
 public:
-  Join();
+  SlabProbe();
   void run(const RunOptions &opts) override;
   void init(const RunOptions &opts) override;
 
