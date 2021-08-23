@@ -4,20 +4,6 @@
 #include <set>
 
 namespace helpers {
-std::vector<uint32_t> make_unique_random(size_t size) {
-  constexpr size_t size_multiplier = 10;
-
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<int> dist(1, std::min((long) (size * size_multiplier), (long) ((uint32_t) -1)));
-
-  std::set<uint32_t> s;
-  while (s.size() < size) {
-    s.insert(dist(gen) % (size * 10));
-  }
-  return std::vector<uint32_t>(s.begin(), s.end());
-}
-
 std::vector<int> make_random_uniform_binary(size_t size) {
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -25,6 +11,27 @@ std::vector<int> make_random_uniform_binary(size_t size) {
   std::uniform_int_distribution<int> dist(0, 1);
   std::generate(out.begin(), out.end(), [&]() { return dist(gen); });
   return out;
+}
+
+uint32_t make_random() {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> dist(1, 1000);
+  return dist(gen);
+}
+
+std::vector<uint32_t> make_unique_random(size_t size) {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> dist(
+      1, std::min((long)size * 10,
+                  (long)(std::numeric_limits<uint32_t>::max() - 1)));
+
+  std::set<uint32_t> s;
+  while (s.size() < size) {
+    s.insert(dist(gen) % (size * 10));
+  }
+  return std::vector<uint32_t>(s.begin(), s.end());
 }
 
 std::string get_kernels_root_env(const char *argv0) {
