@@ -63,12 +63,8 @@ template <class Key, class Val, class Hasher1, class Hasher2> class CuckooHashta
             uint32_t major_idx = pos / elem_sz;
             uint8_t minor_idx = pos % elem_sz;
             uint32_t mask = uint32_t(1) << minor_idx;
-            uint32_t counter = 0;
             do {
                 present = sycl::atomic<uint32_t>(_bitmask + major_idx).fetch_or(mask);
-                counter++;
-                // if (counter > 100000)
-                    // break;
             } while (present & mask);
         }
 
