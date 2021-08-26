@@ -11,14 +11,16 @@ using atomic_ref_device =
     sycl::ext::oneapi::atomic_ref<K, acq_rel, device, global_device_space>;
 
 int main() {
-  sycl::queue q{ sycl::gpu_selector{} };
+  sycl::queue q{sycl::gpu_selector{}};
 
-  std::cout << q.get_device().get_info<sycl::info::device::max_work_group_size>() << std::endl;
-  
-  size_t work_group_size = q.get_device().get_info<sycl::info::device::max_work_group_size>();
+  std::cout
+      << q.get_device().get_info<sycl::info::device::max_work_group_size>()
+      << std::endl;
+
+  size_t work_group_size =
+      q.get_device().get_info<sycl::info::device::max_work_group_size>();
   size_t work_groups_count = 256;
 
-  
   uint32_t lock = 0;
   uint32_t num = 0;
 
@@ -31,22 +33,21 @@ int main() {
     q.submit([&](sycl::handler &h) {
       auto num_acc = sycl::accessor(num_buf, h, sycl::read_write);
       auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
-      sycl::stream out(100000,100,h);
-      
-      h.parallel_for(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(subgroup_size)]]  {
-          int sg_ind = it.get_sub_group().get_local_id();
 
-          if (sg_ind == 0) { 
-            
-            while (atomic_ref_device<uint32_t>(*(lock_acc.get_pointer())).fetch_or(1)) {}
-            *(num_acc.get_pointer()) = *(num_acc.get_pointer()) + 1;
-            atomic_ref_device<uint32_t>(*(lock_acc.get_pointer())).fetch_and(~1);
+      h.parallel_for(r, [=
+      ](sycl::nd_item<1> it)[[intel::reqd_sub_group_size(subgroup_size)]] {
+        int sg_ind = it.get_sub_group().get_local_id();
+
+        if (sg_ind == 0) {
+          while (atomic_ref_device<uint32_t>(*(lock_acc.get_pointer()))
+                     .fetch_or(1)) {
           }
+          *(num_acc.get_pointer()) = *(num_acc.get_pointer()) + 1;
+          atomic_ref_device<uint32_t>(*(lock_acc.get_pointer())).fetch_and(~1);
+        }
       });
-    });
+    }).wait();
   }
-
-  
 
   std::cout << num << '\n';
 }
