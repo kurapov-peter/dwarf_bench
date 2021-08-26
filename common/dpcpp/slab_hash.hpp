@@ -115,8 +115,7 @@ public:
     if (_ind == 0) {
       if ((_lists + _hasher(key))->root == nullptr) {
         alloc_node((_lists + _hasher(key))->root);
-      }
-      
+      }   
     }
     _iter = (_lists + _hasher(key))->root;
     sycl::group_barrier(_gr);
@@ -178,7 +177,7 @@ private:
     auto list_index = _hasher(_key);
     while (atomic_ref_device<uint32_t>(
                (*(_lock + (list_index / (UINT32_T_BIT)))))
-               .fetch_or(1 << (list_index % (UINT32_T_BIT))) &
+       .fetch_or(1 << (list_index % (UINT32_T_BIT))) &
            (1 << (list_index % (UINT32_T_BIT)))) {
     }
   }
@@ -278,5 +277,4 @@ private:
 
   std::optional<T> _ans;
 };
-
 } // namespace SlabHash
