@@ -1,9 +1,9 @@
 #pragma once
 #include "common/common.hpp"
 
-class CuckooJoin : public Dwarf {
+class SortMergeJoin : public Dwarf {
 public:
-  CuckooJoin();
+  SortMergeJoin();
   void run(const RunOptions &opts) override;
   void init(const RunOptions &opts) override;
 

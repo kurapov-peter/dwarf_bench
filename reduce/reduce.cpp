@@ -65,12 +65,12 @@ void ReduceDPCPP::_run(const size_t buf_size, Meter &meter) {
                              host_end - host_start)
                              .count();
 
-    Result result;
-    result.host_time = host_end - host_start;
+    std::unique_ptr<Result> result = std::make_unique<Result>();
+    result->host_time = host_end - host_start;
     out.get_access<sycl::access::mode::read>();
     if (expected != host_out) {
       std::cerr << "Incorrect results" << std::endl;
-      result.valid = false;
+      result->valid = false;
     }
 #ifndef NDEBUG
     {

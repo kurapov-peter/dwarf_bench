@@ -1,4 +1,5 @@
-#pragma once
+#pragma once 
+
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
@@ -25,11 +26,13 @@ void dump_collection(const Collection &c, std::ostream &os = std::cout) {
 }
 
 namespace helpers {
+std::vector<uint32_t> make_unique_random(size_t size);
+
 template <class T> std::vector<T> make_random(size_t size) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::vector<T> out(size);
-  std::uniform_int_distribution<T> dist(0, 10);
+  std::uniform_int_distribution<T> dist(1, 10000);
   std::generate(out.begin(), out.end(), [&]() { return dist(gen); });
   return out;
 }

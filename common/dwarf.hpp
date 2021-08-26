@@ -16,7 +16,7 @@ public:
   void report(const RunOptions &opts) {
     if (opts.report_path.empty()) {
       for (const auto &res : results_) {
-        std::cout << res.result;
+        std::cout << *res.result;
       }
     } else {
       results_.write_csv(opts.report_path);

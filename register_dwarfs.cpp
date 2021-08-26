@@ -1,14 +1,17 @@
 #include "register_dwarfs.hpp"
 #include "common/registry.hpp"
 #include "constant/constant.hpp"
+#include "hash/cuckoo_hash_build.hpp"
 #include "hash/hash_build.hpp"
 #include "hash/slab_hash_build.hpp"
-#include "hash/cuckoo_hash_build.hpp"
+#include "join/nested_join.hpp"
+#include "join/slab_join.hpp"
+#include "probe/slab_probe.hpp"
 #include "radix/radix.hpp"
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
 #include "join/cuckoo_join.hpp"
-#include "join/sort_join.hpp"
+#include "join/sort_merge_join.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();
@@ -23,9 +26,12 @@ void populate_registry() {
   registry->registerd(new ReduceDPCPP());
   registry->registerd(new HashBuild());
   registry->registerd(new SlabHashBuild());
+  registry->registerd(new NestedLoopJoin());
+  registry->registerd(new SlabJoin());
+  registry->registerd(new SlabProbe());
   registry->registerd(new CuckooHashBuild());
   registry->registerd(new CuckooJoin());
-  registry->registerd(new SortJoin());
+  registry->registerd(new SortMergeJoin());
 #ifdef CUDA_ENABLED
   registry->registerd(new ConstantExampleDPCPPCuda());
   registry->registerd(new DPLScanCuda());

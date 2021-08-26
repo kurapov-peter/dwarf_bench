@@ -1,4 +1,5 @@
 #include "cuckoo_join.hpp"
+#include "join_helpers/join_helpers.hpp"
 #include "common/dpcpp/cuckoo_hashtable.hpp"
 
 CuckooJoin::CuckooJoin() : Dwarf("CuckooJoin") {}
@@ -27,7 +28,6 @@ void CuckooJoin::_run(const size_t buf_size, Meter &meter) {
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
  
   for (auto it = 0; it < opts.iterations; ++it) {
-
       MurmurHash3_x86_32 hasher1(ht_size, sizeof(uint32_t), helpers::make_random()), 
                           hasher2(ht_size, sizeof(uint32_t),helpers::make_random());
 
@@ -144,8 +144,8 @@ void CuckooJoin::_run(const size_t buf_size, Meter &meter) {
       }
 
       auto host_end = std::chrono::steady_clock::now();
-      Result result;
-      result.host_time = host_end - host_start;
+      std::unique_ptr<Result> result = std::make_unique<Result>();
+      result->host_time = host_end - host_start;
 
       std::vector<uint32_t> res_keys;
       std::vector<uint32_t> res_a_values;
@@ -171,7 +171,7 @@ void CuckooJoin::_run(const size_t buf_size, Meter &meter) {
       
       if (output != expected) {
         std::cerr << "Incorrect results" << std::endl;
-        result.valid = false;
+        result->valid = false;
       }
 
       DwarfParams params{{"buf_size", std::to_string(buf_size)}};
