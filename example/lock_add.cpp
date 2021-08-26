@@ -32,6 +32,7 @@ int main() {
     q.submit([&](sycl::handler &h) {
       auto num_acc = sycl::accessor(num_buf, h, sycl::read_write);
       auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
+      sycl::stream out(100000,100,h);
       
       h.parallel_for(r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(subgroup_size)]]  {
           int sg_ind = it.get_sub_group().get_local_id();
