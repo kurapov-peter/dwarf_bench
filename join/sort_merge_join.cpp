@@ -70,11 +70,11 @@ void SortMergeJoin::_run(const size_t buf_size, Meter &meter) {
         std::unique_ptr<Result> result = std::make_unique<Result>();
         result->host_time = host_end - host_start;
         
-        auto expected =
-            join_helpers::seq_join(table_a_keys, table_a_values, table_b_keys, table_b_values);
+        // auto expected =
+        //     join_helpers::seq_join(table_a_keys, table_a_values, table_b_keys, table_b_values);
       
-        join_helpers::ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = 
-            {res_keys, {res_a_values, res_b_values}};
+        // join_helpers::ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = 
+        //     {res_keys, {res_a_values, res_b_values}};
       
         if (output != expected) {
             std::cerr << "Incorrect results" << std::endl;
