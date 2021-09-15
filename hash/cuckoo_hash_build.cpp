@@ -4,9 +4,8 @@
 
 CuckooHashBuild::CuckooHashBuild() : Dwarf("CuckooHashBuild") {}
 const uint32_t EMPTY_KEY = std::numeric_limits<uint32_t>::max();
-const uint32_t WORKGROUP_SIZE = 1;
-//const size_t MAX_WORKGROUPS_COUNT = 10;
-//const uint32_t SCALE = 2;
+const size_t work_groups_count = 256;
+constexpr size_t subgroup_size = 32;
 
 void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
@@ -21,9 +20,12 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
  
+  size_t work_group_size =
+        q.get_device().get_info<sycl::info::device::max_work_group_size>();
+  
+  sycl::nd_range<1> r{work_group_size * work_groups_count, work_group_size};
+ 
   for (auto it = 0; it < opts.iterations; ++it) {
-      std::cout << "here 1"<< std::endl;
-
       MurmurHash3_x86_32 hasher1(ht_size, sizeof(uint32_t), helpers::make_random()), 
                           hasher2(ht_size, sizeof(uint32_t),helpers::make_random());
 
@@ -43,15 +45,19 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
      
 
       auto host_start = std::chrono::steady_clock::now();
+      
       uint32_t scale;
-      size_t workgroups_cnt = 10;
-      if (buf_size % (workgroups_cnt / 2) == 0)
-        scale = buf_size / (workgroups_cnt / 2);
+      size_t subgroups_cnt = work_group_size * work_groups_count / subgroup_size;
+      
+      if (buf_size < subgroups_cnt)
+        scale = 1;
+      else if (buf_size % (subgroups_cnt) == 0)
+        scale = buf_size / subgroups_cnt;
       else
-        scale = buf_size / (workgroups_cnt / 2 - 1);
+        scale = buf_size / (subgroups_cnt - 1);
 
       while (true) {
-        std::cout << "here 2"<< std::endl;
+        // std::cout << "here 2"<< std::endl;
         uint32_t hasher1_offset = helpers::make_random();
         uint32_t hasher2_offset = helpers::make_random();
      
@@ -74,24 +80,31 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
           auto keys_acc = keys_buf.get_access(h);
           auto vals_acc = vals_buf.get_access(h);
           auto insertion_acc = insertion_result_buf.get_access(h);
-          
+          // auto out = sycl::stream(20480, 768, h);
 
-          h.parallel_for<class hash_build>(sycl::nd_range<1>{workgroups_cnt, WORKGROUP_SIZE}, [=](sycl::nd_item<1> it) {
+          h.parallel_for<class hash_build>(r, [=](sycl::nd_item<1> it)[[intel::reqd_sub_group_size(subgroup_size)]] {
             CuckooHashtable<uint32_t, uint32_t,  MurmurHash3_x86_32,  MurmurHash3_x86_32> 
             ht(buf_size, keys_acc.get_pointer(), vals_acc.get_pointer(), 
                     bitmask_acc.get_pointer(), hasher1, hasher2);
-
-            size_t idx = it.get_global_id();
-              if (idx % 2 == 0){
-                idx = idx / 2;
-                for (int i = idx * scale; i < (idx + 1) * scale && i < buf_size; i++)
+            
+            int sg_ind = it.get_sub_group().get_local_id();
+            if (sg_ind == 0){
+              int idx = it.get_global_id() / subgroup_size;
+              // out << idx << " : ";
+              int end = (idx + 1) * scale;
+                if (idx == subgroups_cnt - 1)
+                  end = buf_size;
+                for (int i = idx * scale; i < end && i < buf_size; i++){
+                  // out << i << " ";
                   insertion_acc[i] = ht.insert(s[i], s[i]);
-              }
+                }
+                // out << sycl::endl;
+            }
           });
         }).wait();
-        std::cout << "here 3"<< std::endl;
+        // std::cout << "here 3"<< std::endl;
         auto result = insertion_result_buf.get_access<sycl::access::mode::read>();
-
+        //break;
         bool flag = false;
         for (int i = 0; i < buf_size; i++){
           if (result[i] == false){

@@ -27,7 +27,7 @@ void MeasureResults::write_csv(const std::string &filename) const {
       of << "device_type,buf_size_bytes,host_time_ms,kernel_time_ms\n";
     for (const auto &res : results_) {
       of << res.params.at("device_type") << ","
-         << std::stoi(res.params.at("buf_size")) * 4 << ",";
+         << std::stoi(res.params.at("buf_size")) * 8 << ",";
       of << res.result.host_time.count() / 1000.0 << ","
          << ((double)res.result.kernel_time) / (1000.0 * 1000.0) << "\n";
     }
