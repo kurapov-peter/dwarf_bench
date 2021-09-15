@@ -39,10 +39,13 @@ int main() {
         int sg_ind = it.get_sub_group().get_local_id();
 
         if (sg_ind == 0) {
+          //lock
           while (atomic_ref_device<uint32_t>(*(lock_acc.get_pointer()))
-                     .fetch_or(1)) {
-          }
+                     .fetch_or(1)) {}
+            
           *(num_acc.get_pointer()) = *(num_acc.get_pointer()) + 1;
+          
+          //unlock
           atomic_ref_device<uint32_t>(*(lock_acc.get_pointer())).fetch_and(~1);
         }
       });
