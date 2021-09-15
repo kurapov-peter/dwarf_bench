@@ -80,7 +80,6 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
           auto keys_acc = keys_buf.get_access(h);
           auto vals_acc = vals_buf.get_access(h);
           auto insertion_acc = insertion_result_buf.get_access(h);
-          // auto out = sycl::stream(20480, 768, h);
 
           h.parallel_for<class hash_build>(r, [=](sycl::nd_item<1> it)[[intel::reqd_sub_group_size(subgroup_size)]] {
             CuckooHashtable<uint32_t, uint32_t,  MurmurHash3_x86_32,  MurmurHash3_x86_32> 
@@ -90,21 +89,16 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
             int sg_ind = it.get_sub_group().get_local_id();
             if (sg_ind == 0){
               int idx = it.get_global_id() / subgroup_size;
-              // out << idx << " : ";
               int end = (idx + 1) * scale;
-                if (idx == subgroups_cnt - 1)
-                  end = buf_size;
-                for (int i = idx * scale; i < end && i < buf_size; i++){
-                  // out << i << " ";
-                  insertion_acc[i] = ht.insert(s[i], s[i]);
-                }
-                // out << sycl::endl;
+              if (idx == subgroups_cnt - 1)
+                end = buf_size;
+              for (int i = idx * scale; i < end && i < buf_size; i++){
+                insertion_acc[i] = ht.insert(s[i], s[i]);
+              }
             }
           });
         }).wait();
-        // std::cout << "here 3"<< std::endl;
         auto result = insertion_result_buf.get_access<sycl::access::mode::read>();
-        //break;
         bool flag = false;
         for (int i = 0; i < buf_size; i++){
           if (result[i] == false){
