@@ -12,6 +12,7 @@
 #include "scan/scan.hpp"
 #include "join/cuckoo_join.hpp"
 #include "join/sort_merge_join.hpp"
+#include "probe/cuckoo_probe.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();
@@ -31,6 +32,7 @@ void populate_registry() {
   registry->registerd(new SlabProbe());
   registry->registerd(new CuckooHashBuild());
   registry->registerd(new CuckooJoin());
+  registry->registerd(new CuckooProbe());
   registry->registerd(new SortMergeJoin());
 #ifdef CUDA_ENABLED
   registry->registerd(new ConstantExampleDPCPPCuda());

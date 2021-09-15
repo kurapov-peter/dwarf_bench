@@ -76,6 +76,7 @@ if(ENABLE_DPCPP)
     join_helpers_lib
     cuckoo_hash_build
     cuckoo_join
+    cuckoo_probe
     sort_merge_join
     join
   )
