@@ -63,7 +63,6 @@ void CuckooHashBuild::_run(const size_t buf_size, Meter &meter) {
 
       auto clear_keys = q.submit([&](sycl::handler &h) {
           auto keys_acc = keys_buf.get_access(h);
-          auto bitmask_acc = bitmask_buf.get_access(h);
 
           h.parallel_for<class clear_keys>(ht_size, [=](auto &idx) {
             keys_acc[idx] = EMPTY_KEY;
