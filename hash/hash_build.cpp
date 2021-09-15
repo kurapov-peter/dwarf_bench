@@ -49,8 +49,8 @@ void HashBuild::_run(const size_t buf_size, Meter &meter) {
     auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
                              host_end - host_start)
                              .count();
-    Result result;
-    result.host_time = host_end - host_start;
+    std::unique_ptr<Result> result = std::make_unique<Result>();
+    result->host_time = host_end - host_start;
 
     sycl::buffer<uint32_t> out_buf(output);
 
@@ -74,7 +74,7 @@ void HashBuild::_run(const size_t buf_size, Meter &meter) {
     out_buf.get_access<sycl::access::mode::read>();
     if (output != expected) {
       std::cerr << "Incorrect results" << std::endl;
-      result.valid = false;
+      result->valid = false;
     }
 
     DwarfParams params{{"buf_size", std::to_string(buf_size)}};

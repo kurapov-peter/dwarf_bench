@@ -8,6 +8,7 @@ find_package(CUDA)
 option(ENABLE_DPCPP ON)
 option(ENABLE_CUDA OFF)
 option(EXPLICIT_DPL OFF)
+option(ENABLE_EXAMPLES ON)
 
 if(ENABLE_DPCPP)
   if(EXPLICIT_DPL)
@@ -47,6 +48,11 @@ add_subdirectory(radix)
 add_subdirectory(reduce)
 add_subdirectory(hash)
 add_subdirectory(join)
+add_subdirectory(probe)
+
+if(ENABLE_EXAMPLES)
+  add_subdirectory(example)
+endif()
 
 set(bench_libs 
   common
@@ -64,6 +70,10 @@ if(ENABLE_DPCPP)
     reduce
     hash_build
     slab_hash_build
+    slab_join
+    slab_probe
+    nested_loop_join
+    join_helpers_lib
     cuckoo_hash_build
     cuckoo_join
     sort_join

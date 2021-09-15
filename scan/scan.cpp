@@ -136,8 +136,8 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
                 << " (should be CL_COMPLETE)";
     }
 
-    Result result;
-    result.host_time = host_end - host_start;
+    std::unique_ptr<Result> result = std::make_unique<Result>();
+    result->host_time = host_end - host_start;
 
     cl_int profiling_error1;
     cl_int profiling_error2;
@@ -148,10 +148,10 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
       std::cerr << "Got profiling error: ";
       std::cerr << get_error_string(profiling_error1) << " & "
                 << get_error_string(profiling_error2) << std::endl;
-      result.valid = false;
+      result->valid = false;
     }
 
-    result.kernel_time = exe_time;
+    result->kernel_time = exe_time;
 
     // todo: move out
     std::vector<int> expected_out = expected_out_lt(host_src, filter_value);
@@ -160,7 +160,7 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
 
     if (expected_out != host_out) {
       std::cerr << "incorrect results" << std::endl;
-      result.valid = false;
+      result->valid = false;
     }
     DwarfParams params{{"buf_size", std::to_string(buffer_size)}};
     meter.add_result(std::move(params), std::move(result));

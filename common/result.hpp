@@ -4,6 +4,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <memory>
 
 using DwarfParams = std::map<std::string, std::string>;
 
@@ -17,13 +18,23 @@ struct Result {
   unsigned long kernel_time = 0;
   Duration host_time;
   bool valid = true;
+
+protected:
+  virtual std::ostream &print_to_stream(std::ostream &os) const;
+  friend std::ostream& operator << (std::ostream& out, const Result& instance);
+};
+
+struct HashJoinResult : public Result {
+  Duration probe_time;
+  Duration build_time;
+  std::ostream &print_to_stream(std::ostream &os) const override;
 };
 
 std::ostream &operator<<(std::ostream &os, const Result &res);
 
 struct DwarfRunResult {
   DwarfParams params;
-  Result result;
+  std::unique_ptr<Result> result;
 };
 
 using SingleRunResults = std::vector<DwarfRunResult>;
@@ -32,7 +43,7 @@ public:
   using const_iterator = SingleRunResults::const_iterator;
   MeasureResults(const std::string &name) : name_(name) {}
 
-  void add_result(DwarfParams params, Result &&result);
+  void add_result(DwarfParams params, std::unique_ptr<Result> result);
 
   const_iterator begin() const;
   const_iterator end() const;
