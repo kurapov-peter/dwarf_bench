@@ -42,8 +42,8 @@ void MeasureResults::write_csv(const std::string &filename) const {
     for (const auto &res : results_) {
       of << res.params.at("device_type") << ","
          << std::stoi(res.params.at("buf_size")) * 8 << ",";
-      of << res.result.host_time.count() / 1000.0 << ","
-         << ((double)res.result.kernel_time) / (1000.0 * 1000.0) << "\n";
+      of << res.result->host_time.count() / 1000.0 << ","
+         << ((double)res.result->kernel_time) / (1000.0 * 1000.0) << "\n";
     }
   } else {
     throw std::runtime_error("Could not open the file at " + filename);
