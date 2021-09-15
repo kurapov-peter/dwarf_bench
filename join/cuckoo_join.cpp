@@ -147,27 +147,27 @@ void CuckooJoin::_run(const size_t buf_size, Meter &meter) {
       std::unique_ptr<Result> result = std::make_unique<Result>();
       result->host_time = host_end - host_start;
 
-      // std::vector<uint32_t> res_keys;
-      // std::vector<uint32_t> res_a_values;
-      // std::vector<uint32_t> res_b_values;
+      std::vector<uint32_t> res_keys;
+      std::vector<uint32_t> res_a_values;
+      std::vector<uint32_t> res_b_values;
 
-      // auto probe_keys_acc = probe_keys_buf.get_access<sycl::access::mode::read>();
-      // auto probe_a_values_acc = probe_a_values_buf.get_access<sycl::access::mode::read>();
-      // auto probe_b_values_acc = probe_b_values_buf.get_access<sycl::access::mode::read>();
+      auto probe_keys_acc = probe_keys_buf.get_access<sycl::access::mode::read>();
+      auto probe_a_values_acc = probe_a_values_buf.get_access<sycl::access::mode::read>();
+      auto probe_b_values_acc = probe_b_values_buf.get_access<sycl::access::mode::read>();
 
-      // for (int i = 0; i < buf_size; i++){
-      //   if (probe_keys_acc[i] != 0){
-      //     res_keys.push_back(probe_keys_acc[i]);
-      //     res_a_values.push_back(probe_a_values_acc[i]);
-      //     res_b_values.push_back(probe_b_values_acc[i]);
-      //   }
-      // }
+      for (int i = 0; i < buf_size; i++){
+        if (probe_keys_acc[i] != 0){
+          res_keys.push_back(probe_keys_acc[i]);
+          res_a_values.push_back(probe_a_values_acc[i]);
+          res_b_values.push_back(probe_b_values_acc[i]);
+        }
+      }
 
-      // auto expected =
-      //   join_helpers::seq_join(table_a_keys, table_a_values, table_b_keys, table_b_values);
+      auto expected =
+        join_helpers::seq_join(table_a_keys, table_a_values, table_b_keys, table_b_values);
       
-      // join_helpers::ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = 
-      //   {res_keys, {res_a_values, res_b_values}};
+      join_helpers::ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = 
+        {res_keys, {res_a_values, res_b_values}};
       
       if (output != expected) {
         std::cerr << "Incorrect results" << std::endl;
