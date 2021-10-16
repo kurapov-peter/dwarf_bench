@@ -47,28 +47,28 @@ void NestedLoopJoin::_run(const size_t buf_size, Meter &meter) {
 
       auto host_start = std::chrono::steady_clock::now();
       q.submit([&](sycl::handler &h) {
-        auto key_a_acc = sycl::accessor(key_a, h, sycl::read_only);
-        auto val_a_acc = sycl::accessor(val_a, h, sycl::read_only);
+         auto key_a_acc = sycl::accessor(key_a, h, sycl::read_only);
+         auto val_a_acc = sycl::accessor(val_a, h, sycl::read_only);
 
-        auto key_b_acc = sycl::accessor(key_b, h, sycl::read_only);
-        auto val_b_acc = sycl::accessor(val_b, h, sycl::read_only);
+         auto key_b_acc = sycl::accessor(key_b, h, sycl::read_only);
+         auto val_b_acc = sycl::accessor(val_b, h, sycl::read_only);
 
-        auto out_key_acc = sycl::accessor(out_key_b, h, sycl::read_write);
-        auto out_val1_acc = sycl::accessor(out_val1_b, h, sycl::read_write);
-        auto out_val2_acc = sycl::accessor(out_val2_b, h, sycl::read_write);
+         auto out_key_acc = sycl::accessor(out_key_b, h, sycl::read_write);
+         auto out_val1_acc = sycl::accessor(out_val1_b, h, sycl::read_write);
+         auto out_val2_acc = sycl::accessor(out_val2_b, h, sycl::read_write);
 
-        h.parallel_for<class nested_join>(buf_size, [=](auto &it) {
-          uint32_t key = key_a_acc[it];
-          uint32_t val = val_a_acc[it];
-          for (int i = 0; i < buf_size; i++) {
-            if (key_b_acc[i] == key) {
-              out_key_acc[it * buf_size + i] = key;
-              out_val1_acc[it * buf_size + i] = val;
-              out_val2_acc[it * buf_size + i] = val_b_acc[i];
-            }
-          }
-        });
-      }).wait();
+         h.parallel_for<class nested_join>(buf_size, [=](auto &it) {
+           uint32_t key = key_a_acc[it];
+           uint32_t val = val_a_acc[it];
+           for (int i = 0; i < buf_size; i++) {
+             if (key_b_acc[i] == key) {
+               out_key_acc[it * buf_size + i] = key;
+               out_val1_acc[it * buf_size + i] = val;
+               out_val2_acc[it * buf_size + i] = val_b_acc[i];
+             }
+           }
+         });
+       }).wait();
       auto host_end = std::chrono::steady_clock::now();
 
       result->host_time = host_end - host_start;
