@@ -31,22 +31,24 @@ int main() {
     sycl::buffer<uint32_t> lock_buf(&lock, sycl::range<1>{1});
 
     q.submit([&](sycl::handler &h) {
-      auto num_acc = sycl::accessor(num_buf, h, sycl::read_write);
-      auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
+       auto num_acc = sycl::accessor(num_buf, h, sycl::read_write);
+       auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
 
-      h.parallel_for(r, [=
-      ](sycl::nd_item<1> it)[[intel::reqd_sub_group_size(subgroup_size)]] {
-        int sg_ind = it.get_sub_group().get_local_id();
+       h.parallel_for(
+           r, [=
+       ](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(subgroup_size)]] {
+             int sg_ind = it.get_sub_group().get_local_id();
 
-        if (sg_ind == 0) {
-          while (atomic_ref_device<uint32_t>(*(lock_acc.get_pointer()))
-                     .fetch_or(1)) {
-          }
-          *(num_acc.get_pointer()) = *(num_acc.get_pointer()) + 1;
-          atomic_ref_device<uint32_t>(*(lock_acc.get_pointer())).fetch_and(~1);
-        }
-      });
-    }).wait();
+             if (sg_ind == 0) {
+               while (atomic_ref_device<uint32_t>(*(lock_acc.get_pointer()))
+                          .fetch_or(1)) {
+               }
+               *(num_acc.get_pointer()) = *(num_acc.get_pointer()) + 1;
+               atomic_ref_device<uint32_t>(*(lock_acc.get_pointer()))
+                   .fetch_and(~1);
+             }
+           });
+     }).wait();
   }
 
   std::cout << num << '\n';

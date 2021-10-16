@@ -74,11 +74,10 @@ void Join::_run(const size_t buf_size, Meter &meter) {
                                      bitmask_acc.get_pointer(), hasher);
 
          // todo: insert
-
        });
        q.wait();
      }).wait();
-     auto build_end = std::chrono::steady_clock::now();
+    auto build_end = std::chrono::steady_clock::now();
 
     q.submit([&](sycl::handler &h) {
        auto key_b_acc = key_b.get_access(h);

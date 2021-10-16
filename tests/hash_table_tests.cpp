@@ -177,7 +177,6 @@ TEST(HashTable, Has) {
   ASSERT_EQ(outer[5], 1);
 }
 
-
 TEST(HashTable, BigBuild) {
   using namespace sycl;
   gpu_selector sel;

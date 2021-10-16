@@ -1,10 +1,10 @@
 #pragma once
 #include <chrono>
 #include <map>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
-#include <memory>
 
 using DwarfParams = std::map<std::string, std::string>;
 
@@ -21,7 +21,7 @@ struct Result {
 
 protected:
   virtual std::ostream &print_to_stream(std::ostream &os) const;
-  friend std::ostream& operator << (std::ostream& out, const Result& instance);
+  friend std::ostream &operator<<(std::ostream &out, const Result &instance);
 };
 
 struct HashJoinResult : public Result {

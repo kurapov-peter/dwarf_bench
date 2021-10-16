@@ -54,7 +54,6 @@ void Radix::_run(const size_t buf_size, Meter &meter) {
     std::unique_ptr<Result> result = std::make_unique<Result>();
     result->host_time = host_end - host_start;
     DwarfParams params{{"buf_size", std::to_string(buf_size)}};
-    
 
     {
       sycl::host_accessor res(src, sycl::read_only);
