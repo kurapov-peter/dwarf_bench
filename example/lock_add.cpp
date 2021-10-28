@@ -10,6 +10,7 @@ template <typename K>
 using atomic_ref_device =
     sycl::ext::oneapi::atomic_ref<K, acq_rel, device, global_device_space>;
 
+
 int main(int argc, char *argv[]) {
   sycl::queue q = std::string(argv[1]).compare("gpu") == 0 ? sycl::queue{sycl::gpu_selector{}} : sycl::queue{sycl::cpu_selector{}};
   
