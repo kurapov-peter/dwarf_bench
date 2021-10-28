@@ -42,27 +42,28 @@ int main(int argc, char *argv[]) {
        auto num_acc = sycl::accessor(num_buf, h, sycl::read_write);
        auto lock_acc = sycl::accessor(lock_buf, h, sycl::read_write);
 
-       h.parallel_for(r, [=
-       ](sycl::nd_item<1> it)[[intel::reqd_sub_group_size(subgroup_size)]] {
-         int sg_ind = it.get_sub_group().get_local_id();
+       h.parallel_for(
+           r, [=
+       ](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(subgroup_size)]] {
+             int sg_ind = it.get_sub_group().get_local_id();
 
-         if (it.get_sub_group().get_local_id() == 0) {
-           bool success = false;
+             if (it.get_sub_group().get_local_id() == 0) {
+               bool success = false;
 
-           // lock
-           while (!success) {
-             uint32_t expected = 0;
-             success = atomic_ref_device<uint32_t>(*(lock_acc.get_pointer()))
-                           .compare_exchange_weak(expected, 1);
-           }
+               // lock
+               while (!success) {
+                 uint32_t expected = 0;
+                 success =
+                     atomic_ref_device<uint32_t>(*(lock_acc.get_pointer()))
+                         .compare_exchange_weak(expected, 1);
+               }
 
-           *(num_acc.get_pointer()) = *(num_acc.get_pointer()) + 1;
-           // unlock
-           atomic_ref_device<uint32_t>(*(lock_acc.get_pointer())).store(0);
-         }
-       });
-     })
-        .wait();
+               *(num_acc.get_pointer()) = *(num_acc.get_pointer()) + 1;
+               // unlock
+               atomic_ref_device<uint32_t>(*(lock_acc.get_pointer())).store(0);
+             }
+           });
+     }).wait();
   }
   std::cout << num << '\n';
 }
