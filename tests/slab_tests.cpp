@@ -38,8 +38,7 @@ TEST(SlabHash, insert) {
            ht.insert(tests[i].first, tests[i].second);
          }
        });
-     })
-        .wait();
+     }).wait();
 
     q.submit([&](sycl::handler &cgh) {
        auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
@@ -91,7 +90,6 @@ TEST(SlabHash, find) {
        auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
        cgh.single_task<class find_test_slab_check>([=]() {
          DefaultHasher<13, 24, 343> h;
-
          for (int j = 0; j < 6; j++) {
            auto e = tests[j];
            auto list = &((*(adap_acc.get_pointer()))._data[h(e.first)]);
@@ -121,13 +119,20 @@ TEST(SlabHash, find) {
 
          SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
              SlabHash::EMPTY_UINT32_T, it, *(adap_acc.get_pointer()));
-
-         for (int i = ind * 2; i < ind * 2 + 2; i++) {
-           auto ans = ht.find(tests[i].first);
-
-           if (it.get_local_id() == 0)
-             accChecks[i] = {static_cast<bool>(ans),
-                             ans.value_or(-1) == tests[i].second};
+         for (int j = 0; j < 6; j++) {
+           auto e = tests[j];
+           auto list = &((*(adap_acc.get_pointer()))._data[h(e.first)]);
+           if (list->root == nullptr) {
+             list->root = (*(adap_acc.get_pointer()))._heap.malloc_node();
+             *list->root = SlabNode<pair<uint32_t, uint32_t>>(
+                 {SlabHash::EMPTY_UINT32_T, 0});
+           }
+           for (int i = 0; i < SLAB_SIZE; i++) {
+             if (list->root->data[i].first == EMPTY_UINT32_T) {
+               list->root->data[i] = e;
+               break;
+             }
+           }
          }
        });
      })
@@ -163,7 +168,8 @@ TEST(SlabHash, find_and_insert_together) {
        auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
 
        cgh.parallel_for<class insert_test_slab_both>(
-           r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
+           r, [=](sycl::nd_item<1> it) [
+                  [intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
              size_t ind = it.get_group().get_id();
 
              SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
@@ -173,8 +179,7 @@ TEST(SlabHash, find_and_insert_together) {
                ht.insert(tests[i].first, tests[i].second);
              }
            });
-     })
-        .wait();
+     }).wait();
 
     q.submit([&](sycl::handler &cgh) {
        auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
@@ -186,9 +191,6 @@ TEST(SlabHash, find_and_insert_together) {
 
          SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
              SlabHash::EMPTY_UINT32_T, it, *(adap_acc.get_pointer()));
-
-         for (int i = ind * 2; i < ind * 2 + 2; i++) {
-           auto ans = ht.find(tests[i].first);
 
            if (it.get_local_id() == 0)
              accChecks[i] = {static_cast<bool>(ans),
@@ -233,7 +235,8 @@ TEST(SlabHash, find_and_insert_together_big) {
        auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
 
        cgh.parallel_for<class insert_test_slab_both_big>(
-           r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
+           r, [=](sycl::nd_item<1> it) [
+                  [intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
              size_t ind = it.get_group().get_id();
 
              SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(
@@ -243,8 +246,7 @@ TEST(SlabHash, find_and_insert_together_big) {
                ht.insert(tests[i].first, tests[i].second);
              }
            });
-     })
-        .wait();
+     }).wait();
 
     q.submit([&](sycl::handler &cgh) {
        auto tests = sycl::accessor(buffTestUniv, cgh, sycl::read_only);
@@ -252,7 +254,8 @@ TEST(SlabHash, find_and_insert_together_big) {
        auto adap_acc = sycl::accessor(adap_buf, cgh, sycl::read_write);
 
        cgh.parallel_for<class find_test_slab_both_big>(
-           r, [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
+           r, [=](sycl::nd_item<1> it) [
+                  [intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
              size_t ind = it.get_group().get_id();
 
              SlabHashTable<uint32_t, uint32_t, DefaultHasher<13, 24, 343>> ht(

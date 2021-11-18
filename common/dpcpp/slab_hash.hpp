@@ -147,7 +147,6 @@ public:
       if ((_lists + _hasher(key, _buckets_count))->root == nullptr) {
         alloc_node((_lists + _hasher(key, _buckets_count))->root);
       }
-      
     }
     _iter = (_lists + _hasher(key, _buckets_count))->root;
     sycl::group_barrier(_gr);
@@ -299,6 +298,7 @@ private:
   sycl::device_ptr<SlabNode<std::pair<K, T>>> _prev;
   detail::HeapMaster<std::pair<K, T>> &_heap;
   sycl::sub_group _gr;
+
   size_t _ind;
   size_t _buckets_count;
 
@@ -310,5 +310,4 @@ private:
 
   std::optional<T> _ans;
 };
-
 } // namespace SlabHash

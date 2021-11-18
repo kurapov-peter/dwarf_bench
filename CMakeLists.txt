@@ -8,6 +8,7 @@ find_package(CUDA)
 option(ENABLE_DPCPP ON)
 option(ENABLE_CUDA OFF)
 option(EXPLICIT_DPL OFF)
+option(ENABLE_EXAMPLES ON)
 
 if(ENABLE_DPCPP)
   if(EXPLICIT_DPL)
@@ -49,6 +50,10 @@ add_subdirectory(hash)
 add_subdirectory(join)
 add_subdirectory(probe)
 
+if(ENABLE_EXAMPLES)
+  add_subdirectory(example)
+endif()
+
 set(bench_libs 
   common
   standalone_scan
@@ -69,6 +74,7 @@ if(ENABLE_DPCPP)
     slab_probe
     nested_loop_join
     join_helpers_lib
+    cuckoo_hash_build
     join
   )
   if(ENABLE_CUDA)
