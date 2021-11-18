@@ -28,7 +28,8 @@ void dump_collection(const Collection &c, std::ostream &os = std::cout) {
 namespace helpers {
 std::vector<uint32_t> make_unique_random(size_t size);
 
-template <class T> std::vector<T> make_random(size_t size, size_t l = 1, size_t r = 10000) {
+template <class T>
+std::vector<T> make_random(size_t size, size_t l = 1, size_t r = 10000) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::vector<T> out(size);

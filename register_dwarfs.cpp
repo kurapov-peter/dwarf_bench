@@ -1,6 +1,7 @@
 #include "register_dwarfs.hpp"
 #include "common/registry.hpp"
 #include "constant/constant.hpp"
+#include "groupby/groupby.hpp"
 #include "hash/cuckoo_hash_build.hpp"
 #include "hash/hash_build.hpp"
 #include "hash/slab_hash_build.hpp"
@@ -10,7 +11,6 @@
 #include "radix/radix.hpp"
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
-#include "groupby/groupby.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();
