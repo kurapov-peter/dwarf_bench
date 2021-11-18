@@ -49,6 +49,7 @@ add_subdirectory(reduce)
 add_subdirectory(hash)
 add_subdirectory(join)
 add_subdirectory(probe)
+add_subdirectory(groupby)
 
 if(ENABLE_EXAMPLES)
   add_subdirectory(example)
@@ -76,6 +77,7 @@ if(ENABLE_DPCPP)
     join_helpers_lib
     cuckoo_hash_build
     join
+    groupby
   )
   if(ENABLE_CUDA)
   list(APPEND bench_libs

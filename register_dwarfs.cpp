@@ -10,6 +10,7 @@
 #include "radix/radix.hpp"
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
+#include "groupby/groupby.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();
@@ -28,6 +29,7 @@ void populate_registry() {
   registry->registerd(new SlabJoin());
   registry->registerd(new SlabProbe());
   registry->registerd(new CuckooHashBuild());
+  registry->registerd(new GroupBy());
 #ifdef CUDA_ENABLED
   registry->registerd(new ConstantExampleDPCPPCuda());
   registry->registerd(new DPLScanCuda());
