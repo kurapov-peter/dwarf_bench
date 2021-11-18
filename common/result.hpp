@@ -5,7 +5,6 @@
 #include <ostream>
 #include <string>
 #include <vector>
-#include <memory>
 
 using DwarfParams = std::map<std::string, std::string>;
 
