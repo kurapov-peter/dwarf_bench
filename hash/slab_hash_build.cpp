@@ -48,8 +48,9 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
                     [intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
                size_t ind = it.get_group().get_id();
 
-               SlabHash::SlabHashTable<uint32_t, uint32_t,
-                                       SlabHash::DefaultHasher<242792921, 653019598, 2147483647>>
+               SlabHash::SlabHashTable<
+                   uint32_t, uint32_t,
+                   SlabHash::DefaultHasher<242792921, 653019598, 2147483647>>
                    ht(SlabHash::EMPTY_UINT32_T, it, *(adap_acc.get_pointer()));
 
                for (int i = ind * scale; i < (ind + 1) * scale && i < buf_size;
@@ -79,8 +80,9 @@ void SlabHashBuild::_run(const size_t buf_size, Meter &meter) {
                     [intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
                size_t ind = it.get_group().get_id();
 
-               SlabHash::SlabHashTable<uint32_t, uint32_t,
-                                       SlabHash::DefaultHasher<242792921, 653019598, 2147483647>>
+               SlabHash::SlabHashTable<
+                   uint32_t, uint32_t,
+                   SlabHash::DefaultHasher<242792921, 653019598, 2147483647>>
                    ht(SlabHash::EMPTY_UINT32_T, it, *(adap_acc.get_pointer()));
 
                for (int i = ind * scale; i < (ind + 1) * scale && i < buf_size;

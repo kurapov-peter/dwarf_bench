@@ -30,31 +30,31 @@ constexpr size_t EMPTY_UINT32_T = std::numeric_limits<uint32_t>::max();
 int calculate_buckets_count(size_t input_size, int mem_util) {
   float avg_bucket = 1.f;
   switch (mem_util) {
-    case 20:
-      avg_bucket = 0.2;
-      break;
-    case 30:
-      avg_bucket = 0.3;
-      break;
-    case 40:
-      avg_bucket = 0.4;
-      break;
-    case 50:
-      avg_bucket = 0.55;
-      break;
-    case 60:
-      avg_bucket = 0.625;
-      break;
-    case 70:
-      avg_bucket = 0.875;
-      break;
-    case 80:
-      avg_bucket = 1.875;
-      break;
-    default:
-      break;
+  case 20:
+    avg_bucket = 0.2;
+    break;
+  case 30:
+    avg_bucket = 0.3;
+    break;
+  case 40:
+    avg_bucket = 0.4;
+    break;
+  case 50:
+    avg_bucket = 0.55;
+    break;
+  case 60:
+    avg_bucket = 0.625;
+    break;
+  case 70:
+    avg_bucket = 0.875;
+    break;
+  case 80:
+    avg_bucket = 1.875;
+    break;
+  default:
+    break;
   }
-  return (float) input_size / (SLAB_SIZE * avg_bucket);
+  return (float)input_size / (SLAB_SIZE * avg_bucket);
 }
 
 template <size_t A, size_t B, size_t P> struct DefaultHasher {
@@ -90,7 +90,9 @@ template <typename T> struct HeapMaster {
   ~HeapMaster() { sycl::free(_heap, _q); }
 
   sycl::device_ptr<SlabNode<T>> malloc_node() {
-    uint32_t ret_offset = sycl::atomic<uint32_t>(sycl::global_ptr<uint32_t>(&_offset)).fetch_add(1);
+    uint32_t ret_offset =
+        sycl::atomic<uint32_t>(sycl::global_ptr<uint32_t>(&_offset))
+            .fetch_add(1);
     return _heap + ret_offset;
   }
 
@@ -136,8 +138,8 @@ public:
   SlabHashTable(K empty, sycl::nd_item<1> &it,
                 SlabHash::AllocAdapter<std::pair<K, T>> &adap)
       : _lists(adap._data), _gr(it.get_sub_group()), _empty(empty),
-         _ind(it.get_local_id()),
-        _lock(adap._lock), _heap(adap._heap), _buckets_count(adap._buckets_count) {};
+        _ind(it.get_local_id()), _lock(adap._lock), _heap(adap._heap),
+        _buckets_count(adap._buckets_count){};
 
   void insert(K key, T val) {
     _key = key;
@@ -177,7 +179,7 @@ public:
     _ans = std::nullopt;
 
     _iter = (_lists + _hasher(key, _buckets_count))->root;
-    
+
     sycl::group_barrier(_gr);
 
     while (_iter != nullptr) {
@@ -206,17 +208,16 @@ private:
 
   void lock() {
     auto list_index = _hasher(_key, _buckets_count);
-    while (atomic_ref_device<uint32_t>(
-               (*(_lock + (list_index / (UINT32_T_BIT)))))
-               .fetch_or(1 << (list_index % (UINT32_T_BIT))) &
-           (1 << (list_index % (UINT32_T_BIT)))) {
+    while (
+        atomic_ref_device<uint32_t>((*(_lock + (list_index / (UINT32_T_BIT)))))
+            .fetch_or(1 << (list_index % (UINT32_T_BIT))) &
+        (1 << (list_index % (UINT32_T_BIT)))) {
     }
   }
 
   void unlock() {
     auto list_index = _hasher(_key, _buckets_count);
-    atomic_ref_device<uint32_t>(
-        (*(_lock + (list_index / (UINT32_T_BIT)))))
+    atomic_ref_device<uint32_t>((*(_lock + (list_index / (UINT32_T_BIT)))))
         .fetch_and(~(1 << (list_index % (UINT32_T_BIT))));
   }
 
