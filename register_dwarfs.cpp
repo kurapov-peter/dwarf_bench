@@ -10,10 +10,6 @@
 #include "radix/radix.hpp"
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
-#include "hash/slab_hash_build.hpp"
-#include "probe/slab_probe.hpp"
-#include "join/slab_join.hpp"
-#include "join/nested_join.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();
