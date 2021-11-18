@@ -88,3 +88,65 @@ private:
     }
   }
 };
+
+template <class Key, class T, class Hash>
+class SimpleNonOwningHashTableForGroupBy {
+public:
+  explicit SimpleNonOwningHashTableForGroupBy(size_t size,
+                                              sycl::global_ptr<Key> keys,
+                                              sycl::global_ptr<T> vals,
+                                              Hash hash, Key empty_key)
+      : _keys(keys), _vals(vals), _size(size), _hasher(hash),
+        _empty_key(empty_key) {}
+
+  bool insert_group_by(Key key, T val) {
+    bool pos = update_bitmask_group_by(key, val);
+    return pos;
+  }
+
+  const std::pair<T, bool> at(const Key &key) const {
+    uint32_t pos = _hasher(key);
+    bool present = !(_keys[pos] == _empty_key);
+    while (present) {
+      if (_keys[pos] == key) {
+        return {_vals[pos], true};
+      }
+
+      pos = (++pos) % _size;
+      if (pos == _hasher(key))
+        break;
+
+      present = !(_keys[pos] == _empty_key);
+    }
+
+    return {{}, false};
+  }
+
+private:
+  sycl::global_ptr<Key> _keys;
+  sycl::global_ptr<T> _vals;
+  size_t _size;
+  Hash _hasher;
+  Key _empty_key;
+
+  static constexpr uint32_t elem_sz = CHAR_BIT * sizeof(uint32_t);
+
+  bool update_bitmask_group_by(Key key, T val) {
+    uint32_t at = _hasher(key);
+
+    while (true) {
+      Key expected_key = _empty_key;
+      bool success = sycl::atomic<uint32_t>(_keys + at)
+                         .compare_exchange_strong(expected_key, key);
+      if (success || expected_key == key) {
+        sycl::atomic<uint32_t>(_vals + at).fetch_add(val);
+        return true;
+      }
+
+      at = (at + 1) % _size;
+      if (at == _hasher(key)) {
+        return false;
+      }
+    }
+  }
+};
