@@ -90,18 +90,23 @@ private:
 };
 
 template <class Key, class T, class Hash>
-class SimpleNonOwningHashTableForGroupBy {
+class NonOwningHashTableWithAdding {
 public:
-  explicit SimpleNonOwningHashTableForGroupBy(size_t size,
+  explicit NonOwningHashTableWithAdding(size_t size,
                                               sycl::global_ptr<Key> keys,
                                               sycl::global_ptr<T> vals,
                                               Hash hash, Key empty_key)
       : _keys(keys), _vals(vals), _size(size), _hasher(hash),
         _empty_key(empty_key) {}
 
-  bool insert_group_by(Key key, T val) {
-    bool pos = update_bitmask_group_by(key, val);
-    return pos;
+  bool add(Key key, T val) {
+    bool success = add_update(key, val);
+    return success;
+  }
+
+  bool insert(Key key, T val) {
+    bool success = insert_update(key, val);
+    return success;
   }
 
   const std::pair<T, bool> at(const Key &key) const {
@@ -131,7 +136,7 @@ private:
 
   static constexpr uint32_t elem_sz = CHAR_BIT * sizeof(uint32_t);
 
-  bool update_bitmask_group_by(Key key, T val) {
+  bool add_update(Key key, T val) {
     uint32_t at = _hasher(key);
 
     while (true) {
@@ -140,6 +145,25 @@ private:
                          .compare_exchange_strong(expected_key, key);
       if (success || expected_key == key) {
         sycl::atomic<uint32_t>(_vals + at).fetch_add(val);
+        return true;
+      }
+
+      at = (at + 1) % _size;
+      if (at == _hasher(key)) {
+        return false;
+      }
+    }
+  }
+  
+  bool insert_update(Key key, T val) {
+    uint32_t at = _hasher(key);
+
+    while (true) {
+      Key expected_key = _empty_key;
+      bool success = sycl::atomic<uint32_t>(_keys + at)
+                         .compare_exchange_strong(expected_key, key);
+      if (success || expected_key == key) {
+        sycl::atomic<uint32_t>(_vals + at).store(val);
         return true;
       }
 

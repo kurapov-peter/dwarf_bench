@@ -246,14 +246,11 @@ TEST(GroupByHashTable, GroupByFunctions) {
   }
 
   PolynomialHasher hasher(buf_size);
-  size_t bitmask_sz = buf_size / 32 + 1;
-  std::vector<uint32_t> bitmask(bitmask_sz, 0);
   std::vector<uint32_t> data(buf_size, 0);
   std::vector<uint32_t> data_answers(groups, 0);
   std::vector<uint32_t> keys(buf_size, -1);
 
   {
-    sycl::buffer<uint32_t> bitmask_buf(bitmask);
     sycl::buffer<uint32_t> data_buf(data);
     sycl::buffer<uint32_t> keys_buf(keys);
     sycl::buffer<uint32_t> src_keys(host_src_keys);
@@ -264,21 +261,19 @@ TEST(GroupByHashTable, GroupByFunctions) {
        auto sk = sycl::accessor(src_keys, h, sycl::read_write);
        auto sv = sycl::accessor(src_vals, h, sycl::read_write);
 
-       auto bitmask_acc = sycl::accessor(bitmask_buf, h, sycl::read_write);
        auto data_acc = sycl::accessor(data_buf, h, sycl::read_write);
        auto keys_acc = sycl::accessor(keys_buf, h, sycl::read_write);
 
        h.parallel_for<class hash_group_by_build_test>(buf_size, [=](auto &idx) {
-         SimpleNonOwningHashTableForGroupBy<uint32_t, uint32_t,
+         NonOwningHashTableWithAdding<uint32_t, uint32_t,
                                             PolynomialHasher>
              ht(buf_size, keys_acc.get_pointer(), data_acc.get_pointer(),
                 hasher, -1);
-         ht.insert_group_by(sk[idx], sv[idx]);
+         ht.add(sk[idx], sv[idx]);
        });
      }).wait();
   }
   {
-    sycl::buffer<uint32_t> bitmask_buf(bitmask);
     sycl::buffer<uint32_t> data_buf(data);
     sycl::buffer<uint32_t> keys_buf(keys);
     sycl::buffer<uint32_t> src_keys(host_src_keys);
@@ -289,14 +284,13 @@ TEST(GroupByHashTable, GroupByFunctions) {
        auto sk = sycl::accessor(src_keys, h, sycl::read_write);
        auto sv = sycl::accessor(src_vals, h, sycl::read_write);
 
-       auto bitmask_acc = sycl::accessor(bitmask_buf, h, sycl::read_write);
        auto data_acc = sycl::accessor(data_buf, h, sycl::read_write);
        auto keys_acc = sycl::accessor(keys_buf, h, sycl::read_write);
        auto data_ans_acc = sycl::accessor(data_ans, h, sycl::read_write);
 
        h.parallel_for<class hash_group_by_lookup_test>(
            buf_size, [=](auto &idx) {
-             SimpleNonOwningHashTableForGroupBy<uint32_t, uint32_t,
+             NonOwningHashTableWithAdding<uint32_t, uint32_t,
                                                 PolynomialHasher>
                  ht(buf_size, keys_acc.get_pointer(), data_acc.get_pointer(),
                     hasher, -1);
