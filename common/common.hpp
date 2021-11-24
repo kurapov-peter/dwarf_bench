@@ -34,7 +34,7 @@ std::vector<T> make_random(size_t size, size_t random_range_left = 1,
   std::random_device rd;
   std::mt19937 gen(rd());
   std::vector<T> out(size);
-  std::uniform_int_distribution<T> dist(l, r);
+  std::uniform_int_distribution<T> dist(random_range_left, random_range_right);
   std::generate(out.begin(), out.end(), [&]() { return dist(gen); });
   return out;
 }
