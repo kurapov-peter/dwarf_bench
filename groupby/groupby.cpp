@@ -43,10 +43,9 @@ void GroupBy::_run(const size_t buf_size, Meter &meter) {
        auto keys_acc = keys_buf.get_access(h);
 
        h.parallel_for<class hash_build>(buf_size, [=](auto &idx) {
-         NonOwningHashTableWithAdding<uint32_t, uint32_t,
-                                            PolynomialHasher>
-             ht(buf_size, keys_acc.get_pointer(), data_acc.get_pointer(),
-                hasher, empty_element);
+         NonOwningHashTableWithAdding<uint32_t, uint32_t, PolynomialHasher> ht(
+             buf_size, keys_acc.get_pointer(), data_acc.get_pointer(), hasher,
+             empty_element);
 
          ht.add(sk[idx], sv[idx]);
        });
@@ -63,10 +62,9 @@ void GroupBy::_run(const size_t buf_size, Meter &meter) {
        auto keys_acc = keys_buf.get_access(h);
 
        h.parallel_for<class hash_build_check>(buf_size, [=](auto &idx) {
-         NonOwningHashTableWithAdding<uint32_t, uint32_t,
-                                            PolynomialHasher>
-             ht(buf_size, keys_acc.get_pointer(), data_acc.get_pointer(),
-                hasher, empty_element);
+         NonOwningHashTableWithAdding<uint32_t, uint32_t, PolynomialHasher> ht(
+             buf_size, keys_acc.get_pointer(), data_acc.get_pointer(), hasher,
+             empty_element);
 
          std::pair<uint32_t, bool> sum_for_group = ht.at(sk[idx]);
          sycl::atomic<uint32_t>(o.get_pointer() + sk[idx])

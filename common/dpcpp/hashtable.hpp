@@ -89,13 +89,11 @@ private:
   }
 };
 
-template <class Key, class T, class Hash>
-class NonOwningHashTableWithAdding {
+template <class Key, class T, class Hash> class NonOwningHashTableWithAdding {
 public:
-  explicit NonOwningHashTableWithAdding(size_t size,
-                                              sycl::global_ptr<Key> keys,
-                                              sycl::global_ptr<T> vals,
-                                              Hash hash, Key empty_key)
+  explicit NonOwningHashTableWithAdding(size_t size, sycl::global_ptr<Key> keys,
+                                        sycl::global_ptr<T> vals, Hash hash,
+                                        Key empty_key)
       : _keys(keys), _vals(vals), _size(size), _hasher(hash),
         _empty_key(empty_key) {}
 
@@ -154,7 +152,7 @@ private:
       }
     }
   }
-  
+
   bool insert_update(Key key, T val) {
     uint32_t at = _hasher(key);
 
