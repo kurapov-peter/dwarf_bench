@@ -1,6 +1,7 @@
 #include "register_dwarfs.hpp"
 #include "common/registry.hpp"
 #include "constant/constant.hpp"
+#include "groupby/groupby.hpp"
 #include "hash/cuckoo_hash_build.hpp"
 #include "hash/hash_build.hpp"
 #include "hash/slab_hash_build.hpp"
@@ -28,6 +29,7 @@ void populate_registry() {
   registry->registerd(new SlabJoin());
   registry->registerd(new SlabProbe());
   registry->registerd(new CuckooHashBuild());
+  registry->registerd(new GroupBy());
 #ifdef CUDA_ENABLED
   registry->registerd(new ConstantExampleDPCPPCuda());
   registry->registerd(new DPLScanCuda());
