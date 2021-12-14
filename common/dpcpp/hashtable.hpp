@@ -78,7 +78,8 @@ private:
       }
 
       minor_idx++;
-      uint32_t occupied = sycl::intel::ctz<uint32_t>(~(present >> minor_idx));
+      uint32_t occupied =
+          sycl::ext::intel::ctz<uint32_t>(~(present >> minor_idx));
       if (occupied + minor_idx == elem_sz) {
         major_idx = (++major_idx) % _size;
         minor_idx = 0;
