@@ -49,4 +49,6 @@ add_test(scan_tests scan_tests WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tes
 add_test(hash_table_tests hash_table_tests WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tests)
 add_test(cuckoo_hashtable_tests cuckoo_hashtable_tests WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tests)
 add_test(join_tests join_tests WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tests)
-add_test(slab_tests slab_tests WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tests)
+if(ENABLE_EXPERIMENTAL)
+  add_test(slab_tests slab_tests WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tests)
+endif()
