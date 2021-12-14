@@ -25,13 +25,15 @@ void populate_registry() {
   registry->registerd(new Radix());
   registry->registerd(new ReduceDPCPP());
   registry->registerd(new HashBuild());
-  registry->registerd(new SlabHashBuild());
   registry->registerd(new NestedLoopJoin());
-  registry->registerd(new SlabJoin());
-  registry->registerd(new SlabProbe());
   registry->registerd(new CuckooHashBuild());
   registry->registerd(new GroupBy());
   registry->registerd(new Join());
+#ifdef EXPERIMENTAL
+  registry->registerd(new SlabHashBuild());
+  registry->registerd(new SlabJoin());
+  registry->registerd(new SlabProbe());
+#endif
 #ifdef CUDA_ENABLED
   registry->registerd(new ConstantExampleDPCPPCuda());
   registry->registerd(new DPLScanCuda());
