@@ -126,6 +126,10 @@ public:
     return {{}, false};
   }
 
+  bool has(const Key &key) const {
+    return at(key).second;
+  }
+
 private:
   sycl::global_ptr<Key> _keys;
   sycl::global_ptr<T> _vals;
