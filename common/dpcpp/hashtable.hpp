@@ -90,9 +90,9 @@ private:
   }
 };
 
-template <class Key, class T, class Hash> class NonOwningHashTableWithAdding {
+template <class Key, class T, class Hash> class NonOwningHashTableNonBitmask {
 public:
-  explicit NonOwningHashTableWithAdding(size_t size, sycl::global_ptr<Key> keys,
+  explicit NonOwningHashTableNonBitmask(size_t size, sycl::global_ptr<Key> keys,
                                         sycl::global_ptr<T> vals, Hash hash,
                                         Key empty_key)
       : _keys(keys), _vals(vals), _size(size), _hasher(hash),
