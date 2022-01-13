@@ -8,6 +8,9 @@ SlabProbe::SlabProbe() : Dwarf("SlabProbe") {}
 
 void SlabProbe::_run(const size_t buf_size, Meter &meter) {
   const int scale = 16; // todo how to get through options
+  int mem_util = 60;
+  size_t buckets_count = SlabHash::calculate_buckets_count(buf_size, mem_util);
+  size_t cluster_size = 2 * buckets_count;
 
   auto opts = meter.opts();
   const std::vector<uint32_t> host_src = helpers::make_unique_random(buf_size);
@@ -23,7 +26,7 @@ void SlabProbe::_run(const size_t buf_size, Meter &meter) {
     sycl::nd_range<1> r{SlabHash::SUBGROUP_SIZE * num_of_groups,
                         SlabHash::SUBGROUP_SIZE};
     SlabHash::AllocAdapter<std::pair<uint32_t, uint32_t>> adap(
-        SlabHash::CLUSTER_SIZE, num_of_groups, SlabHash::BUCKETS_COUNT,
+        cluster_size, num_of_groups, buckets_count,
         {SlabHash::EMPTY_UINT32_T, 0}, q);
 
     std::vector<uint32_t> output(buf_size, 0);
@@ -44,8 +47,9 @@ void SlabProbe::_run(const size_t buf_size, Meter &meter) {
                     [intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
                size_t ind = it.get_group().get_id();
 
-               SlabHash::SlabHashTable<uint32_t, uint32_t,
-                                       SlabHash::DefaultHasher<5, 11, 1031>>
+               SlabHash::SlabHashTable<
+                   uint32_t, uint32_t,
+                   SlabHash::DefaultHasher<242792921, 653019598, 2147483647>>
                    ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
 
                for (int i = ind * scale; i < (ind + 1) * scale && i < buf_size;
@@ -67,8 +71,9 @@ void SlabProbe::_run(const size_t buf_size, Meter &meter) {
                     [intel::reqd_sub_group_size(SlabHash::SUBGROUP_SIZE)]] {
                size_t ind = it.get_group().get_id();
 
-               SlabHash::SlabHashTable<uint32_t, uint32_t,
-                                       SlabHash::DefaultHasher<5, 11, 1031>>
+               SlabHash::SlabHashTable<
+                   uint32_t, uint32_t,
+                   SlabHash::DefaultHasher<242792921, 653019598, 2147483647>>
                    ht(SlabHash::EMPTY_UINT32_T, it, *adap_acc.get_pointer());
 
                for (int i = ind * scale; i < (ind + 1) * scale && i < buf_size;
