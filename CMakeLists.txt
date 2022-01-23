@@ -14,7 +14,7 @@ option(ENABLE_EXPERIMENTAL OFF)
 if(ENABLE_DPCPP)
   find_package(oneDPL REQUIRED)
   find_package(TBB REQUIRED)
-  add_definitions(-DDPCPP_ENABLED)  
+  add_definitions(-DDPCPP_ENABLED)
   if(ENABLE_EXPERIMENTAL)
     add_definitions(-DEXPERIMENTAL)
   endif()
@@ -57,7 +57,7 @@ if(ENABLE_EXAMPLES)
   add_subdirectory(example)
 endif()
 
-set(bench_libs 
+set(bench_libs
   common
   standalone_scan
   constant
@@ -65,7 +65,7 @@ set(bench_libs
 
 if(ENABLE_DPCPP)
   add_subdirectory(common/dpcpp)
-  
+
   list(APPEND bench_libs
     dpcpp_constant
     scan
@@ -77,6 +77,7 @@ if(ENABLE_DPCPP)
     cuckoo_hash_build
     join
     groupby
+    groupby_local
     hash_build_non_bitmask
   )
   if(ENABLE_EXPERIMENTAL)
@@ -116,6 +117,6 @@ if(ENABLE_TESTS)
   )
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(googletest)
-  
+
   add_subdirectory(tests)
 endif()
