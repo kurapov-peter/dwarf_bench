@@ -32,8 +32,9 @@ int main(int argc, char *argv[]) {
                      "Device to run on.");
   desc.add_options()("report_path", po::value<std::string>(&opts.report_path),
                      "Full/Relative path to a report file.");
-  desc.add_options()("groups_count", po::value<size_t>(&opts.groups_count),
-                     "Number of unique keys for dwarfs with keys (groupby, hash build etc.).");
+  desc.add_options()(
+      "groups_count", po::value<size_t>(&opts.groups_count),
+      "Number of unique keys for dwarfs with keys (groupby, hash build etc.).");
   desc.add_options()("executors", po::value<size_t>(&opts.executors),
                      "Number of executors for GroupByLocal.");
   po::positional_options_description pos_opts;

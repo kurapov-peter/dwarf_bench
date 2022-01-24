@@ -176,12 +176,10 @@ private:
   }
 };
 
-
 template <class Key, class T, class Hash> class LinearHashtable {
 public:
   explicit LinearHashtable(size_t size, sycl::global_ptr<Key> keys,
-                                        sycl::global_ptr<T> vals, Hash hash,
-                                        Key empty_key)
+                           sycl::global_ptr<T> vals, Hash hash, Key empty_key)
       : _keys(keys), _vals(vals), _size(size), _hasher(hash),
         _empty_key(empty_key) {}
 
@@ -226,7 +224,6 @@ private:
 
   bool add_update(Key key, T val) {
     uint32_t at = _hasher(key);
-
 
     while (true) {
       if (_keys[at] == _empty_key) {
