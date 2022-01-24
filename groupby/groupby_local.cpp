@@ -76,7 +76,7 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
               hasher,
               empty_element);
            for (int j = 0; j < groups_count; j++) {
-               o[j] += ht.at(j, out).first;
+               o[j] += ht.at(j).first;
            }
         }
       });

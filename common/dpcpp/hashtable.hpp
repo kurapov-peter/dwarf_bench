@@ -195,10 +195,9 @@ public:
     return success;
   }
 
-  const std::pair<T, bool> at(const Key &key, sycl::stream out) const {
+  const std::pair<T, bool> at(const Key &key) const {
     uint32_t pos = _hasher(key);
     bool present = !(_keys[pos] == _empty_key);
-    //out << "AT " << pos << ' ' << key << ' ' << present << sycl::endl;
     while (present) {
       if (_keys[pos] == key) {
         return {_vals[pos], true};
