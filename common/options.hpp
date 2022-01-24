@@ -10,6 +10,10 @@ struct RunOptions {
   size_t iterations = 1;
   std::string root_path;
   std::string report_path;
+
+  // For groupby
+  size_t groups_count = 1;
+  size_t executors = 1;
 };
 
 std::istream &operator>>(std::istream &in, RunOptions::DeviceType &dt);

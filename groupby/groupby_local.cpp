@@ -5,9 +5,10 @@
 GroupByLocal::GroupByLocal() : Dwarf("GroupByLocal") {}
 void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
   constexpr uint32_t empty_element = std::numeric_limits<uint32_t>::max();
-  const int groups_count = 20;
-  const int executors = 50;
   auto opts = meter.opts();
+
+  const int groups_count = opts.groups_count;
+  const int executors = opts.executors;
   const std::vector<uint32_t> host_src_vals =
       helpers::make_random<uint32_t>(buf_size);
   const std::vector<uint32_t> host_src_keys =
