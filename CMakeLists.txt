@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(dwarf_bench)
 
+find_package(TBB REQUIRED)
 find_package(OpenCL REQUIRED)
 find_package(oclhelpers 0.1.3 REQUIRED)
 find_package(CUDA)
@@ -13,7 +14,6 @@ option(ENABLE_EXPERIMENTAL OFF)
 
 if(ENABLE_DPCPP)
   find_package(oneDPL REQUIRED)
-  find_package(TBB REQUIRED)
   add_definitions(-DDPCPP_ENABLED)
   if(ENABLE_EXPERIMENTAL)
     add_definitions(-DEXPERIMENTAL)
@@ -61,6 +61,7 @@ set(bench_libs
   common
   standalone_scan
   constant
+  sort
 )
 
 if(ENABLE_DPCPP)

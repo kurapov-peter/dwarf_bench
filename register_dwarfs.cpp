@@ -14,12 +14,14 @@
 #include "radix/radix.hpp"
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
+#include "radix/sort.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();
   registry->registerd(new TwoPassScan());
   registry->registerd(new ConstantExample());
   registry->registerd(new ConstantExampleCAPI());
+  registry->registerd(new Sort());
 
 #ifdef DPCPP_ENABLED
   registry->registerd(new ConstantExampleDPCPP());
