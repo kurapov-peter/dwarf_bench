@@ -2,7 +2,21 @@
 #include "common/dpcpp/hashtable.hpp"
 #include <limits>
 
+std::vector<uint32_t> expected_GroupBy(const std::vector<uint32_t> &keys,
+                                       const std::vector<uint32_t> &vals,
+                                       size_t groups_count) {
+  std::vector<uint32_t> result(groups_count);
+  size_t data_size = keys.size();
+
+  for (int i = 0; i < data_size; i++) {
+    result[keys[i]] += vals[i];
+  }
+
+  return result;
+}
+
 GroupByLocal::GroupByLocal() : Dwarf("GroupByLocal") {}
+
 void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
   constexpr uint32_t empty_element = std::numeric_limits<uint32_t>::max();
   auto opts = meter.opts();
@@ -14,10 +28,8 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
   const std::vector<uint32_t> host_src_keys =
       helpers::make_random<uint32_t>(buf_size, 0, groups_count - 1);
 
-  std::vector<uint32_t> expected(groups_count);
-  for (int i = 0; i < buf_size; i++) {
-    expected[host_src_keys[i]] += host_src_vals[i];
-  }
+  std::vector<uint32_t> expected =
+      expected_GroupBy(host_src_keys, host_src_vals, groups_count);
 
   auto sel = get_device_selector(opts);
   sycl::queue q{*sel};
@@ -45,18 +57,24 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
        auto data_acc = data_buf.get_access(h);
        auto keys_acc = keys_buf.get_access(h);
 
-       auto o = out_buf.get_access(h);
+       const size_t work_per_executor = buf_size / executors;
 
-       h.parallel_for<class hash_build>(executors, [=](auto &idx) {
-         LinearHashtable<uint32_t, uint32_t, SimpleHasher<uint32_t>> ht(
-             groups_count,
-             keys_acc.get_pointer() + ((size_t)idx * groups_count),
-             data_acc.get_pointer() + ((size_t)idx * groups_count), hasher,
-             empty_element);
-         for (size_t i = buf_size / executors * idx;
-              i < buf_size / executors * (idx + 1); i++)
-           ht.add(sk[i], sv[i]);
-       });
+       h.parallel_for<class groupby_local_hash_build>(
+           executors, [=](auto &idx) {
+             size_t hash_table_ptr_offset = (idx * groups_count);
+             auto executor_keys_ptr =
+                 keys_acc.get_pointer() + hash_table_ptr_offset;
+             auto executor_vals_ptr =
+                 data_acc.get_pointer() + hash_table_ptr_offset;
+
+             LinearHashtable<uint32_t, uint32_t, SimpleHasher<uint32_t>> ht(
+                 groups_count, executor_keys_ptr, executor_vals_ptr, hasher,
+                 empty_element);
+
+             for (size_t i = work_per_executor * idx;
+                  i < work_per_executor * (idx + 1); i++)
+               ht.add(sk[i], sv[i]);
+           });
      }).wait();
 
     q.submit([&](sycl::handler &h) {
@@ -69,15 +87,19 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
        auto o = out_buf.get_access(h);
 
        h.single_task<class groupby_local_collect>([=]() {
-         for (int i = 0; i < executors; i++) {
+         for (int idx = 0; idx < executors; idx++) {
+           size_t hash_table_ptr_offset = (idx * groups_count);
+           auto executor_keys_ptr =
+               keys_acc.get_pointer() + hash_table_ptr_offset;
+           auto executor_vals_ptr =
+               data_acc.get_pointer() + hash_table_ptr_offset;
+
            LinearHashtable<uint32_t, uint32_t, SimpleHasher<uint32_t>> ht(
-               groups_count,
-               keys_acc.get_pointer() + ((size_t)i * groups_count),
-               data_acc.get_pointer() + ((size_t)i * groups_count), hasher,
+               groups_count, executor_keys_ptr, executor_vals_ptr, hasher,
                empty_element);
-           for (int j = 0; j < groups_count; j++) {
+
+           for (int j = 0; j < groups_count; j++)
              o[j] += ht.at(j).first;
-           }
          }
        });
      }).wait();
