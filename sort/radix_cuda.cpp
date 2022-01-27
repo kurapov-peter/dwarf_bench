@@ -2,7 +2,7 @@
 #include <oneapi/dpl/execution>
 #include <oneapi/dpl/iterator>
 
-#include "radix/radix.hpp"
+#include "sort/radix.hpp"
 
 #include "common/dpcpp/dpcpp_common.hpp"
 

@@ -3,17 +3,26 @@ function(add_kernel name)
 endfunction()
 
 set(common_dpcpp_libs common dpcpp_common sycl oclhelpers::oclhelpers)
+set(common_tbb_libs common tbb)
+
 if(EXPLICIT_DPL)
   list(APPEND common_dpcpp_libs oneDPL)
 endif()
 
 function(add_dpcpp_lib name sources)
-  message(STATUS "Adding library ${name}")
+  message(STATUS "Adding dpcpp library ${name}")
   add_library(${name} SHARED ${sources})
   target_link_libraries(${name} PRIVATE ${common_dpcpp_libs})
   target_include_directories(${name} PRIVATE ${PROJECT_SOURCE_DIR})
   target_compile_options(${name} PRIVATE -fsycl)
   target_link_options(${name} PRIVATE -fsycl)
+endfunction()
+
+function(add_tbb_lib name sources)
+  message(STATUS "Adding tbb library ${name}")
+  add_library(${name} SHARED ${sources})
+  target_link_libraries(${name} PRIVATE ${common_tbb_libs})
+  target_include_directories(${name} PRIVATE ${PROJECT_SOURCE_DIR})
 endfunction()
 
 function(add_dpcpp_cuda_lib name sources)

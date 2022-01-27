@@ -1,3 +1,5 @@
+add_tbb_lib(sort sort.cpp)
+
 if(ENABLE_DPCPP)
     add_dpcpp_lib(radix radix.cpp)
     if(ENABLE_CUDA)

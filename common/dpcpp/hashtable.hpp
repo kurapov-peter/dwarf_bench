@@ -175,3 +175,88 @@ private:
     }
   }
 };
+
+template <class Key, class T, class Hash> class LinearHashtable {
+public:
+  explicit LinearHashtable(size_t size, sycl::global_ptr<Key> keys,
+                           sycl::global_ptr<T> vals, Hash hash, Key empty_key)
+      : _keys(keys), _vals(vals), _size(size), _hasher(hash),
+        _empty_key(empty_key) {}
+
+  bool add(Key key, T val) {
+    bool success = add_update(key, val);
+    return success;
+  }
+
+  bool insert(Key key, T val) {
+    bool success = insert_update(key, val);
+    return success;
+  }
+
+  const std::pair<T, bool> at(const Key &key) const {
+    uint32_t pos = _hasher(key);
+    bool present = !(_keys[pos] == _empty_key);
+    while (present) {
+      if (_keys[pos] == key) {
+        return {_vals[pos], true};
+      }
+
+      pos = (++pos) % _size;
+      if (pos == _hasher(key))
+        break;
+
+      present = !(_keys[pos] == _empty_key);
+    }
+
+    return {{}, false};
+  }
+
+  bool has(const Key &key) const { return at(key).second; }
+
+private:
+  sycl::global_ptr<Key> _keys;
+  sycl::global_ptr<T> _vals;
+  size_t _size;
+  Hash _hasher;
+  Key _empty_key;
+
+  static constexpr uint32_t elem_sz = CHAR_BIT * sizeof(uint32_t);
+
+  bool add_update(Key key, T val) {
+    uint32_t at = _hasher(key);
+
+    while (true) {
+      if (_keys[at] == _empty_key) {
+        _keys[at] = key;
+      }
+      if (_keys[at] == key) {
+        _vals[at] += val;
+        return true;
+      }
+
+      at = (at + 1) % _size;
+      if (at == _hasher(key)) {
+        return false;
+      }
+    }
+  }
+
+  bool insert_update(Key key, T val) {
+    uint32_t at = _hasher(key);
+
+    while (true) {
+      if (_keys[at] == _empty_key) {
+        _keys[at] = key;
+      }
+      if (_keys[at] == key) {
+        _vals[at] = val;
+        return true;
+      }
+
+      at = (at + 1) % _size;
+      if (at == _hasher(key)) {
+        return false;
+      }
+    }
+  }
+};
