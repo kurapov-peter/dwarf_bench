@@ -2,7 +2,23 @@
 #include "common/dpcpp/hashtable.hpp"
 #include <limits>
 
+namespace {
+std::vector<uint32_t> expected_GroupBy(const std::vector<uint32_t> &keys,
+                                       const std::vector<uint32_t> &vals,
+                                       size_t groups_count) {
+  std::vector<uint32_t> result(groups_count);
+  size_t data_size = keys.size();
+
+  for (int i = 0; i < data_size; i++) {
+    result[keys[i]] += vals[i];
+  }
+
+  return result;
+}
+} // namespace
+
 GroupBy::GroupBy() : Dwarf("GroupBy") {}
+
 void GroupBy::_run(const size_t buf_size, Meter &meter) {
   constexpr uint32_t empty_element = std::numeric_limits<uint32_t>::max();
   auto opts = meter.opts();
@@ -13,10 +29,8 @@ void GroupBy::_run(const size_t buf_size, Meter &meter) {
   const std::vector<uint32_t> host_src_keys =
       helpers::make_random<uint32_t>(buf_size, 0, groups_count - 1);
 
-  std::vector<uint32_t> expected(groups_count);
-  for (int i = 0; i < buf_size; i++) {
-    expected[host_src_keys[i]] += host_src_vals[i];
-  }
+  std::vector<uint32_t> expected =
+      expected_GroupBy(host_src_keys, host_src_vals, groups_count);
 
   auto sel = get_device_selector(opts);
   sycl::queue q{*sel};

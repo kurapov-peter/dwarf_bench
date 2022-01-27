@@ -2,6 +2,7 @@
 #include "common/dpcpp/hashtable.hpp"
 #include <limits>
 
+namespace {
 std::vector<uint32_t> expected_GroupBy(const std::vector<uint32_t> &keys,
                                        const std::vector<uint32_t> &vals,
                                        size_t groups_count) {
@@ -14,6 +15,7 @@ std::vector<uint32_t> expected_GroupBy(const std::vector<uint32_t> &keys,
 
   return result;
 }
+} // namespace
 
 GroupByLocal::GroupByLocal() : Dwarf("GroupByLocal") {}
 
