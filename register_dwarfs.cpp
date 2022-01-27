@@ -11,17 +11,17 @@
 #include "join/nested_join.hpp"
 #include "join/slab_join.hpp"
 #include "probe/slab_probe.hpp"
-#include "radix/radix.hpp"
+#include "sort/radix.hpp"
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
-#include "radix/sort.hpp"
+#include "sort/sort.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();
   registry->registerd(new TwoPassScan());
   registry->registerd(new ConstantExample());
   registry->registerd(new ConstantExampleCAPI());
-  registry->registerd(new Sort());
+  registry->registerd(new TBBSort());
 
 #ifdef DPCPP_ENABLED
   registry->registerd(new ConstantExampleDPCPP());

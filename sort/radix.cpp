@@ -2,7 +2,7 @@
 #include <oneapi/dpl/execution>
 #include <oneapi/dpl/iterator>
 
-#include "radix/radix.hpp"
+#include "sort/radix.hpp"
 
 #include "common/dpcpp/dpcpp_common.hpp"
 
@@ -14,9 +14,9 @@ template <typename T> std::vector<T> expected_out(const std::vector<T> &v) {
 }
 } // namespace
 
-RadixCuda::RadixCuda() : Dwarf("RadixCuda") {}
+Radix::Radix() : Dwarf("Radix") {}
 
-void RadixCuda::_run(const size_t buf_size, Meter &meter) {
+void Radix::_run(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
   const std::vector<int> host_src = helpers::make_random<int>(buf_size);
   const std::vector<int> expected = expected_out(host_src);
@@ -51,28 +51,28 @@ void RadixCuda::_run(const size_t buf_size, Meter &meter) {
       dump_collection(expected);
     }
 #endif
-    Result result;
-    result.host_time = host_end - host_start;
+    std::unique_ptr<Result> result = std::make_unique<Result>();
+    result->host_time = host_end - host_start;
     DwarfParams params{{"buf_size", std::to_string(buf_size)}};
-    meter.add_result(std::move(params), std::move(result));
 
     {
       sycl::host_accessor res(src, sycl::read_only);
       if (!helpers::check_first(res, expected, expected.size())) {
         std::cerr << "incorrect results" << std::endl;
-        result.valid = false;
+        result->valid = false;
       }
     }
+    meter.add_result(std::move(params), std::move(result));
   }
 }
 
-void RadixCuda::run(const RunOptions &opts) {
+void Radix::run(const RunOptions &opts) {
   for (auto size : opts.input_size) {
     _run(size, meter());
   }
 }
 
-void RadixCuda::init(const RunOptions &opts) {
+void Radix::init(const RunOptions &opts) {
   meter().set_opts(opts);
   DwarfParams params = {{"device_type", to_string(opts.device_ty)}};
   meter().set_params(params);

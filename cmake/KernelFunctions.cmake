@@ -4,12 +4,13 @@ endfunction()
 
 set(common_dpcpp_libs common dpcpp_common sycl oclhelpers::oclhelpers)
 set(common_tbb_libs common tbb)
+
 if(EXPLICIT_DPL)
   list(APPEND common_dpcpp_libs oneDPL)
 endif()
 
 function(add_dpcpp_lib name sources)
-  message(STATUS "Adding library ${name}")
+  message(STATUS "Adding dpcpp library ${name}")
   add_library(${name} SHARED ${sources})
   target_link_libraries(${name} PRIVATE ${common_dpcpp_libs})
   target_include_directories(${name} PRIVATE ${PROJECT_SOURCE_DIR})

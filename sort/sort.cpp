@@ -1,5 +1,6 @@
 #include <oneapi/tbb/parallel_sort.h>
-#include "radix/sort.hpp"
+
+#include "sort/sort.hpp"
 
 namespace {
 template <typename T> std::vector<T> expected_out(const std::vector<T> &v) {
