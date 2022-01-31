@@ -21,7 +21,7 @@ GroupBy::GroupBy() : Dwarf("GroupBy") {}
 
 void GroupBy::_run(const size_t buf_size, Meter &meter) {
   constexpr uint32_t empty_element = std::numeric_limits<uint32_t>::max();
-  auto opts = meter.opts();
+  auto opts = static_cast<const GroupByRunOptions&>(meter.opts());
 
   const int groups_count = opts.groups_count;
   const std::vector<uint32_t> host_src_vals =

@@ -4,12 +4,20 @@
 #include <boost/program_options.hpp>
 #include <iostream>
 
+bool isGroupBy(const std::string &dwarfName) {
+  return (dwarfName.find("GroupBy") != std::string::npos);
+}
+
 int main(int argc, char *argv[]) {
   populate_registry();
 
   auto registry = Registry::instance();
   namespace po = boost::program_options;
+
   RunOptions opts;
+  size_t groups_count = 1;
+  size_t executors = 1;
+
   opts.root_path = helpers::get_kernels_root_env(argv[0]);
   std::cout
       << "DWARF_BENCH_ROOT is set to " << opts.root_path << std::endl
@@ -33,9 +41,9 @@ int main(int argc, char *argv[]) {
   desc.add_options()("report_path", po::value<std::string>(&opts.report_path),
                      "Full/Relative path to a report file.");
   desc.add_options()(
-      "groups_count", po::value<size_t>(&opts.groups_count),
+      "groups_count", po::value<size_t>(&groups_count),
       "Number of unique keys for dwarfs with keys (groupby, hash build etc.).");
-  desc.add_options()("executors", po::value<size_t>(&opts.executors),
+  desc.add_options()("executors", po::value<size_t>(&executors),
                      "Number of executors for GroupByLocal.");
   po::positional_options_description pos_opts;
   pos_opts.add("dwarf", 1);
@@ -74,9 +82,16 @@ int main(int argc, char *argv[]) {
 
     helpers::set_dpcpp_filter_env(opts);
 
-    dwarf->init(opts);
-    dwarf->run(opts);
-    dwarf->report(opts);
+    if (isGroupBy(dwarf_name)) {
+      GroupByRunOptions group_by_opts(opts, groups_count, executors);
+      dwarf->init(group_by_opts);
+      dwarf->run(group_by_opts);
+      dwarf->report(group_by_opts);
+    } else {
+      dwarf->init(opts);
+      dwarf->run(opts);
+      dwarf->report(opts);
+    }
   } catch (std::exception &e) {
     std::cerr << "Caught exception: " << e.what() << std::endl;
   }
