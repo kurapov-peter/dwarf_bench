@@ -1,6 +1,8 @@
 # dwarf_bench
 
-## build
+“Dwarf bench” is a collection of patterns that attempt to capture performance characteristics of analytical queries. The idea is to extend the taxonomy of computational patterns defined in the article “The Landscape of Parallel Computing Research” published in 2006 to data analytics in heterogeneous environments. Implementing basic structures and algorithms once for multiple devices strives to find a balance between performance and specific capabilities usage, and implementation effort. We chose platform-agnostic tools to express our language of patterns (OpenCL, SYCL).
+
+## Build
 0. Requirements (see below): boost1.61, oclhelpers, opencl 1.2 (tested with nvidia 11.3, intel gfx & intel opencl cpu runtimes)
 1. Get latest release of opencl helpers from https://github.com/kurapov-peter/oclhelpers/releases
 2. Put the lib into your CMAKE_PREFIX_PATH or set oclhelpers_DIR env var
