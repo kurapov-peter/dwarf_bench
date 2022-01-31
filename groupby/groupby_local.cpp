@@ -21,7 +21,7 @@ GroupByLocal::GroupByLocal() : Dwarf("GroupByLocal") {}
 
 void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
   constexpr uint32_t empty_element = std::numeric_limits<uint32_t>::max();
-  auto opts = static_cast<const GroupByRunOptions&>(meter.opts());
+  auto opts = static_cast<const GroupByRunOptions &>(meter.opts());
 
   const int groups_count = opts.groups_count;
   const int executors = opts.executors;

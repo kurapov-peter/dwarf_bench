@@ -15,5 +15,5 @@ private:
   const std::string dwarf_name_;
   MeasureResults &result_;
   DwarfParams params_;
-  RunOptions const * opts_;
+  RunOptions const *opts_;
 };

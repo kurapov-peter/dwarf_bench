@@ -98,13 +98,9 @@ public:
       : _keys(keys), _vals(vals), _size(size), _hasher(hash),
         _empty_key(empty_key) {}
 
-  bool add(Key key, T val) {
-    return add_update(key, val);
-  }
+  bool add(Key key, T val) { return add_update(key, val); }
 
-  bool insert(Key key, T val) {
-    return insert_update(key, val);
-  }
+  bool insert(Key key, T val) { return insert_update(key, val); }
 
   const std::pair<T, bool> at(const Key &key) const {
     uint32_t pos = _hasher(key);
@@ -181,13 +177,9 @@ public:
       : _keys(keys), _vals(vals), _size(size), _hasher(hash),
         _empty_key(empty_key) {}
 
-  bool add(Key key, T val) {
-    return add_update(key, val);
-  }
+  bool add(Key key, T val) { return add_update(key, val); }
 
-  bool insert(Key key, T val) {
-    return insert_update(key, val);
-  }
+  bool insert(Key key, T val) { return insert_update(key, val); }
 
   const std::pair<T, bool> at(const Key &key) const {
     uint32_t pos = _hasher(key);
