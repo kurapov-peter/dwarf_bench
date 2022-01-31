@@ -99,13 +99,11 @@ public:
         _empty_key(empty_key) {}
 
   bool add(Key key, T val) {
-    bool success = add_update(key, val);
-    return success;
+    return add_update(key, val);
   }
 
   bool insert(Key key, T val) {
-    bool success = insert_update(key, val);
-    return success;
+    return insert_update(key, val);
   }
 
   const std::pair<T, bool> at(const Key &key) const {
@@ -149,7 +147,7 @@ private:
         return true;
       }
 
-      at = (at + 1) % _size;
+      at = (++at) % _size;
       if (at == _hasher(key)) {
         return false;
       }
@@ -168,7 +166,7 @@ private:
         return true;
       }
 
-      at = (at + 1) % _size;
+      at = (++at) % _size;
       if (at == _hasher(key)) {
         return false;
       }
@@ -184,13 +182,11 @@ public:
         _empty_key(empty_key) {}
 
   bool add(Key key, T val) {
-    bool success = add_update(key, val);
-    return success;
+    return add_update(key, val);
   }
 
   bool insert(Key key, T val) {
-    bool success = insert_update(key, val);
-    return success;
+    return insert_update(key, val);
   }
 
   const std::pair<T, bool> at(const Key &key) const {
@@ -234,7 +230,7 @@ private:
         return true;
       }
 
-      at = (at + 1) % _size;
+      at = (++at) % _size;
       if (at == _hasher(key)) {
         return false;
       }
@@ -253,7 +249,7 @@ private:
         return true;
       }
 
-      at = (at + 1) % _size;
+      at = (++at) % _size;
       if (at == _hasher(key)) {
         return false;
       }
