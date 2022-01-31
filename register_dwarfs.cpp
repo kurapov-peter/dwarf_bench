@@ -11,9 +11,9 @@
 #include "join/nested_join.hpp"
 #include "join/slab_join.hpp"
 #include "probe/slab_probe.hpp"
-#include "sort/radix.hpp"
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
+#include "sort/radix.hpp"
 #include "sort/sort.hpp"
 
 void populate_registry() {
