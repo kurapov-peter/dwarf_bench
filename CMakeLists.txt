@@ -61,7 +61,7 @@ set(bench_libs
   common
   standalone_scan
   constant
-  sort
+  tbbsort
 )
 
 if(ENABLE_DPCPP)

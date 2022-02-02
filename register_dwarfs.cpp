@@ -14,7 +14,7 @@
 #include "reduce/reduce.hpp"
 #include "scan/scan.hpp"
 #include "sort/radix.hpp"
-#include "sort/sort.hpp"
+#include "sort/tbbsort.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();

@@ -1,6 +1,6 @@
 #include <oneapi/tbb/parallel_sort.h>
 
-#include "sort/sort.hpp"
+#include "sort/tbbsort.hpp"
 
 namespace {
 template <typename T> std::vector<T> expected_out(const std::vector<T> &v) {

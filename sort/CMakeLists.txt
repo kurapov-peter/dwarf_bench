@@ -1,4 +1,4 @@
-add_tbb_lib(sort sort.cpp)
+add_tbb_lib(tbbsort tbbsort.cpp)
 
 if(ENABLE_DPCPP)
     add_dpcpp_lib(radix radix.cpp)
