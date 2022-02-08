@@ -12,6 +12,14 @@ struct RunOptions {
   std::string report_path;
 };
 
+struct GroupByRunOptions : public RunOptions {
+  GroupByRunOptions(const RunOptions &opts, size_t groups_count,
+                    size_t executors)
+      : RunOptions(opts), groups_count(groups_count), executors(executors){};
+  size_t groups_count;
+  size_t executors;
+};
+
 std::istream &operator>>(std::istream &in, RunOptions::DeviceType &dt);
 
 std::string to_string(const RunOptions::DeviceType &dt);

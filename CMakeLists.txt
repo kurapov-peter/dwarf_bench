@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(dwarf_bench)
 
+find_package(TBB REQUIRED)
 find_package(OpenCL REQUIRED)
 find_package(oclhelpers 0.1.3 REQUIRED)
 find_package(CUDA)
@@ -13,8 +14,7 @@ option(ENABLE_EXPERIMENTAL OFF)
 
 if(ENABLE_DPCPP)
   find_package(oneDPL REQUIRED)
-  find_package(TBB REQUIRED)
-  add_definitions(-DDPCPP_ENABLED)  
+  add_definitions(-DDPCPP_ENABLED)
   if(ENABLE_EXPERIMENTAL)
     add_definitions(-DEXPERIMENTAL)
   endif()
@@ -46,7 +46,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_subdirectory(common)
 add_subdirectory(scan)
 add_subdirectory(constant)
-add_subdirectory(radix)
+add_subdirectory(sort)
 add_subdirectory(reduce)
 add_subdirectory(hash)
 add_subdirectory(join)
@@ -57,15 +57,16 @@ if(ENABLE_EXAMPLES)
   add_subdirectory(example)
 endif()
 
-set(bench_libs 
+set(bench_libs
   common
   standalone_scan
   constant
+  tbbsort
 )
 
 if(ENABLE_DPCPP)
   add_subdirectory(common/dpcpp)
-  
+
   list(APPEND bench_libs
     dpcpp_constant
     scan
@@ -77,6 +78,7 @@ if(ENABLE_DPCPP)
     cuckoo_hash_build
     join
     groupby
+    groupby_local
     hash_build_non_bitmask
   )
   if(ENABLE_EXPERIMENTAL)
@@ -116,6 +118,6 @@ if(ENABLE_TESTS)
   )
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(googletest)
-  
+
   add_subdirectory(tests)
 endif()
