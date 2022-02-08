@@ -3,14 +3,16 @@
 #include <limits>
 
 namespace {
+using Func = std::function<uint32_t(uint32_t, uint32_t)>;
+
 std::vector<uint32_t> expected_GroupBy(const std::vector<uint32_t> &keys,
                                        const std::vector<uint32_t> &vals,
-                                       size_t groups_count) {
+                                       size_t groups_count, Func f) {
   std::vector<uint32_t> result(groups_count);
   size_t data_size = keys.size();
 
   for (int i = 0; i < data_size; i++) {
-    result[keys[i]] += vals[i];
+    result[keys[i]] = f(result[keys[i]], vals[i]);
   }
 
   return result;
@@ -31,7 +33,8 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
       helpers::make_random<uint32_t>(buf_size, 0, groups_count - 1);
 
   std::vector<uint32_t> expected =
-      expected_GroupBy(host_src_keys, host_src_vals, groups_count);
+      expected_GroupBy(host_src_keys, host_src_vals, groups_count,
+                       [](uint32_t x, uint32_t y) { return x + y; });
 
   auto sel = get_device_selector(opts);
   sycl::queue q{*sel};
