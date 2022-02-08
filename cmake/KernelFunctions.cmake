@@ -3,7 +3,7 @@ function(add_kernel name)
 endfunction()
 
 set(common_dpcpp_libs common dpcpp_common sycl oclhelpers::oclhelpers)
-set(common_tbb_libs common tbb)
+set(common_tbb_libs common TBB::tbb)
 
 if(EXPLICIT_DPL)
   list(APPEND common_dpcpp_libs oneDPL)
