@@ -83,7 +83,8 @@ int main(int argc, char *argv[]) {
     helpers::set_dpcpp_filter_env(*opts);
 
     if (isGroupBy(dwarf_name)) {
-      std::unique_ptr<GroupByRunOptions> tmpPtr = std::make_unique<GroupByRunOptions>(*opts, groups_count, executors);
+      std::unique_ptr<GroupByRunOptions> tmpPtr =
+          std::make_unique<GroupByRunOptions>(*opts, groups_count, executors);
       opts.reset();
       opts = std::move(tmpPtr);
     }
