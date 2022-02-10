@@ -52,6 +52,10 @@ void MeasureResults::add_result(DwarfParams params,
   results_.push_back({params, std::move(result)});
 }
 
+void MeasureResults::set_report_header(const std::string &header) {
+  header_ = header;
+}
+
 void MeasureResults::write_csv(const std::string &filename) const {
   bool exists = std::ifstream(filename).good();
   std::ofstream of(filename, std::ios::app);

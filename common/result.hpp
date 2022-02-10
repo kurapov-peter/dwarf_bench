@@ -59,7 +59,7 @@ public:
   const_iterator begin() const;
   const_iterator end() const;
 
-  void set_report_header(std::string &&header);
+  void set_report_header(const std::string &header);
   void write_csv(const std::string &filename) const;
 
 private:
