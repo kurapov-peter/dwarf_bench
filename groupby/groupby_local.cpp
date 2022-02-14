@@ -82,6 +82,8 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
            });
      }).wait();
 
+    auto group_by_end = std::chrono::steady_clock::now();
+
     q.submit([&](sycl::handler &h) {
        auto sv = src_vals.get_access(h);
        auto sk = src_keys.get_access(h);
@@ -110,11 +112,11 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
      }).wait();
 
     auto host_end = std::chrono::steady_clock::now();
-    auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
-                             host_end - host_start)
-                             .count();
-    std::unique_ptr<Result> result = std::make_unique<Result>();
+    std::unique_ptr<GroupByAggResult> result =
+        std::make_unique<GroupByAggResult>();
     result->host_time = host_end - host_start;
+    result->group_by_time = group_by_end - host_start;
+    result->reduction_time = host_end - group_by_end;
     out_buf.get_access<sycl::access::mode::read>();
 
     if (output != expected) {
@@ -133,6 +135,7 @@ void GroupByLocal::run(const RunOptions &opts) {
   }
 }
 void GroupByLocal::init(const RunOptions &opts) {
+  reporting_header_ = "total_time,group_by_time,reduction_time";
   meter().set_opts(opts);
   DwarfParams params = {{"device_type", to_string(opts.device_ty)}};
   meter().set_params(params);

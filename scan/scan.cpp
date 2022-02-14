@@ -151,7 +151,7 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
       result->valid = false;
     }
 
-    result->kernel_time = exe_time;
+    result->kernel_time = std::chrono::nanoseconds(exe_time);
 
     // todo: move out
     std::vector<int> expected_out = expected_out_lt(host_src, filter_value);

@@ -6,7 +6,8 @@
 class Dwarf {
 public:
   Dwarf(const std::string &name)
-      : name_(name), results_(name), meter_(name, results_) {}
+      : name_(name), results_(name), meter_(name, results_),
+        reporting_header_("host_time_ms,kernel_time_ms") {}
   virtual ~Dwarf() = default;
 
   const std::string &name() const { return name_; }
@@ -19,11 +20,15 @@ public:
         std::cout << *res.result;
       }
     } else {
+      results_.set_report_header(reporting_header_);
       results_.write_csv(opts.report_path);
     }
   }
 
   Meter &meter() { return meter_; }
+
+protected:
+  std::string reporting_header_;
 
 private:
   std::string name_;
