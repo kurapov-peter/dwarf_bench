@@ -226,7 +226,6 @@ public:
   build_join_position_buffer(size_t buffer_size,
                              sycl::buffer<K> &other_keys_buf) {
     sycl::buffer<size_t> join_count_buffer(buffer_size);
-    sycl::buffer<size_t> join_position_buffer(buffer_size);
 
     { // parallel??
       auto jcb = join_count_buffer.get_host_access();
@@ -266,8 +265,8 @@ public:
     auto policy = oneapi::dpl::execution::make_device_policy<class mysecondpolicy>(q);
     oneapi::dpl::inclusive_scan(policy, oneapi::dpl::begin(join_count_buffer),
                                 oneapi::dpl::end(join_count_buffer),
-                                oneapi::dpl::begin(join_position_buffer));
-    return join_position_buffer;
+                                oneapi::dpl::begin(join_count_buffer));
+    return join_count_buffer;
   }
 
   void dump_buffer() {
