@@ -5,8 +5,8 @@
 #include <unordered_set>
 
 size_t count_distinct(const std::vector<uint32_t> &v) {
-    std::unordered_set<uint32_t> s {v.begin(), v.end()};
-    return s.size();
+  std::unordered_set<uint32_t> s{v.begin(), v.end()};
+  return s.size();
 }
 
 JoinOmnisci::JoinOmnisci() : Dwarf("JoinOmnisci") {}
@@ -39,11 +39,27 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
   SimpleHasher<uint32_t> hasher(ht_size);
 
   for (unsigned it = 0; it < opts.iterations; ++it) {
-    OmniSci::HashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>> ht(table_a_keys, std::numeric_limits<uint32_t>::max(), hasher, ht_size, unique_keys, q);
+    std::unique_ptr<HashJoinResult> result = std::make_unique<HashJoinResult>();
+    OmniSci::HashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>> ht(
+        table_a_keys, std::numeric_limits<uint32_t>::max(), hasher, ht_size,
+        unique_keys, q);
+    auto host_start = std::chrono::steady_clock::now();
+
     ht.build_table();
     ht.build_id_buffer();
 
+    auto build_end = std::chrono::steady_clock::now();
+
     auto res = ht.lookup(table_b_keys);
+
+    auto host_end = std::chrono::steady_clock::now();
+    auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
+                             host_end - host_start)
+                             .count();
+
+    result->host_time = host_end - host_start;
+    result->build_time = build_end - host_start;
+    result->probe_time = host_end - build_end;
 
     std::vector<uint32_t> res_k;
     std::vector<uint32_t> res_va;
@@ -54,12 +70,16 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
       res_vb.push_back(table_b_values[res.first[i]]);
       res_va.push_back(table_a_values[res.second[i]]);
     }
-    ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = {
-        res_k, {res_va, res_vb}};
-    std::cout << (output == expected) << std::endl;
+    ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = {res_k,
+                                                             {res_va, res_vb}};
 
-    // DwarfParams params{{"buf_size", std::to_string(buf_size)}};
-    // meter.add_result(std::move(params), std::move(result));
+    if (output != expected) {
+      std::cerr << "Incorrect results" << std::endl;
+      result->valid = false;
+    }
+
+    DwarfParams params{{"buf_size", std::to_string(buf_size)}};
+    meter.add_result(std::move(params), std::move(result));
     // todo: scale factor?
   }
 }
