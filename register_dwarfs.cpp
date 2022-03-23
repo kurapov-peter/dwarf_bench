@@ -15,6 +15,7 @@
 #include "scan/scan.hpp"
 #include "sort/radix.hpp"
 #include "sort/tbbsort.hpp"
+#include "join/join_omnisci.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();
@@ -35,6 +36,7 @@ void populate_registry() {
   registry->registerd(new GroupByLocal());
   registry->registerd(new Join());
   registry->registerd(new HashBuildNonBitmask());
+  registry->registerd(new JoinOmnisci());
 #ifdef EXPERIMENTAL
   registry->registerd(new SlabHashBuild());
   registry->registerd(new SlabJoin());

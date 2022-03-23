@@ -80,6 +80,7 @@ if(ENABLE_DPCPP)
     groupby
     groupby_local
     hash_build_non_bitmask
+    omnisci_join
   )
   if(ENABLE_EXPERIMENTAL)
     list(APPEND bench_libs
