@@ -72,6 +72,15 @@ std::ostream &operator<<(std::ostream &os,
   return os;
 }
 
+template <class Key, class Val1, class Val2>
+std::ostream &operator<<(std::ostream &os,
+                         const RowJoinedTableTy<Key, Val1, Val2> &t) {
+  for (auto e: t) {
+    std::cout << e.first << ' ' << e.second.first << ' ' << e.second.second << std::endl;
+  }
+  return os;
+}
+
 template <class K, class V1, class V2>
 ColJoinedTableTy<K, V1, V2>
 seq_join(const std::vector<K> &a_keys, const std::vector<V1> &a_vals,
@@ -94,25 +103,27 @@ seq_join(const std::vector<K> &a_keys, const std::vector<V1> &a_vals,
 }
 
 template <class K, class V1, class V2>
+bool eq(const RowJoinedTableTy<K, V1, V2> &t1,
+                const RowJoinedTableTy<K, V1, V2> &t2) {
+  auto temp1 = t1;
+  auto temp2 = t2;
+
+  std::sort(temp1.begin(), temp1.end());
+  std::sort(temp2.begin(), temp2.end());
+
+  return temp1 == temp2;
+}
+
+template <class K, class V1, class V2>
 bool operator==(const ColJoinedTableTy<K, V1, V2> &t1,
                 const ColJoinedTableTy<K, V1, V2> &t2) {
   if (is_malformed(t1) || is_malformed(t2))
     throw std::invalid_argument("ColJoinedTableTy is malformed.");
 
-  return to_row_store(t1) == to_row_store(t2);
+  return eq(to_row_store(t1), to_row_store(t2));
 }
 
-template <class K, class V1, class V2>
-bool operator==(const RowJoinedTableTy<K, V1, V2> &t1,
-                const RowJoinedTableTy<K, V1, V2> &t2) {
-  auto temp1 = t1;
-  auto temp2 = t2;
 
-  std::sort(temp1);
-  std::sort(temp2);
-
-  return temp1 == temp2;
-}
 
 template <class K, class V1, class V2>
 ColJoinedTableTy<K, V1, V2> zip(const std::vector<K> &keys,
