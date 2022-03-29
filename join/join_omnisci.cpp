@@ -9,12 +9,14 @@ size_t count_distinct(const std::vector<uint32_t> &v) {
   return s.size();
 }
 
-std::vector<std::pair<uint32_t, std::unordered_set<size_t>>> get_expected(const std::vector<uint32_t> &a, const std::vector<uint32_t> &b) {
+std::vector<std::pair<uint32_t, std::unordered_set<size_t>>>
+get_expected(const std::vector<uint32_t> &a, const std::vector<uint32_t> &b) {
   std::vector<std::pair<uint32_t, std::unordered_set<size_t>>> ans(b.size());
   for (int i = 0; i < b.size(); i++) {
     std::unordered_set<size_t> ids;
     for (int j = 0; j < a.size(); j++) {
-      if (a[j] == b[i]) ids.insert(j);
+      if (a[j] == b[i])
+        ids.insert(j);
     }
 
     ans[i] = {b[i], ids};
@@ -22,14 +24,17 @@ std::vector<std::pair<uint32_t, std::unordered_set<size_t>>> get_expected(const 
   return ans;
 }
 
-bool is_right(const std::vector<std::pair<uint32_t, std::unordered_set<size_t>>> &expected, const std::vector<JoinOneToMany> &result) {
+bool is_right(const std::vector<std::pair<uint32_t, std::unordered_set<size_t>>>
+                  &expected,
+              const std::vector<JoinOneToMany> &result) {
   for (int i = 0; i < expected.size(); i++) {
     if (expected[i].second.size() != result[i].size) {
       std::cerr << "Different sizes" << std::endl;
       return false;
     }
     for (int j = 0; j < result[i].size; j++) {
-      if (expected[i].second.find(*(result[i].vals + j)) == expected[i].second.end()) {
+      if (expected[i].second.find(*(result[i].vals + j)) ==
+          expected[i].second.end()) {
         std::cerr << "No such key in join" << std::endl;
         return false;
       }
@@ -60,9 +65,7 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
   sycl::queue q{*sel};
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
-  auto expected =
-      get_expected(table_a_keys, table_b_keys);
-  
+  auto expected = get_expected(table_a_keys, table_b_keys);
 
   const size_t ht_size = unique_keys * 2;
   SimpleHasher<uint32_t> hasher(ht_size);
