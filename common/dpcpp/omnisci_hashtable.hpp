@@ -8,6 +8,11 @@
 #include <oneapi/dpl/iterator>
 #include <oneapi/dpl/numeric>
 
+struct JoinOneToMany {
+  sycl::global_ptr<size_t> vals;
+  size_t size;
+};
+
 namespace OmniSci {
 template <typename K, typename V, typename H> class HashTable {
 public:
@@ -151,28 +156,13 @@ public:
     }
   }
 
-  std::pair<std::vector<size_t>, std::vector<size_t>>
+  std::vector<JoinOneToMany>
   lookup(const std::vector<K> &other_keys) {
-    sycl::buffer<K> other_keys_buf(other_keys);
-    sycl::buffer<size_t> join_position_buffer =
-        build_join_position_buffer(other_keys.size(), other_keys_buf);
-    size_t join_size = 0;
-
+    std::vector<JoinOneToMany> answer(other_keys.size());
+    
     {
-      auto jpos_buf = join_position_buffer.get_host_access();
-      join_size = jpos_buf[other_keys.size() - 1];
-    }
-
-    if (join_size == 0) {
-      return {{}, {}};
-    }
-
-    std::vector<size_t> left(join_size);
-    std::vector<size_t> right(join_size);
-
-    {
-      sycl::buffer<size_t> l_buf(left);
-      sycl::buffer<size_t> r_buf(right);
+      sycl::buffer<JoinOneToMany> join(answer);
+      sycl::buffer<K> keys(other_keys);
 
       q.submit([&](sycl::handler &cgh) {
          ht_fields loc_f = *f;
@@ -181,15 +171,12 @@ public:
          auto ht_pos = position_buffer.get_access(cgh);
          auto ht_ids = id_buffer.get_access(cgh);
 
-         auto ks = other_keys_buf.get_access(cgh);
-         auto jpos_buf = join_position_buffer.get_access(cgh);
+         auto ks = keys.get_access(cgh);
+         auto j = join.get_access(cgh);
 
-         auto l = l_buf.get_access(cgh);
-         auto r = r_buf.get_access(cgh);
+        //  sycl::stream out(1000, 1000, cgh);
 
-         cgh.parallel_for(loc_f.keys_size, [=](auto i) {
-           auto id = i == 0 ? 0 : jpos_buf[i - 1];
-
+         cgh.parallel_for(other_keys.size(), [=](auto i) {
            auto h = loc_f.hasher(ks[i]);
            auto ht_id = h;
 
@@ -206,20 +193,14 @@ public:
              if (h_probe == h)
                return;
            }
-           auto join_entries = ht_cnt[ht_id];
-
-           if (join_entries == 0)
-             return; // impossible?
-
-           for (int j = 0; j < join_entries; j++) {
-             l[id + j] = i;
-             r[id + j] = ht_ids[ht_pos[ht_id] + j];
-           }
+          //  out << "KERNEL STAT -- " << i << " " << ht_id << " " << ht_pos[ht_id] << ' ' << (ht_ids.get_pointer() + ht_pos[ht_id]) << sycl::endl;
+           j[i].vals = (ht_ids.get_pointer() + ht_pos[ht_id]);
+           j[i].size = ht_cnt[ht_id];
          });
        }).wait();
     }
 
-    return {left, right};
+    return answer;
   }
 
   sycl::buffer<size_t>

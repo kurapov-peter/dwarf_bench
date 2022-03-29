@@ -9,6 +9,35 @@ size_t count_distinct(const std::vector<uint32_t> &v) {
   return s.size();
 }
 
+std::vector<std::pair<uint32_t, std::unordered_set<size_t>>> get_expected(const std::vector<uint32_t> &a, const std::vector<uint32_t> &b) {
+  std::vector<std::pair<uint32_t, std::unordered_set<size_t>>> ans(b.size());
+  for (int i = 0; i < b.size(); i++) {
+    std::unordered_set<size_t> ids;
+    for (int j = 0; j < a.size(); j++) {
+      if (a[j] == b[i]) ids.insert(j);
+    }
+
+    ans[i] = {b[i], ids};
+  }
+  return ans;
+}
+
+bool is_right(const std::vector<std::pair<uint32_t, std::unordered_set<size_t>>> &expected, const std::vector<JoinOneToMany> &result) {
+  for (int i = 0; i < expected.size(); i++) {
+    if (expected[i].second.size() != result[i].size) {
+      std::cerr << "Different sizes" << std::endl;
+      return false;
+    }
+    for (int j = 0; j < result[i].size; j++) {
+      if (expected[i].second.find(*(result[i].vals + j)) == expected[i].second.end()) {
+        std::cerr << "No such key in join" << std::endl;
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 JoinOmnisci::JoinOmnisci() : Dwarf("JoinOmnisci") {}
 using namespace join_helpers;
 void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
@@ -32,10 +61,10 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
   auto expected =
-      seq_join(table_a_keys, table_a_values, table_b_keys, table_b_values);
+      get_expected(table_a_keys, table_b_keys);
+  
 
-  const size_t ht_size = buf_size * 2;
-  const size_t bitmask_sz = ht_size / 32 + 1;
+  const size_t ht_size = unique_keys * 2;
   SimpleHasher<uint32_t> hasher(ht_size);
 
   for (unsigned it = 0; it < opts.iterations; ++it) {
@@ -61,19 +90,7 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
     result->build_time = build_end - host_start;
     result->probe_time = host_end - build_end;
 
-    std::vector<uint32_t> res_k;
-    std::vector<uint32_t> res_va;
-    std::vector<uint32_t> res_vb;
-
-    for (int i = 0; i < res.first.size(); i++) {
-      res_k.push_back(table_b_keys[res.first[i]]);
-      res_vb.push_back(table_b_values[res.first[i]]);
-      res_va.push_back(table_a_values[res.second[i]]);
-    }
-    ColJoinedTableTy<uint32_t, uint32_t, uint32_t> output = {res_k,
-                                                             {res_va, res_vb}};
-
-    if (output != expected) {
+    if (!is_right(expected, res)) {
       std::cerr << "Incorrect results" << std::endl;
       result->valid = false;
     }
