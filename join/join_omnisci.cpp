@@ -4,14 +4,16 @@
 #include "join_helpers/join_helpers.hpp"
 #include <unordered_set>
 
+using JoinOneToManySet = JoinOneToMany<std::unordered_set<size_t>>;
+
 size_t count_distinct(const std::vector<uint32_t> &v) {
   std::unordered_set<uint32_t> s{v.begin(), v.end()};
   return s.size();
 }
 
-std::vector<std::pair<uint32_t, std::unordered_set<size_t>>>
+std::vector<JoinOneToManySet>
 get_expected(const std::vector<uint32_t> &a, const std::vector<uint32_t> &b) {
-  std::vector<std::pair<uint32_t, std::unordered_set<size_t>>> ans(b.size());
+  std::vector<JoinOneToManySet> ans(b.size());
   for (int i = 0; i < b.size(); i++) {
     std::unordered_set<size_t> ids;
     for (int j = 0; j < a.size(); j++) {
@@ -19,22 +21,22 @@ get_expected(const std::vector<uint32_t> &a, const std::vector<uint32_t> &b) {
         ids.insert(j);
     }
 
-    ans[i] = {b[i], ids};
+    ans[i] = {ids, ids.size()};
   }
   return ans;
 }
 
-bool is_right(const std::vector<std::pair<uint32_t, std::unordered_set<size_t>>>
+bool is_right(const std::vector<JoinOneToManySet>
                   &expected,
-              const std::vector<JoinOneToMany> &result) {
+              const std::vector<JoinOneToManyPtrs> &result) {
   for (int i = 0; i < expected.size(); i++) {
-    if (expected[i].second.size() != result[i].size) {
+    if (expected[i].size != result[i].size) {
       std::cerr << "Different sizes" << std::endl;
       return false;
     }
     for (int j = 0; j < result[i].size; j++) {
-      if (expected[i].second.find(*(result[i].vals + j)) ==
-          expected[i].second.end()) {
+      if (expected[i].vals.find(*(result[i].vals + j)) ==
+          expected[i].vals.end()) {
         std::cerr << "No such key in join" << std::endl;
         return false;
       }

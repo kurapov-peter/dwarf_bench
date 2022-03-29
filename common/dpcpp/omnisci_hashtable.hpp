@@ -8,10 +8,13 @@
 #include <oneapi/dpl/iterator>
 #include <oneapi/dpl/numeric>
 
+template <typename T>
 struct JoinOneToMany {
-  sycl::global_ptr<size_t> vals;
+  T vals;
   size_t size;
 };
+
+using JoinOneToManyPtrs = JoinOneToMany<sycl::global_ptr<size_t>>;
 
 namespace OmniSci {
 template <typename K, typename V, typename H> class HashTable {
@@ -116,11 +119,11 @@ public:
      }).wait();
   }
 
-  std::vector<JoinOneToMany> lookup(const std::vector<K> &other_keys) {
-    std::vector<JoinOneToMany> answer(other_keys.size());
+  std::vector<JoinOneToManyPtrs> lookup(const std::vector<K> &other_keys) {
+    std::vector<JoinOneToManyPtrs> answer(other_keys.size());
 
     {
-      sycl::buffer<JoinOneToMany> join(answer);
+      sycl::buffer<JoinOneToManyPtrs> join(answer);
       sycl::buffer<K> keys(other_keys);
 
       q.submit([&](sycl::handler &cgh) {
