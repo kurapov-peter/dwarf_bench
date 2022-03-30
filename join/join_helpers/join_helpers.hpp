@@ -76,7 +76,7 @@ template <class Key, class Val1, class Val2>
 std::ostream &operator<<(std::ostream &os,
                          const RowJoinedTableTy<Key, Val1, Val2> &t) {
   for (auto e: t) {
-    std::cout << e.first << ' ' << e.second.first << ' ' << e.second.second << std::endl;
+    os << e.first << ' ' << e.second.first << ' ' << e.second.second << std::endl;
   }
   return os;
 }
