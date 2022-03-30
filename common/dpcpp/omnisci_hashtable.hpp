@@ -143,15 +143,16 @@ public:
            if (ht[h] != ks[i]) {
              auto h_probe = (h + 1) % loc_f.ht_size;
 
-             while (h_probe != h) {
+             while (true) {
                if (ht[h_probe] == ks[i]) {
                  ht_id = h_probe;
                  break;
                }
+               if (h_probe == h || ht[h_probe] == loc_f.empty_key) {
+                 return;
+               }
                h_probe = (h_probe + 1) % loc_f.ht_size;
              }
-             if (h_probe == h)
-               return;
            }
            j[i].vals = (ht_ids.get_pointer() + ht_pos[ht_id]);
            j[i].size = ht_cnt[ht_id];
