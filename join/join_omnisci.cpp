@@ -12,7 +12,8 @@ size_t count_distinct(const std::vector<uint32_t> &v) {
 }
 
 std::vector<JoinOneToManySet>
-build_join_id_buffer(const std::vector<uint32_t> &a, const std::vector<uint32_t> &b) {
+build_join_id_buffer(const std::vector<uint32_t> &a,
+                     const std::vector<uint32_t> &b) {
   std::vector<JoinOneToManySet> ans(b.size());
   for (int i = 0; i < b.size(); i++) {
     std::unordered_set<size_t> ids;
@@ -26,9 +27,8 @@ build_join_id_buffer(const std::vector<uint32_t> &a, const std::vector<uint32_t>
   return ans;
 }
 
-bool operator==(const std::vector<JoinOneToManySet>
-                  &expected,
-              const std::vector<JoinOneToManyPtrs> &result) {
+bool operator==(const std::vector<JoinOneToManySet> &expected,
+                const std::vector<JoinOneToManyPtrs> &result) {
   for (int i = 0; i < expected.size(); i++) {
     if (expected[i].size != result[i].size) {
       return false;
@@ -43,9 +43,8 @@ bool operator==(const std::vector<JoinOneToManySet>
   return true;
 }
 
-bool operator!=(const std::vector<JoinOneToManySet>
-                  &expected,
-              const std::vector<JoinOneToManyPtrs> &result) {
+bool operator!=(const std::vector<JoinOneToManySet> &expected,
+                const std::vector<JoinOneToManyPtrs> &result) {
   return !(expected == result);
 }
 

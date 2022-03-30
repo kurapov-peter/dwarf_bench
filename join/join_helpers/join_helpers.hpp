@@ -75,8 +75,9 @@ std::ostream &operator<<(std::ostream &os,
 template <class Key, class Val1, class Val2>
 std::ostream &operator<<(std::ostream &os,
                          const RowJoinedTableTy<Key, Val1, Val2> &t) {
-  for (auto e: t) {
-    os << e.first << ' ' << e.second.first << ' ' << e.second.second << std::endl;
+  for (auto e : t) {
+    os << e.first << ' ' << e.second.first << ' ' << e.second.second
+       << std::endl;
   }
   return os;
 }
@@ -104,7 +105,7 @@ seq_join(const std::vector<K> &a_keys, const std::vector<V1> &a_vals,
 
 template <class K, class V1, class V2>
 bool eq(const RowJoinedTableTy<K, V1, V2> &t1,
-                const RowJoinedTableTy<K, V1, V2> &t2) {
+        const RowJoinedTableTy<K, V1, V2> &t2) {
   auto temp1 = t1;
   auto temp2 = t2;
 
@@ -122,8 +123,6 @@ bool operator==(const ColJoinedTableTy<K, V1, V2> &t1,
 
   return eq(to_row_store(t1), to_row_store(t2));
 }
-
-
 
 template <class K, class V1, class V2>
 ColJoinedTableTy<K, V1, V2> zip(const std::vector<K> &keys,

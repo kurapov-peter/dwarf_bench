@@ -8,6 +8,7 @@
 #include "hash/hash_build_non_bitmask.hpp"
 #include "hash/slab_hash_build.hpp"
 #include "join/join.hpp"
+#include "join/join_omnisci.hpp"
 #include "join/nested_join.hpp"
 #include "join/slab_join.hpp"
 #include "probe/slab_probe.hpp"
@@ -15,7 +16,6 @@
 #include "scan/scan.hpp"
 #include "sort/radix.hpp"
 #include "sort/tbbsort.hpp"
-#include "join/join_omnisci.hpp"
 
 void populate_registry() {
   auto registry = Registry::instance();
