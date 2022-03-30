@@ -23,16 +23,16 @@ public:
       : q(q), keys(keys_vec), hash_table(ht_size), count_buffer(ht_size),
         position_buffer(ht_size), id_buffer(keys_vec.size()) {
 
-    ht_fields tmp_f = {empty_key, ht_size,     distinct_size, keys_vec.size(),
+    hash_table_pimpl tmp_f = {empty_key, ht_size,     distinct_size, keys_vec.size(),
 
                        ht_size,   ht_size * 2, ht_size * 3,
 
                        hasher};
 
-    f = std::make_unique<ht_fields>(tmp_f);
+    f = std::make_unique<hash_table_pimpl>(tmp_f);
 
     q.submit([&](sycl::handler &cgh) {
-       ht_fields loc_f = *f;
+       hash_table_pimpl loc_f = *f;
        auto ht = hash_table.get_access(cgh);
        auto cnt = count_buffer.get_access(cgh);
        auto pos = position_buffer.get_access(cgh);
@@ -54,7 +54,7 @@ public:
 
   void build_table() {
     q.submit([&](sycl::handler &cgh) {
-       ht_fields loc_f = *f;
+       hash_table_pimpl loc_f = *f;
        auto ht = hash_table.get_access(cgh);
        auto ks = keys.get_access(cgh);
 
@@ -87,7 +87,7 @@ public:
     build_pos_buffer();
 
     q.submit([&](sycl::handler &cgh) {
-       ht_fields loc_f = *f;
+       hash_table_pimpl loc_f = *f;
        auto ht = hash_table.get_access(cgh);
        auto ks = keys.get_access(cgh);
        auto cnt = count_buffer.get_access(cgh);
@@ -128,7 +128,7 @@ public:
       sycl::buffer<K> keys(other_keys);
 
       q.submit([&](sycl::handler &cgh) {
-         ht_fields loc_f = *f;
+         hash_table_pimpl loc_f = *f;
          auto ht = hash_table.get_access(cgh);
          auto ht_cnt = count_buffer.get_access(cgh);
          auto ht_pos = position_buffer.get_access(cgh);
@@ -195,7 +195,7 @@ public:
 private:
   void build_count_buffer() {
     q.submit([&](sycl::handler &cgh) {
-       ht_fields loc_f = *f;
+       hash_table_pimpl loc_f = *f;
        auto ht = hash_table.get_access(cgh);
        auto ks = keys.get_access(cgh);
        auto cnt = count_buffer.get_access(cgh);
@@ -232,7 +232,7 @@ private:
       cnt[i] = 0;
     }
   }
-  struct ht_fields {
+  struct hash_table_pimpl {
     K empty_key;
     size_t ht_size;
     size_t distinct_size;
@@ -251,6 +251,6 @@ private:
   sycl::buffer<size_t> id_buffer;
   sycl::queue &q;
 
-  std::unique_ptr<ht_fields> f;
+  std::unique_ptr<hash_table_pimpl> f;
 };
 } // namespace OmniSci
