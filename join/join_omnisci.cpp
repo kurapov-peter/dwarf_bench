@@ -57,14 +57,10 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
   constexpr uint32_t empty_element = std::numeric_limits<uint32_t>::max();
   const std::vector<uint32_t> table_a_keys =
       helpers::make_random<uint32_t>(buf_size);
-  const std::vector<uint32_t> table_a_values =
-      helpers::make_random<uint32_t>(table_a_keys.size());
   size_t unique_keys = count_distinct(table_a_keys);
 
   const std::vector<uint32_t> table_b_keys =
       helpers::make_random<uint32_t>(buf_size);
-  const std::vector<uint32_t> table_b_values =
-      helpers::make_random<uint32_t>(table_b_keys.size());
 
   auto sel = get_device_selector(opts);
   sycl::queue q{*sel};
