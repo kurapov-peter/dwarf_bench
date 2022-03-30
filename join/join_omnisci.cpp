@@ -57,7 +57,6 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
 
   constexpr uint32_t empty_element = std::numeric_limits<uint32_t>::max();
-  // todo: sizes
   const std::vector<uint32_t> table_a_keys =
       helpers::make_random<uint32_t>(buf_size);
   const std::vector<uint32_t> table_a_values =
