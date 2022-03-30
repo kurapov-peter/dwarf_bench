@@ -8,8 +8,7 @@
 #include <oneapi/dpl/iterator>
 #include <oneapi/dpl/numeric>
 
-template <typename T>
-struct JoinOneToMany {
+template <typename T> struct JoinOneToMany {
   T vals;
   size_t size;
 };
@@ -32,23 +31,25 @@ public:
 
     f = std::make_unique<ht_fields>(tmp_f);
 
-    // todo parallel init?
-    auto ht = hash_table.get_host_access();
-    auto cnt = count_buffer.get_host_access();
-    auto pos = position_buffer.get_host_access();
-    auto id = id_buffer.get_host_access();
-    for (int i = 0; i < ht_size; i++) {
-      ht[i] = empty_key;
-    }
-    for (int i = 0; i < ht_size; i++) {
-      cnt[i] = 0;
-    }
-    for (int i = 0; i < ht_size; i++) {
-      pos[i] = 0;
-    }
-    for (int i = 0; i < keys_vec.size(); i++) {
-      id[i] = 0;
-    }
+    q.submit([&](sycl::handler &cgh) {
+       ht_fields loc_f = *f;
+       auto ht = hash_table.get_access(cgh);
+       auto cnt = count_buffer.get_access(cgh);
+       auto pos = position_buffer.get_access(cgh);
+       auto id = id_buffer.get_access(cgh);
+
+       cgh.parallel_for(std::max(ht_size, keys_vec.size()), [=](auto i) {
+         if (i < loc_f.ht_size) {
+           ht[i] = loc_f.empty_key;
+           cnt[i] = 0;
+           pos[i] = 0;
+         }
+
+         if (i < loc_f.keys_size) {
+           id[i] = 0;
+         }
+       });
+     }).wait();
   }
 
   void build_table() {
