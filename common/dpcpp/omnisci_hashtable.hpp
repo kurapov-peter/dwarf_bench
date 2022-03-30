@@ -23,11 +23,12 @@ public:
       : q(q), keys(keys_vec), hash_table(ht_size), count_buffer(ht_size),
         position_buffer(ht_size), id_buffer(keys_vec.size()) {
 
-    hash_table_pimpl tmp_f = {empty_key, ht_size,     distinct_size, keys_vec.size(),
+    hash_table_pimpl tmp_f = {empty_key,       ht_size,     distinct_size,
+                              keys_vec.size(),
 
-                       ht_size,   ht_size * 2, ht_size * 3,
+                              ht_size,         ht_size * 2, ht_size * 3,
 
-                       hasher};
+                              hasher};
 
     f = std::make_unique<hash_table_pimpl>(tmp_f);
 
