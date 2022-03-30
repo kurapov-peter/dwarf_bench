@@ -12,7 +12,7 @@ size_t count_distinct(const std::vector<uint32_t> &v) {
 }
 
 std::vector<JoinOneToManySet>
-get_expected(const std::vector<uint32_t> &a, const std::vector<uint32_t> &b) {
+build_join_id_buffer(const std::vector<uint32_t> &a, const std::vector<uint32_t> &b) {
   std::vector<JoinOneToManySet> ans(b.size());
   for (int i = 0; i < b.size(); i++) {
     std::unordered_set<size_t> ids;
@@ -70,7 +70,7 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
   sycl::queue q{*sel};
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
-  auto expected = get_expected(table_a_keys, table_b_keys);
+  auto expected = build_join_id_buffer(table_a_keys, table_b_keys);
 
   const size_t ht_size = unique_keys * 2;
   SimpleHasher<uint32_t> hasher(ht_size);
