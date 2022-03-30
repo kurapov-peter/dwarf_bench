@@ -26,7 +26,7 @@ get_expected(const std::vector<uint32_t> &a, const std::vector<uint32_t> &b) {
   return ans;
 }
 
-bool is_right(const std::vector<JoinOneToManySet>
+bool operator==(const std::vector<JoinOneToManySet>
                   &expected,
               const std::vector<JoinOneToManyPtrs> &result) {
   for (int i = 0; i < expected.size(); i++) {
@@ -43,6 +43,12 @@ bool is_right(const std::vector<JoinOneToManySet>
     }
   }
   return true;
+}
+
+bool operator!=(const std::vector<JoinOneToManySet>
+                  &expected,
+              const std::vector<JoinOneToManyPtrs> &result) {
+  return !(expected == result);
 }
 
 JoinOmnisci::JoinOmnisci() : Dwarf("JoinOmnisci") {}
@@ -95,7 +101,7 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
     result->build_time = build_end - host_start;
     result->probe_time = host_end - build_end;
 
-    if (!is_right(expected, res)) {
+    if (!(expected == res)) {
       std::cerr << "Incorrect results" << std::endl;
       result->valid = false;
     }
