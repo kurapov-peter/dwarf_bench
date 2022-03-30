@@ -31,13 +31,11 @@ bool operator==(const std::vector<JoinOneToManySet>
               const std::vector<JoinOneToManyPtrs> &result) {
   for (int i = 0; i < expected.size(); i++) {
     if (expected[i].size != result[i].size) {
-      std::cerr << "Different sizes" << std::endl;
       return false;
     }
     for (int j = 0; j < result[i].size; j++) {
       if (expected[i].vals.find(*(result[i].vals + j)) ==
           expected[i].vals.end()) {
-        std::cerr << "No such key in join" << std::endl;
         return false;
       }
     }
