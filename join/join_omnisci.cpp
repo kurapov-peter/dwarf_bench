@@ -27,25 +27,41 @@ build_join_id_buffer(const std::vector<uint32_t> &a,
   return ans;
 }
 
-bool operator==(const std::vector<JoinOneToManySet> &expected,
-                const std::vector<JoinOneToManyPtrs> &result) {
+std::vector<size_t> get_from_device(sycl::global_ptr<size_t> p, size_t size,
+                                    sycl::queue &q) {
+  std::vector<size_t> get(size);
+
+  {
+    sycl::buffer<size_t> get_buf(get);
+
+    q.submit([&](sycl::handler &cgh) {
+       auto get_acc = get_buf.get_access(cgh);
+
+       cgh.single_task([=]() {
+         for (int i = 0; i < size; i++) {
+           get_acc[i] = *(p + i);
+         }
+       });
+     }).wait();
+  }
+
+  return get;
+}
+
+bool are_equal(const std::vector<JoinOneToManySet> &expected,
+               const std::vector<JoinOneToManyPtrs> &result, sycl::queue &q) {
   for (int i = 0; i < expected.size(); i++) {
     if (expected[i].size != result[i].size) {
       return false;
     }
     for (int j = 0; j < result[i].size; j++) {
-      if (expected[i].vals.find(*(result[i].vals + j)) ==
-          expected[i].vals.end()) {
+      auto vals = get_from_device(result[i].vals, result[i].size, q);
+      if (expected[i].vals.find(vals[j]) == expected[i].vals.end()) {
         return false;
       }
     }
   }
   return true;
-}
-
-bool operator!=(const std::vector<JoinOneToManySet> &expected,
-                const std::vector<JoinOneToManyPtrs> &result) {
-  return !(expected == result);
 }
 
 JoinOmnisci::JoinOmnisci() : Dwarf("JoinOmnisci") {}
@@ -81,7 +97,6 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
     ht.build_id_buffer();
 
     auto build_end = std::chrono::steady_clock::now();
-
     auto res = ht.lookup(table_b_keys);
 
     auto host_end = std::chrono::steady_clock::now();
@@ -93,7 +108,7 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
     result->build_time = build_end - host_start;
     result->probe_time = host_end - build_end;
 
-    if (!(expected == res)) {
+    if (!(are_equal(expected, res, q))) {
       std::cerr << "Incorrect results" << std::endl;
       result->valid = false;
     }
