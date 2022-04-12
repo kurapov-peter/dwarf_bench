@@ -8,6 +8,7 @@
 #include "hash/hash_build_non_bitmask.hpp"
 #include "hash/slab_hash_build.hpp"
 #include "join/join.hpp"
+#include "join/join_omnisci.hpp"
 #include "join/nested_join.hpp"
 #include "join/slab_join.hpp"
 #include "probe/slab_probe.hpp"
@@ -35,6 +36,7 @@ void populate_registry() {
   registry->registerd(new GroupByLocal());
   registry->registerd(new Join());
   registry->registerd(new HashBuildNonBitmask());
+  registry->registerd(new JoinOmnisci());
 #ifdef EXPERIMENTAL
   registry->registerd(new SlabHashBuild());
   registry->registerd(new SlabJoin());
