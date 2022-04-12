@@ -15,6 +15,27 @@ template <typename T> struct JoinOneToMany {
 
 using JoinOneToManyPtrs = JoinOneToMany<sycl::global_ptr<size_t>>;
 
+std::vector<size_t> get_from_device(sycl::global_ptr<size_t> p, size_t size,
+                                    sycl::queue &q) {
+  std::vector<size_t> get(size);
+
+  {
+    sycl::buffer<size_t> get_buf(get);
+
+    q.submit([&](sycl::handler &cgh) {
+       auto get_acc = get_buf.get_access(cgh);
+
+       cgh.single_task([=]() {
+         for (int i = 0; i < size; i++) {
+           get_acc[i] = *(p + i);
+         }
+       });
+     }).wait();
+  }
+
+  return get;
+}
+
 namespace OmniSci {
 template <typename K, typename V, typename H> class HashTable {
 public:
