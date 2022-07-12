@@ -1,12 +1,11 @@
 #pragma once
 #include "common/common.hpp"
+#include "groupby.hpp"
 
-class GroupByGlobal : public Dwarf {
+class GroupByGlobal : public GroupBy {
 public:
   GroupByGlobal();
-  void run(const RunOptions &opts) override;
-  void init(const RunOptions &opts) override;
 
 private:
-  void _run(const size_t buffer_size, Meter &meter);
+  void _run(const size_t buffer_size, Meter &meter) override;
 };
