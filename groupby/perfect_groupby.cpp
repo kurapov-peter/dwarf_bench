@@ -10,6 +10,8 @@ void PerfectGroupBy::_run(const size_t buf_size, Meter &meter) {
   auto opts = static_cast<const GroupByRunOptions &>(meter.opts());
 
   const int groups_count = opts.groups_count;
+  size_t threads_count = 1024 * 40;
+  size_t work_group_size = 1024;
   generate_vals(buf_size);
   generate_keys(buf_size, groups_count);
   generate_expected(groups_count, add);
@@ -19,7 +21,7 @@ void PerfectGroupBy::_run(const size_t buf_size, Meter &meter) {
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
   const size_t min_key = 0;
-  std::vector<uint32_t> ht_vals(groups_count, 0);
+  std::vector<uint32_t> ht_vals(groups_count * threads_count, 0);
   std::vector<uint32_t> output(groups_count, 0);
 
   sycl::buffer<uint32_t> ht_vals_buf(ht_vals);
@@ -36,12 +38,13 @@ void PerfectGroupBy::_run(const size_t buf_size, Meter &meter) {
        auto ht_v = ht_vals_buf.get_access(h);
 
        h.parallel_for<class groupby_local_hash_build>(
-           buf_size, [=](auto &idx) {
+           sycl::nd_range{ {threads_count}, {work_group_size} }, [=](auto &idx) {
              PerfectHashTable<uint32_t, uint32_t> ht(
-             groups_count, ht_v.get_pointer(),
+             groups_count, ht_v.get_pointer() + idx.get_global_id() * groups_count,
              min_key);
-
-         ht.add(sk[idx], sv[idx]);
+            
+            for (size_t i = idx.get_global_id(); i < buf_size; i += threads_count)
+              ht.add(sk[i], sv[i]);
            });
      }).wait();
 
@@ -56,13 +59,15 @@ void PerfectGroupBy::_run(const size_t buf_size, Meter &meter) {
        auto o = out_buf.get_access(h);
 
        h.single_task<class groupby_local_collect>([=]() {
+         for (size_t idx = 0; idx < threads_count; idx++) {
            PerfectHashTable<uint32_t, uint32_t> ht(
-             groups_count, ht_v.get_pointer(),
+             groups_count, ht_v.get_pointer() + idx * groups_count,
              min_key);
 
            for (int j = 0; j < groups_count; j++)
              o[j] += ht.at(j);
          }
+       }
        );
      }).wait();
 
@@ -84,7 +89,7 @@ void PerfectGroupBy::_run(const size_t buf_size, Meter &meter) {
        auto ht_v = ht_vals_buf.get_access(h);
 
        h.single_task<class clean>([=]() {
-         for (size_t i = 0; i < groups_count; i++) {
+         for (size_t i = 0; i < groups_count * threads_count; i++) {
            ht_v[i] = 0;
           o[i] = 0;
          }
