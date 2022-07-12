@@ -11,6 +11,7 @@ void GroupBy::run(const RunOptions &opts) {
 }
 
 void GroupBy::init(const RunOptions &opts) {
+  reporting_header_ = "total_time,group_by_time,reduction_time";
   meter().set_opts(opts);
   DwarfParams params = {{"device_type", to_string(opts.device_ty)}};
   meter().set_params(params);
