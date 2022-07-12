@@ -10,8 +10,8 @@ void PerfectGroupBy::_run(const size_t buf_size, Meter &meter) {
   auto opts = static_cast<const GroupByRunOptions &>(meter.opts());
 
   const int groups_count = opts.groups_count;
-  size_t threads_count = 1024 * 40;
-  size_t work_group_size = 1024;
+  size_t threads_count = opts.threads_count;
+  size_t work_group_size = opts.work_group_size;
   generate_vals(buf_size);
   generate_keys(buf_size, groups_count);
   generate_expected(groups_count, add);
