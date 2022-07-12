@@ -79,7 +79,7 @@ void GroupByGlobal::_run(const size_t buf_size, Meter &meter) {
     out_buf.get_access<sycl::access::mode::read>();
     result->valid = check_correctness(output);
 
-    DwarfParams params{{"buf_size", std::to_string(get_size_bytes(buf_size))}};
+    DwarfParams params{{"buf_size", std::to_string(get_size(buf_size))}};
     meter.add_result(std::move(params), std::move(result));
 
     q.submit([&](sycl::handler &h) {
