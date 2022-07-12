@@ -16,7 +16,7 @@ protected:
   
   const uint32_t _empty_element = std::numeric_limits<uint32_t>::max();
 
-
+  virtual size_t get_size_bytes(size_t buf_size);
   virtual void _run(const size_t buffer_size, Meter &meter) = 0;
 
   std::vector<uint32_t> src_keys;
