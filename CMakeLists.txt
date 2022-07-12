@@ -77,7 +77,7 @@ if(ENABLE_DPCPP)
     join_helpers_lib
     cuckoo_hash_build
     join
-    groupby
+    groupby_global
     groupby_local
     hash_build_non_bitmask
     omnisci_join
