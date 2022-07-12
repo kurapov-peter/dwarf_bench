@@ -49,7 +49,7 @@ void GroupByGlobal::_run(const size_t buf_size, Meter &meter) {
        });
      }).wait();
 
-    auto group_by_end = std::chrono::steady_clock::now();  
+    auto group_by_end = std::chrono::steady_clock::now();
 
     q.submit([&](sycl::handler &h) {
        auto sv = src_vals_buf.get_access(h);
@@ -70,8 +70,8 @@ void GroupByGlobal::_run(const size_t buf_size, Meter &meter) {
        });
      }).wait();
     auto host_end = std::chrono::steady_clock::now();
-    std::unique_ptr<GroupByAggResult> result = 
-      std::make_unique<GroupByAggResult>();
+    std::unique_ptr<GroupByAggResult> result =
+        std::make_unique<GroupByAggResult>();
     result->host_time = host_end - host_start;
     result->group_by_time = group_by_end - host_start;
     result->reduction_time = host_end - group_by_end;
@@ -92,7 +92,7 @@ void GroupByGlobal::_run(const size_t buf_size, Meter &meter) {
            ht_v[i] = 0;
            ht_k[i] = empty_element;
            if (i < groups_count)
-            o[i] = 0;
+             o[i] = 0;
          }
        });
      }).wait();

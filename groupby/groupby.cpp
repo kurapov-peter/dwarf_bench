@@ -42,6 +42,4 @@ void GroupBy::generate_vals(size_t buf_size) {
   src_vals = helpers::make_random<uint32_t>(buf_size);
 }
 
-size_t GroupBy::get_size(size_t buf_size) {
-  return buf_size * 2;
-}
+size_t GroupBy::get_size(size_t buf_size) { return buf_size * 2; }

@@ -53,8 +53,7 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
                  hash_size, executor_keys_ptr, executor_vals_ptr, hasher,
                  empty_element);
 
-             for (size_t i = idx;
-                  i < buf_size; i += threads_count)
+             for (size_t i = idx; i < buf_size; i += threads_count)
                ht.add(sk[i], sv[i]);
            });
      }).wait();
@@ -73,10 +72,8 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
        h.single_task<class groupby_local_collect>([=]() {
          for (int idx = 0; idx < threads_count; idx++) {
            size_t hash_table_ptr_offset = (idx * hash_size);
-           auto executor_keys_ptr =
-               ht_k.get_pointer() + hash_table_ptr_offset;
-           auto executor_vals_ptr =
-               ht_v.get_pointer() + hash_table_ptr_offset;
+           auto executor_keys_ptr = ht_k.get_pointer() + hash_table_ptr_offset;
+           auto executor_vals_ptr = ht_v.get_pointer() + hash_table_ptr_offset;
 
            LinearHashtable<uint32_t, uint32_t, SimpleHasher<uint32_t>> ht(
                hash_size, executor_keys_ptr, executor_vals_ptr, hasher,
@@ -111,7 +108,7 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
            ht_v[i] = 0;
            ht_k[i] = empty_element;
            if (i < groups_count)
-            o[i] = 0;
+             o[i] = 0;
          }
        });
      }).wait();

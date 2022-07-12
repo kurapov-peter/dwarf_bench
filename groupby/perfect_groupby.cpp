@@ -1,6 +1,6 @@
 #include "perfect_groupby.hpp"
-#include "common/dpcpp/perfect_hashtable.hpp"
 #include "common/dpcpp/dpcpp_common.hpp"
+#include "common/dpcpp/perfect_hashtable.hpp"
 #include <limits>
 
 PerfectGroupBy::PerfectGroupBy() : GroupBy("Perfect") {}
@@ -38,13 +38,15 @@ void PerfectGroupBy::_run(const size_t buf_size, Meter &meter) {
        auto ht_v = ht_vals_buf.get_access(h);
 
        h.parallel_for<class groupby_local_hash_build>(
-           sycl::nd_range{ {threads_count}, {work_group_size} }, [=](auto &idx) {
+           sycl::nd_range{{threads_count}, {work_group_size}}, [=](auto &idx) {
              PerfectHashTable<uint32_t, uint32_t> ht(
-             groups_count, ht_v.get_pointer() + idx.get_global_id() * groups_count,
-             min_key);
-            
-            for (size_t i = idx.get_global_id(); i < buf_size; i += threads_count)
-              ht.add(sk[i], sv[i]);
+                 groups_count,
+                 ht_v.get_pointer() + idx.get_global_id() * groups_count,
+                 min_key);
+
+             for (size_t i = idx.get_global_id(); i < buf_size;
+                  i += threads_count)
+               ht.add(sk[i], sv[i]);
            });
      }).wait();
 
@@ -61,14 +63,12 @@ void PerfectGroupBy::_run(const size_t buf_size, Meter &meter) {
        h.single_task<class groupby_local_collect>([=]() {
          for (size_t idx = 0; idx < threads_count; idx++) {
            PerfectHashTable<uint32_t, uint32_t> ht(
-             groups_count, ht_v.get_pointer() + idx * groups_count,
-             min_key);
+               groups_count, ht_v.get_pointer() + idx * groups_count, min_key);
 
            for (int j = 0; j < groups_count; j++)
              o[j] += ht.at(j);
          }
-       }
-       );
+       });
      }).wait();
 
     auto host_end = std::chrono::steady_clock::now();
@@ -91,13 +91,11 @@ void PerfectGroupBy::_run(const size_t buf_size, Meter &meter) {
        h.single_task<class clean>([=]() {
          for (size_t i = 0; i < groups_count * threads_count; i++) {
            ht_v[i] = 0;
-          o[i] = 0;
+           o[i] = 0;
          }
        });
      }).wait();
   }
 }
 
-size_t PerfectGroupBy::get_size(size_t buf_size) {
-    return buf_size;
-}
+size_t PerfectGroupBy::get_size(size_t buf_size) { return buf_size; }

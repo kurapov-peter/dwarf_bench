@@ -13,7 +13,7 @@ protected:
   AggregationFunc add = [](uint32_t acc, uint32_t x) { return acc + x; };
   AggregationFunc mul = [](uint32_t acc, uint32_t x) { return acc * x; };
   AggregationFunc count = [](uint32_t acc, uint32_t) { return acc + 1; };
-  
+
   const uint32_t _empty_element = std::numeric_limits<uint32_t>::max();
 
   virtual size_t get_size(size_t buf_size);

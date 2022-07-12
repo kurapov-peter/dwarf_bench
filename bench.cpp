@@ -47,7 +47,8 @@ int main(int argc, char *argv[]) {
   desc.add_options()("threads_count", po::value<size_t>(&threads_count),
                      "Number of threads for GroupBy dwarfs.");
   desc.add_options()("work_group_size", po::value<size_t>(&work_group_size),
-                     "Work group size for GroupBy dwarfs. threads_count must be divisible by work_group_size.");
+                     "Work group size for GroupBy dwarfs. threads_count must "
+                     "be divisible by work_group_size.");
   po::positional_options_description pos_opts;
   pos_opts.add("dwarf", 1);
 
@@ -87,7 +88,8 @@ int main(int argc, char *argv[]) {
 
     if (isGroupBy(dwarf_name)) {
       std::unique_ptr<GroupByRunOptions> tmpPtr =
-          std::make_unique<GroupByRunOptions>(*opts, groups_count, threads_count, work_group_size);
+          std::make_unique<GroupByRunOptions>(*opts, groups_count,
+                                              threads_count, work_group_size);
       opts.reset();
       opts = std::move(tmpPtr);
     }
