@@ -15,7 +15,8 @@ struct RunOptions {
 struct GroupByRunOptions : public RunOptions {
   GroupByRunOptions(const RunOptions &opts, size_t groups_count,
                     size_t threads_count, size_t work_group_size)
-      : RunOptions(opts), groups_count(groups_count), threads_count(threads_count), work_group_size(work_group_size) {};
+      : RunOptions(opts), groups_count(groups_count),
+        threads_count(threads_count), work_group_size(work_group_size){};
   size_t groups_count;
   size_t threads_count;
   size_t work_group_size;
