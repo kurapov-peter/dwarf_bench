@@ -14,10 +14,10 @@ struct RunOptions {
 
 struct GroupByRunOptions : public RunOptions {
   GroupByRunOptions(const RunOptions &opts, size_t groups_count,
-                    size_t executors)
-      : RunOptions(opts), groups_count(groups_count), executors(executors){};
+                    size_t threads_count)
+      : RunOptions(opts), groups_count(groups_count), threads_count(threads_count){};
   size_t groups_count;
-  size_t executors;
+  size_t threads_count;
 };
 
 std::istream &operator>>(std::istream &in, RunOptions::DeviceType &dt);

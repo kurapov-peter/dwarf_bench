@@ -9,7 +9,7 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
   auto opts = static_cast<const GroupByRunOptions &>(meter.opts());
 
   const int groups_count = opts.groups_count;
-  const int executors = opts.executors;
+  const int threads_count = opts.threads_count;
   generate_vals(buf_size);
   generate_keys(buf_size, groups_count);
   generate_expected(groups_count, add);
@@ -22,8 +22,8 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
   size_t hash_size = groups_count * 2;
   SimpleHasher<uint32_t> hasher(hash_size);
 
-  std::vector<uint32_t> ht_vals(hash_size * executors, 0);
-  std::vector<uint32_t> ht_keys(hash_size * executors, empty_element);
+  std::vector<uint32_t> ht_vals(hash_size * threads_count, 0);
+  std::vector<uint32_t> ht_keys(hash_size * threads_count, empty_element);
   std::vector<uint32_t> output(groups_count, 0);
 
   sycl::buffer<uint32_t> ht_vals_buf(ht_vals);
@@ -41,10 +41,8 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
        auto ht_v = ht_vals_buf.get_access(h);
        auto ht_k = ht_keys_buf.get_access(h);
 
-       const size_t work_per_executor = buf_size / executors;
-
        h.parallel_for<class groupby_local_hash_build>(
-           executors, [=](auto &idx) {
+           threads_count, [=](auto &idx) {
              size_t hash_table_ptr_offset = (idx * hash_size);
              auto executor_keys_ptr =
                  ht_k.get_pointer() + hash_table_ptr_offset;
@@ -55,8 +53,8 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
                  hash_size, executor_keys_ptr, executor_vals_ptr, hasher,
                  empty_element);
 
-             for (size_t i = work_per_executor * idx;
-                  i < work_per_executor * (idx + 1); i++)
+             for (size_t i = idx;
+                  i < buf_size; i += threads_count)
                ht.add(sk[i], sv[i]);
            });
      }).wait();
@@ -73,7 +71,7 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
        auto o = out_buf.get_access(h);
 
        h.single_task<class groupby_local_collect>([=]() {
-         for (int idx = 0; idx < executors; idx++) {
+         for (int idx = 0; idx < threads_count; idx++) {
            size_t hash_table_ptr_offset = (idx * hash_size);
            auto executor_keys_ptr =
                ht_k.get_pointer() + hash_table_ptr_offset;
@@ -109,7 +107,7 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
        auto ht_k = ht_keys_buf.get_access(h);
 
        h.single_task<class clean>([=]() {
-         for (size_t i = 0; i < hash_size * executors; i++) {
+         for (size_t i = 0; i < hash_size * threads_count; i++) {
            ht_v[i] = 0;
            ht_k[i] = empty_element;
            if (i < groups_count)
