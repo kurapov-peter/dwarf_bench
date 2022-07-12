@@ -1,15 +1,14 @@
-#include "groupby_local.hpp"
+#include "groupby_global.hpp"
 #include "common/dpcpp/hashtable.hpp"
 #include <limits>
 
-GroupByLocal::GroupByLocal() : GroupBy("Local") {}
+GroupByGlobal::GroupByGlobal() : GroupBy("Global") {}
 
-void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
+void GroupByGlobal::_run(const size_t buf_size, Meter &meter) {
   uint32_t empty_element = _empty_element;
   auto opts = static_cast<const GroupByRunOptions &>(meter.opts());
 
   const int groups_count = opts.groups_count;
-  const int threads_count = opts.threads_count;
   generate_vals(buf_size);
   generate_keys(buf_size, groups_count);
   generate_expected(groups_count, add);
@@ -20,10 +19,10 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
 
   size_t hash_size = groups_count * 2;
-  SimpleHasher<uint32_t> hasher(hash_size);
+  PolynomialHasher hasher(hash_size);
 
-  std::vector<uint32_t> ht_vals(hash_size * threads_count, 0);
-  std::vector<uint32_t> ht_keys(hash_size * threads_count, empty_element);
+  std::vector<uint32_t> ht_vals(hash_size, 0);
+  std::vector<uint32_t> ht_keys(hash_size, empty_element);
   std::vector<uint32_t> output(groups_count, 0);
 
   sycl::buffer<uint32_t> ht_vals_buf(ht_vals);
@@ -41,21 +40,13 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
        auto ht_v = ht_vals_buf.get_access(h);
        auto ht_k = ht_keys_buf.get_access(h);
 
-       h.parallel_for<class groupby_local_hash_build>(
-           threads_count, [=](auto &idx) {
-             size_t hash_table_ptr_offset = (idx * hash_size);
-             auto executor_keys_ptr =
-                 ht_k.get_pointer() + hash_table_ptr_offset;
-             auto executor_vals_ptr =
-                 ht_v.get_pointer() + hash_table_ptr_offset;
+       h.parallel_for<class hash_build>(buf_size, [=](auto &idx) {
+         NonOwningHashTableNonBitmask<uint32_t, uint32_t, PolynomialHasher> ht(
+             hash_size, ht_k.get_pointer(), ht_v.get_pointer(), hasher,
+             empty_element);
 
-             LinearHashtable<uint32_t, uint32_t, SimpleHasher<uint32_t>> ht(
-                 hash_size, executor_keys_ptr, executor_vals_ptr, hasher,
-                 empty_element);
-
-             for (size_t i = idx; i < buf_size; i += threads_count)
-               ht.add(sk[i], sv[i]);
-           });
+         ht.add(sk[idx], sv[idx]);
+       });
      }).wait();
 
     auto group_by_end = std::chrono::steady_clock::now();
@@ -63,28 +54,21 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
     q.submit([&](sycl::handler &h) {
        auto sv = src_vals_buf.get_access(h);
        auto sk = src_keys_buf.get_access(h);
+       auto o = out_buf.get_access(h);
 
        auto ht_v = ht_vals_buf.get_access(h);
        auto ht_k = ht_keys_buf.get_access(h);
 
-       auto o = out_buf.get_access(h);
+       h.parallel_for<class hash_build_check>(buf_size, [=](auto &idx) {
+         NonOwningHashTableNonBitmask<uint32_t, uint32_t, PolynomialHasher> ht(
+             hash_size, ht_k.get_pointer(), ht_v.get_pointer(), hasher,
+             empty_element);
 
-       h.single_task<class groupby_local_collect>([=]() {
-         for (int idx = 0; idx < threads_count; idx++) {
-           size_t hash_table_ptr_offset = (idx * hash_size);
-           auto executor_keys_ptr = ht_k.get_pointer() + hash_table_ptr_offset;
-           auto executor_vals_ptr = ht_v.get_pointer() + hash_table_ptr_offset;
-
-           LinearHashtable<uint32_t, uint32_t, SimpleHasher<uint32_t>> ht(
-               hash_size, executor_keys_ptr, executor_vals_ptr, hasher,
-               empty_element);
-
-           for (int j = 0; j < groups_count; j++)
-             o[j] += ht.at(j).first;
-         }
+         std::pair<uint32_t, bool> sum_for_group = ht.at(sk[idx]);
+         sycl::atomic<uint32_t>(o.get_pointer() + sk[idx])
+             .store(sum_for_group.first);
        });
      }).wait();
-
     auto host_end = std::chrono::steady_clock::now();
     std::unique_ptr<GroupByAggResult> result =
         std::make_unique<GroupByAggResult>();
@@ -104,7 +88,7 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
        auto ht_k = ht_keys_buf.get_access(h);
 
        h.single_task<class clean>([=]() {
-         for (size_t i = 0; i < hash_size * threads_count; i++) {
+         for (size_t i = 0; i < hash_size; i++) {
            ht_v[i] = 0;
            ht_k[i] = empty_element;
            if (i < groups_count)
