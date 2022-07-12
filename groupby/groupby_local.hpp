@@ -7,5 +7,5 @@ public:
   GroupByLocal();
 
 private:
-  void _run(const size_t buffer_size, Meter &meter);
+  void _run(const size_t buffer_size, Meter &meter) override;
 };

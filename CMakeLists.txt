@@ -79,6 +79,7 @@ if(ENABLE_DPCPP)
     join
     groupby_global
     groupby_local
+    groupby_perfect
     hash_build_non_bitmask
     omnisci_join
   )

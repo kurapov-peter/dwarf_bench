@@ -3,6 +3,7 @@
 #include "constant/constant.hpp"
 #include "groupby/groupby_global.hpp"
 #include "groupby/groupby_local.hpp"
+#include "groupby/perfect_groupby.hpp"
 #include "hash/cuckoo_hash_build.hpp"
 #include "hash/hash_build.hpp"
 #include "hash/hash_build_non_bitmask.hpp"
@@ -34,6 +35,7 @@ void populate_registry() {
   registry->registerd(new CuckooHashBuild());
   registry->registerd(new GroupByGlobal());
   registry->registerd(new GroupByLocal());
+  registry->registerd(new PerfectGroupBy());
   registry->registerd(new Join());
   registry->registerd(new HashBuildNonBitmask());
   registry->registerd(new JoinOmnisci());
