@@ -4,12 +4,13 @@
 
 template <class Key, class T, class Hash> class SimpleNonOwningHashTable {
 public:
-  explicit SimpleNonOwningHashTable(size_t size, size_t bitmask_sz, sycl::global_ptr<Key> keys,
+  explicit SimpleNonOwningHashTable(size_t size, size_t bitmask_sz,
+                                    sycl::global_ptr<Key> keys,
                                     sycl::global_ptr<T> vals,
                                     sycl::global_ptr<uint32_t> bitmask,
                                     Hash hash)
-      : _keys(keys), _vals(vals), _bitmask(bitmask), _size(size),
-        _hasher(hash), _bitmask_sz(bitmask_sz) {}
+      : _keys(keys), _vals(vals), _bitmask(bitmask), _size(size), _hasher(hash),
+        _bitmask_sz(bitmask_sz) {}
 
   std::pair<uint32_t, bool> insert(Key key, T val) {
     uint32_t pos = update_bitmask(_hasher(key));
@@ -80,7 +81,8 @@ private:
 
       uint32_t occupied =
           sycl::ext::intel::ctz<uint32_t>(~(present >> minor_idx));
-      if (occupied + minor_idx >= elem_sz || major_idx * elem_sz + minor_idx >= _size) {
+      if (occupied + minor_idx >= elem_sz ||
+          major_idx * elem_sz + minor_idx >= _size) {
         major_idx = (++major_idx) % _bitmask_sz;
         minor_idx = 0;
       } else {
