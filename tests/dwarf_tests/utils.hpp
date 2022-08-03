@@ -7,11 +7,11 @@
 
 #include "common/options.hpp"
 
-std::unique_ptr<RunOptions> get_cpu_test_opts();
-std::unique_ptr<RunOptions> get_gpu_test_opts();
+std::unique_ptr<RunOptions> get_cpu_test_opts(size_t size);
+std::unique_ptr<RunOptions> get_gpu_test_opts(size_t size);
 
-std::unique_ptr<RunOptions> get_cpu_test_opts_groupby();
-std::unique_ptr<RunOptions> get_gpu_test_opts_groupby();
+std::unique_ptr<RunOptions> get_cpu_test_opts_groupby(size_t size);
+std::unique_ptr<RunOptions> get_gpu_test_opts_groupby(size_t size);
 
 std::string get_kernels_root_tests();
 

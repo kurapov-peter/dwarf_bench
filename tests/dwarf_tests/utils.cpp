@@ -16,9 +16,9 @@ bool not_cuda_gpu_available() {
   }
 }
 
-std::unique_ptr<RunOptions> get_gpu_test_opts() {
+std::unique_ptr<RunOptions> get_gpu_test_opts(size_t size) {
   RunOptions opts = {.device_ty = RunOptions::DeviceType::GPU,
-                     .input_size = {128, 256, 512, 1024, 2048, 4096, 10240},
+                     .input_size = {size},
                      .iterations = 10,
                      .root_path = get_kernels_root_tests(),
                      .report_path = ""};
@@ -26,9 +26,9 @@ std::unique_ptr<RunOptions> get_gpu_test_opts() {
   return std::make_unique<RunOptions>(opts);
 }
 
-std::unique_ptr<RunOptions> get_cpu_test_opts() {
+std::unique_ptr<RunOptions> get_cpu_test_opts(size_t size) {
   RunOptions opts = {.device_ty = RunOptions::DeviceType::CPU,
-                     .input_size = {128, 256, 512, 1024, 2048, 4096, 10240},
+                     .input_size = {size},
                      .iterations = 10,
                      .root_path = get_kernels_root_tests(),
                      .report_path = ""};
@@ -36,12 +36,14 @@ std::unique_ptr<RunOptions> get_cpu_test_opts() {
   return std::make_unique<RunOptions>(opts);
 }
 
-std::unique_ptr<RunOptions> get_cpu_test_opts_groupby() {
-  return std::make_unique<GroupByRunOptions>(*get_cpu_test_opts(), 64, 1024);
+std::unique_ptr<RunOptions> get_cpu_test_opts_groupby(size_t size) {
+  return std::make_unique<GroupByRunOptions>(*get_cpu_test_opts(size), 64,
+                                             1024);
 }
 
-std::unique_ptr<RunOptions> get_gpu_test_opts_groupby() {
-  return std::make_unique<GroupByRunOptions>(*get_gpu_test_opts(), 64, 1024);
+std::unique_ptr<RunOptions> get_gpu_test_opts_groupby(size_t size) {
+  return std::make_unique<GroupByRunOptions>(*get_gpu_test_opts(size), 64,
+                                             1024);
 }
 
 std::string get_kernels_root_tests() {
