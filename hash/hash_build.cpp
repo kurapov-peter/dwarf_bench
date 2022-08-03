@@ -15,13 +15,16 @@ void HashBuild::_run(const size_t buf_size, Meter &meter) {
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
 
-  SimpleHasher<uint32_t> hasher(buf_size);
+  size_t ht_size = buf_size * 2;
+  size_t bitmask_sz = std::ceil((float) ht_size / 32);
+  MurmurHash3_x86_32 hasher(ht_size, sizeof(uint32_t),
+                               helpers::make_random());
 
   for (auto it = 0; it < opts.iterations; ++it) {
-    size_t bitmask_sz = std::ceil((float) buf_size / 32);
+    
     std::vector<uint32_t> bitmask(bitmask_sz, 0);
-    std::vector<uint32_t> data(buf_size, 0);
-    std::vector<uint32_t> keys(buf_size, 0);
+    std::vector<uint32_t> data(ht_size, 0);
+    std::vector<uint32_t> keys(ht_size, 0);
     std::vector<uint32_t> output(buf_size, 0);
     std::vector<uint32_t> expected(buf_size, 1);
 
@@ -39,8 +42,8 @@ void HashBuild::_run(const size_t buf_size, Meter &meter) {
        auto keys_acc = keys_buf.get_access(h);
 
        h.parallel_for<class hash_build>(buf_size, [=](auto &idx) {
-         SimpleNonOwningHashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>>
-             ht(buf_size, bitmask_sz, keys_acc.get_pointer(), data_acc.get_pointer(),
+         SimpleNonOwningHashTable<uint32_t, uint32_t, MurmurHash3_x86_32>
+             ht(ht_size, bitmask_sz, keys_acc.get_pointer(), data_acc.get_pointer(),
                 bitmask_acc.get_pointer(), hasher);
 
          ht.insert(s[idx], s[idx]);
@@ -65,8 +68,8 @@ void HashBuild::_run(const size_t buf_size, Meter &meter) {
        auto keys_acc = keys_buf.get_access(h);
 
        h.parallel_for<class hash_build_check>(buf_size, [=](auto &idx) {
-         SimpleNonOwningHashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>>
-             ht(buf_size, _bitmask_sz, keys_acc.get_pointer(), data_acc.get_pointer(),
+         SimpleNonOwningHashTable<uint32_t, uint32_t, MurmurHash3_x86_32>
+             ht(ht_size, bitmask_sz, keys_acc.get_pointer(), data_acc.get_pointer(),
                 bitmask_acc.get_pointer(), hasher);
 
          o[idx] = ht.has(s[idx]);
