@@ -1,6 +1,7 @@
 enable_testing()
 
 # TODO: add add_dpcpp_test() func
+add_subdirectory(dwarf_tests)
 
 add_executable(scan_tests scan_tests.cpp)
 add_executable(hash_table_tests hash_table_tests.cpp)
