@@ -17,27 +17,23 @@ bool not_cuda_gpu_available() {
 }
 
 std::unique_ptr<RunOptions> get_gpu_test_opts() {
-    RunOptions opts = {
-        .device_ty = RunOptions::DeviceType::GPU,
-        .input_size = { 128, 256, 512, 1024, 2048, 4096 },
-        .iterations = 10,
-        .root_path = get_kernels_root_tests(),
-        .report_path = ""
-    };
+  RunOptions opts = {.device_ty = RunOptions::DeviceType::GPU,
+                     .input_size = {128, 256, 512, 1024, 2048, 4096, 10240},
+                     .iterations = 10,
+                     .root_path = get_kernels_root_tests(),
+                     .report_path = ""};
 
-    return std::make_unique<RunOptions>(opts);
+  return std::make_unique<RunOptions>(opts);
 }
 
 std::unique_ptr<RunOptions> get_cpu_test_opts() {
-    RunOptions opts = {
-        .device_ty = RunOptions::DeviceType::CPU,
-        .input_size = { 128, 256, 512, 1024, 2048, 4096 },
-        .iterations = 10,
-        .root_path = get_kernels_root_tests(),
-        .report_path = ""
-    };
+  RunOptions opts = {.device_ty = RunOptions::DeviceType::CPU,
+                     .input_size = {128, 256, 512, 1024, 2048, 4096, 10240},
+                     .iterations = 10,
+                     .root_path = get_kernels_root_tests(),
+                     .report_path = ""};
 
-    return std::make_unique<RunOptions>(opts);
+  return std::make_unique<RunOptions>(opts);
 }
 
 std::unique_ptr<RunOptions> get_cpu_test_opts_groupby() {
@@ -48,17 +44,19 @@ std::unique_ptr<RunOptions> get_gpu_test_opts_groupby() {
   return std::make_unique<GroupByRunOptions>(*get_gpu_test_opts(), 64, 1024);
 }
 
-
 std::string get_kernels_root_tests() {
   auto *val = std::getenv("DWARF_BENCH_ROOT");
-  return val ? val : boost::dll::program_location().parent_path().parent_path().parent_path().c_str();
+  return val ? val
+             : boost::dll::program_location()
+                   .parent_path()
+                   .parent_path()
+                   .parent_path()
+                   .c_str();
 }
 
 StdoutCapture::StdoutCapture() {
-    old_rdbuf = std::cout.rdbuf();
-    std::cout.rdbuf(buffer.rdbuf());
+  old_rdbuf = std::cout.rdbuf();
+  std::cout.rdbuf(buffer.rdbuf());
 }
 
-StdoutCapture::~StdoutCapture() {
-    std::cout.rdbuf(old_rdbuf);
-}
+StdoutCapture::~StdoutCapture() { std::cout.rdbuf(old_rdbuf); }

@@ -1,42 +1,45 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include "common/options.hpp"
-#include "common/result.hpp"
-#include "common/registry.hpp"
 #include "common/dpcpp/dpcpp_common.hpp"
+#include "common/options.hpp"
+#include "common/registry.hpp"
+#include "common/result.hpp"
 
 #include "dwarfs.hpp"
 #include "utils.hpp"
 
 void check_results(std::unique_ptr<Dwarf> dwarf) {
-    for (const DwarfRunResult &res: dwarf->get_results()) {
-        ASSERT_TRUE(res.result->valid);
-    }
+  for (const DwarfRunResult &res : dwarf->get_results()) {
+    ASSERT_TRUE(res.result->valid);
+  }
 }
 
-template <class DwarfClass>
-void test_dwarf(std::unique_ptr<RunOptions> opts) {
-    std::unique_ptr<Dwarf> dwarf = std::make_unique<DwarfClass>();
-    dwarf->init(*opts);
-    dwarf->run(*opts);
-    check_results(std::move(dwarf));
+template <class DwarfClass> void test_dwarf(std::unique_ptr<RunOptions> opts) {
+  std::unique_ptr<Dwarf> dwarf = std::make_unique<DwarfClass>();
+  dwarf->init(*opts);
+  dwarf->run(*opts);
+  check_results(std::move(dwarf));
 }
 
-#define GENERATE_TEST_BASE(DWARF, CPU_OPTS, GPU_OPTS)                                                                \
-    TEST(DwarfsExpectedCorrectnessTests, DWARF##_CPU) {                                     \
-        StdoutCapture c;                                                                    \
-        test_dwarf<DWARF>(std::move(CPU_OPTS()));                                             \
-    }                                                                                       \
-                                                                                            \
-    TEST(DwarfsExpectedCorrectnessTests, DWARF##_GPU) {                                     \
-        if (!not_cuda_gpu_available()) GTEST_SKIP() << "No GPU without CUDA available";     \
-        StdoutCapture c;                                                                    \
-        test_dwarf<DWARF>(std::move(GPU_OPTS()));                                             \
-    }
+#define GENERATE_TEST_BASE(DWARF, CPU_OPTS, GPU_OPTS)                          \
+  TEST(DwarfsExpectedCorrectnessTests, DWARF##_CPU) {                          \
+    StdoutCapture c;                                                           \
+    test_dwarf<DWARF>(std::move(CPU_OPTS()));                                  \
+  }                                                                            \
+                                                                               \
+  TEST(DwarfsExpectedCorrectnessTests, DWARF##_GPU) {                          \
+    if (!not_cuda_gpu_available())                                             \
+      GTEST_SKIP() << "No GPU without CUDA available";                         \
+    StdoutCapture c;                                                           \
+    test_dwarf<DWARF>(std::move(GPU_OPTS()));                                  \
+  }
 
-#define GENERATE_TEST(DWARF) GENERATE_TEST_BASE(DWARF, get_cpu_test_opts, get_gpu_test_opts)
-#define GENERATE_GROUPBY_TEST(DWARF) GENERATE_TEST_BASE(DWARF, get_cpu_test_opts_groupby, get_gpu_test_opts_groupby)
+#define GENERATE_TEST(DWARF)                                                   \
+  GENERATE_TEST_BASE(DWARF, get_cpu_test_opts, get_gpu_test_opts)
+#define GENERATE_GROUPBY_TEST(DWARF)                                           \
+  GENERATE_TEST_BASE(DWARF, get_cpu_test_opts_groupby,                         \
+                     get_gpu_test_opts_groupby)
 
 GENERATE_TEST(TwoPassScan);
 GENERATE_TEST(ConstantExample);
@@ -69,6 +72,6 @@ GENERATE_TEST(RadixCuda);
 #endif
 
 int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

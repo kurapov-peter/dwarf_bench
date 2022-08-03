@@ -1,9 +1,9 @@
 #pragma once
 
 #include <iostream>
-#include <string>
-#include <sstream>
 #include <memory>
+#include <sstream>
+#include <string>
 
 #include "common/options.hpp"
 
@@ -19,10 +19,10 @@ bool not_cuda_gpu_available();
 
 class StdoutCapture {
 public:
-    StdoutCapture();
-    ~StdoutCapture();
+  StdoutCapture();
+  ~StdoutCapture();
 
 private:
-    std::stringstream buffer;
-    std::streambuf *old_rdbuf;
+  std::stringstream buffer;
+  std::streambuf *old_rdbuf;
 };
