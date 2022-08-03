@@ -17,3 +17,8 @@ get_device_selector(const RunOptions &opts) {
     throw std::logic_error("Unsupported device type.");
   }
 }
+
+bool is_cuda(const sycl::device &d) {
+  const static pi_uint32 nvidia_vendor_id = 0x10DE;
+  return d.get_info<sycl::info::device::vendor_id>() == nvidia_vendor_id;
+}
