@@ -1,5 +1,7 @@
 #include "hash_build.hpp"
 
+#include <cmath>
+
 #include "common/dpcpp/hashtable.hpp"
 
 HashBuild::HashBuild() : Dwarf("HashBuild") {}
@@ -16,7 +18,7 @@ void HashBuild::_run(const size_t buf_size, Meter &meter) {
   SimpleHasher<uint32_t> hasher(buf_size);
 
   for (auto it = 0; it < opts.iterations; ++it) {
-    size_t bitmask_sz = (buf_size / 32) ? (buf_size / 32) : 1;
+    size_t bitmask_sz = std::ceil((float) buf_size / 32);
     std::vector<uint32_t> bitmask(bitmask_sz, 0);
     std::vector<uint32_t> data(buf_size, 0);
     std::vector<uint32_t> keys(buf_size, 0);
@@ -38,7 +40,7 @@ void HashBuild::_run(const size_t buf_size, Meter &meter) {
 
        h.parallel_for<class hash_build>(buf_size, [=](auto &idx) {
          SimpleNonOwningHashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>>
-             ht(buf_size, keys_acc.get_pointer(), data_acc.get_pointer(),
+             ht(buf_size, bitmask_sz, keys_acc.get_pointer(), data_acc.get_pointer(),
                 bitmask_acc.get_pointer(), hasher);
 
          ht.insert(s[idx], s[idx]);
@@ -64,7 +66,7 @@ void HashBuild::_run(const size_t buf_size, Meter &meter) {
 
        h.parallel_for<class hash_build_check>(buf_size, [=](auto &idx) {
          SimpleNonOwningHashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>>
-             ht(buf_size, keys_acc.get_pointer(), data_acc.get_pointer(),
+             ht(buf_size, _bitmask_sz, keys_acc.get_pointer(), data_acc.get_pointer(),
                 bitmask_acc.get_pointer(), hasher);
 
          o[idx] = ht.has(s[idx]);
