@@ -29,7 +29,8 @@ void Join::_run(const size_t buf_size, Meter &meter) {
 
   const size_t ht_size = buf_size * 2;
   const size_t bitmask_sz = std::ceil((float) ht_size / 32);
-  SimpleHasher<uint32_t> hasher(ht_size);
+  MurmurHash3_x86_32 hasher(ht_size, sizeof(uint32_t),
+                               helpers::make_random());
 
   for (unsigned it = 0; it < opts.iterations; ++it) {
     // hash table
@@ -67,7 +68,7 @@ void Join::_run(const size_t buf_size, Meter &meter) {
          auto keys_acc = keys_buf.get_access(h);
 
          h.parallel_for<class join_build>(buf_size, [=](auto &idx) {
-           SimpleNonOwningHashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>>
+           SimpleNonOwningHashTable<uint32_t, uint32_t, MurmurHash3_x86_32>
                ht(ht_size, bitmask_sz, keys_acc.get_pointer(), data_acc.get_pointer(),
                   bitmask_acc.get_pointer(), hasher);
 
@@ -91,7 +92,7 @@ void Join::_run(const size_t buf_size, Meter &meter) {
          auto keys_acc = keys_buf.get_access(h);
 
          h.parallel_for<class join_probe>(buf_size, [=](auto &idx) {
-           SimpleNonOwningHashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>>
+           SimpleNonOwningHashTable<uint32_t, uint32_t, MurmurHash3_x86_32>
                ht(ht_size, bitmask_sz, keys_acc.get_pointer(), data_acc.get_pointer(),
                   bitmask_acc.get_pointer(), hasher);
            auto ans = ht.at(key_b_acc[idx]);
