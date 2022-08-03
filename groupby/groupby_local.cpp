@@ -62,7 +62,7 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
        auto data_acc = data_buf.get_access(h);
        auto keys_acc = keys_buf.get_access(h);
 
-       const size_t work_per_executor = buf_size / executors;
+       const size_t work_per_executor = std::ceil((float)buf_size / executors);
 
        h.parallel_for<class groupby_local_hash_build>(
            executors, [=](auto &idx) {
@@ -77,7 +77,7 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
                  empty_element);
 
              for (size_t i = work_per_executor * idx;
-                  i < work_per_executor * (idx + 1); i++)
+                  i < work_per_executor * (idx + 1) && i < buf_size; i++)
                ht.add(sk[i], sv[i]);
            });
      }).wait();
