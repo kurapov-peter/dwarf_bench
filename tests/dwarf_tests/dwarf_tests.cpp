@@ -16,25 +16,27 @@ void check_results(std::unique_ptr<Dwarf> dwarf) {
 }
 
 template <class DwarfClass>
-void test_dwarf(RunOptions opts) {
-    std::cout << opts.root_path << std::endl;
+void test_dwarf(std::unique_ptr<RunOptions> opts) {
     std::unique_ptr<Dwarf> dwarf = std::make_unique<DwarfClass>();
-    dwarf->init(opts);
-    dwarf->run(opts);
+    dwarf->init(*opts);
+    dwarf->run(*opts);
     check_results(std::move(dwarf));
 }
 
-#define GENERATE_TEST(DWARF)                                                                \
+#define GENERATE_TEST_BASE(DWARF, CPU_OPTS, GPU_OPTS)                                                                \
     TEST(DwarfsExpectedCorrectnessTests, DWARF##_CPU) {                                     \
         StdoutCapture c;                                                                    \
-        test_dwarf<DWARF>(get_cpu_test_opts());                                             \
+        test_dwarf<DWARF>(std::move(CPU_OPTS()));                                             \
     }                                                                                       \
                                                                                             \
     TEST(DwarfsExpectedCorrectnessTests, DWARF##_GPU) {                                     \
         if (!not_cuda_gpu_available()) GTEST_SKIP() << "No GPU without CUDA available";     \
         StdoutCapture c;                                                                    \
-        test_dwarf<DWARF>(get_gpu_test_opts());                                             \
+        test_dwarf<DWARF>(std::move(GPU_OPTS()));                                             \
     }
+
+#define GENERATE_TEST(DWARF) GENERATE_TEST_BASE(DWARF, get_cpu_test_opts, get_gpu_test_opts)
+#define GENERATE_GROUPBY_TEST(DWARF) GENERATE_TEST_BASE(DWARF, get_cpu_test_opts_groupby, get_gpu_test_opts_groupby)
 
 GENERATE_TEST(TwoPassScan);
 GENERATE_TEST(ConstantExample);
@@ -49,8 +51,8 @@ GENERATE_TEST(ReduceDPCPP);
 GENERATE_TEST(HashBuild);
 GENERATE_TEST(NestedLoopJoin);
 GENERATE_TEST(CuckooHashBuild);
-GENERATE_TEST(GroupBy);
-GENERATE_TEST(GroupByLocal);
+GENERATE_GROUPBY_TEST(GroupBy);
+GENERATE_GROUPBY_TEST(GroupByLocal);
 GENERATE_TEST(Join);
 GENERATE_TEST(HashBuildNonBitmask);
 GENERATE_TEST(JoinOmnisci);

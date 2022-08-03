@@ -3,13 +3,18 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <memory>
 
 #include "common/options.hpp"
 
-std::string get_kernels_root_tests();
-RunOptions get_cpu_test_opts();
+std::unique_ptr<RunOptions> get_cpu_test_opts();
+std::unique_ptr<RunOptions> get_gpu_test_opts();
 
-RunOptions get_gpu_test_opts();
+std::unique_ptr<RunOptions> get_cpu_test_opts_groupby();
+std::unique_ptr<RunOptions> get_gpu_test_opts_groupby();
+
+std::string get_kernels_root_tests();
+
 bool not_cuda_gpu_available();
 
 class StdoutCapture {

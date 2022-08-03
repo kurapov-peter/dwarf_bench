@@ -16,7 +16,7 @@ bool not_cuda_gpu_available() {
   }
 }
 
-RunOptions get_gpu_test_opts() {
+std::unique_ptr<RunOptions> get_gpu_test_opts() {
     RunOptions opts = {
         .device_ty = RunOptions::DeviceType::GPU,
         .input_size = { 128, 256, 512, 1024, 2048, 4096 },
@@ -25,10 +25,10 @@ RunOptions get_gpu_test_opts() {
         .report_path = ""
     };
 
-    return opts;
+    return std::make_unique<RunOptions>(opts);
 }
 
-RunOptions get_cpu_test_opts() {
+std::unique_ptr<RunOptions> get_cpu_test_opts() {
     RunOptions opts = {
         .device_ty = RunOptions::DeviceType::CPU,
         .input_size = { 128, 256, 512, 1024, 2048, 4096 },
@@ -37,8 +37,17 @@ RunOptions get_cpu_test_opts() {
         .report_path = ""
     };
 
-    return opts;
+    return std::make_unique<RunOptions>(opts);
 }
+
+std::unique_ptr<RunOptions> get_cpu_test_opts_groupby() {
+  return std::make_unique<GroupByRunOptions>(*get_cpu_test_opts(), 64, 1024);
+}
+
+std::unique_ptr<RunOptions> get_gpu_test_opts_groupby() {
+  return std::make_unique<GroupByRunOptions>(*get_gpu_test_opts(), 64, 1024);
+}
+
 
 std::string get_kernels_root_tests() {
   auto *val = std::getenv("DWARF_BENCH_ROOT");
