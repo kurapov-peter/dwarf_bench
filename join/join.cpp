@@ -112,6 +112,10 @@ void Join::_run(const size_t buf_size, Meter &meter) {
       result->build_time = build_end - host_start;
       result->probe_time = host_end - build_end;
 
+      out_key_buf.get_access<sycl::access::mode::read>();
+      out_key_present_buf.get_access<sycl::access::mode::read>();
+      out_val_buf.get_access<sycl::access::mode::read>();
+
       std::vector<uint32_t> res_k;
       std::vector<uint32_t> res_present;
       std::vector<uint32_t> res_val;
