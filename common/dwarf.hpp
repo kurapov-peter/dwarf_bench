@@ -26,6 +26,7 @@ public:
   }
 
   Meter &meter() { return meter_; }
+  const MeasureResults &get_results() const { return results_; }
 
 protected:
   std::string reporting_header_;
