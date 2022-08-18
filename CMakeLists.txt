@@ -80,13 +80,13 @@ if(ENABLE_DPCPP)
     groupby
     groupby_local
     hash_build_non_bitmask
-    omnisci_join
   )
   if(ENABLE_EXPERIMENTAL)
     list(APPEND bench_libs
       slab_hash_build
       slab_join
       slab_probe
+      omnisci_join
     )
   endif()
   if(ENABLE_CUDA)
