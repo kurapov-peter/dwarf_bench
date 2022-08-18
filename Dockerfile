@@ -46,12 +46,3 @@ RUN mkdir /cmake && cd /cmake \
     && rm cmake-3.21.0-linux-x86_64.tar.gz
 
 ENV PATH="/cmake/cmake-3.21.0-linux-x86_64/bin:${PATH}"
-
-ARG compiler_path=https://github.com/intel/llvm/releases/download/sycl-nightly%2F20211213/dpcpp-compiler.tar.gz
-RUN cd root && wget ${compiler_path} \
-    && tar -xf dpcpp-compiler.tar.gz
-
-RUN cd root && rm -rf dpcpp-compiler.tar.gz
-
-ENV LD_LIBRARY_PATH=/root/dpcpp_compiler/lib:$LD_LIBRARY_PATH
-ENV PATH=/root/dpcpp_compiler/bin:$PATH
