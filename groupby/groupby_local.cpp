@@ -37,7 +37,7 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
     q.submit([&](sycl::handler &h) {
        auto sv = src_vals_buf.get_access(h);
        auto sk = src_keys_buf.get_access(h);
-       
+
        auto ht_v = ht_vals_buf.get_access(h);
        auto ht_k = ht_keys_buf.get_access(h);
 

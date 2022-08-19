@@ -91,7 +91,8 @@ void PerfectGroupBy::_run(const size_t buf_size, Meter &meter) {
        h.single_task<class clean>([=]() {
          for (size_t i = 0; i < groups_count * threads_count; i++) {
            ht_v[i] = 0;
-           o[i] = 0;
+           if (i < groups_count)
+             o[i] = 0;
          }
        });
      }).wait();
