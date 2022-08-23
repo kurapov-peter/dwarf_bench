@@ -37,13 +37,13 @@ std::unique_ptr<RunOptions> get_cpu_test_opts(size_t size) {
 }
 
 std::unique_ptr<RunOptions> get_cpu_test_opts_groupby(size_t size) {
-  return std::make_unique<GroupByRunOptions>(*get_cpu_test_opts(size), 64,
-                                             1024);
+  return std::make_unique<GroupByRunOptions>(*get_cpu_test_opts(size), 64, 1024,
+                                             32);
 }
 
 std::unique_ptr<RunOptions> get_gpu_test_opts_groupby(size_t size) {
-  return std::make_unique<GroupByRunOptions>(*get_gpu_test_opts(size), 64,
-                                             1024);
+  return std::make_unique<GroupByRunOptions>(*get_gpu_test_opts(size), 64, 1024,
+                                             32);
 }
 
 std::string get_kernels_root_tests() {

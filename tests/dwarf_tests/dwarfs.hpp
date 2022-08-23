@@ -2,7 +2,9 @@
 
 #include "constant/constant.hpp"
 #include "groupby/groupby.hpp"
+#include "groupby/groupby_global.hpp"
 #include "groupby/groupby_local.hpp"
+#include "groupby/perfect_groupby.hpp"
 #include "hash/cuckoo_hash_build.hpp"
 #include "hash/hash_build.hpp"
 #include "hash/hash_build_non_bitmask.hpp"
