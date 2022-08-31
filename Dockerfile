@@ -38,7 +38,7 @@ RUN apt-get install -y ninja-build libboost-all-dev
 # ENV PATH="${DPCPP_HOME}/llvm/build/bin:${PATH}"
 # ENV LD_LIBRARY_PATH="${DPCPP_HOME}/llvm/build/lib:${LD_LIBRARY_PATH}"
 
-RUN apt-get install -y ocl-icd-* opencl-headers
+RUN apt-get install -y ocl-icd-* opencl-headers intel-opencl-icd
 
 RUN mkdir /cmake && cd /cmake \
     && wget https://github.com/Kitware/CMake/releases/download/v3.21.0/cmake-3.21.0-linux-x86_64.tar.gz \
