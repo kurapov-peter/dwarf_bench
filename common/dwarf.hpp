@@ -1,7 +1,7 @@
 #pragma once
-#include "meter.hpp"
-#include "options.hpp"
-#include "result.hpp"
+#include "common/meter.hpp"
+#include "common/options.hpp"
+#include "common/result.hpp"
 
 class Dwarf {
 public:

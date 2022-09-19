@@ -1,6 +1,6 @@
 #pragma once
-#include "dpcpp_common.hpp"
-#include "hashfunctions.hpp"
+#include "common/dpcpp/dpcpp_common.hpp"
+#include "common/dpcpp/hashfunctions.hpp"
 
 template <class Key, class T, class Hash> class SimpleNonOwningHashTable {
 public:

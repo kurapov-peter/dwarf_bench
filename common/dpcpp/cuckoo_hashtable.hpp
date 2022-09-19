@@ -1,8 +1,8 @@
 #include <CL/sycl.hpp>
 #include <algorithm>
 
-#include "dpcpp_common.hpp"
-#include "hashfunctions.hpp"
+#include "common/dpcpp/dpcpp_common.hpp"
+#include "common/dpcpp/hashfunctions.hpp"
 
 template <class Key, class Val, class Hasher1, class Hasher2>
 class CuckooHashtable {

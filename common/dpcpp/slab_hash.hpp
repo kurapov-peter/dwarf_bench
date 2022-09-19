@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dpcpp_common.hpp"
+#include "common/dpcpp/dpcpp_common.hpp"
 #include <CL/sycl.hpp>
 #include <algorithm>
 #include <cmath>

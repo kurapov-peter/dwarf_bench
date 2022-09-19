@@ -8,9 +8,9 @@
 #include <string>
 #include <vector>
 
-#include "dwarf.hpp"
-#include "meter.hpp"
-#include "options.hpp"
+#include "common/dwarf.hpp"
+#include "common/meter.hpp"
+#include "common/options.hpp"
 
 template <class Collection>
 void dump_collection(const Collection &c, std::ostream &os = std::cout) {

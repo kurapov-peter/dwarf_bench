@@ -4,6 +4,7 @@ set(common_headers
     dwarf.hpp
     registry.hpp
     result.hpp
+    options.hpp
 )
 
 set(common_sources
@@ -23,5 +24,6 @@ target_link_libraries(${COMMON_LIB}
     #PUBLIC OpenCL::OpenCL oclhelpers::oclhelpers
     PRIVATE Boost::filesystem ${CMAKE_DL_LIBS}
 )
+target_include_directories(${COMMON_LIB} PRIVATE ${PROJECT_SOURCE_DIR})
 add_library_install(${COMMON_LIB})
 add_header_install("${common_headers}" "${COMMON_SUBDIR}")
