@@ -40,3 +40,13 @@ function(add_example name sources)
   target_compile_options(${name} PRIVATE -fsycl)
   target_link_options(${name} PRIVATE -fsycl)
 endfunction()
+
+function(add_library_install name) 
+  message(STATUS "Adding installation for ${name}")
+  install(TARGETS ${name} DESTINATION lib)
+endfunction()
+
+function(add_header_install headers path)
+  install(FILES ${headers} DESTINATION "include/${path}")
+endfunction()
+

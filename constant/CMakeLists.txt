@@ -1,5 +1,8 @@
 add_kernel(constant)
 
+set(CONSTANT_SUBDIR
+    constant
+)
 set(sources
     constant.cpp
     constant_capi.cpp
@@ -9,6 +12,8 @@ set(sources
 add_library(constant ${sources})
 target_link_libraries(constant PRIVATE common OpenCL::OpenCL oclhelpers::oclhelpers)
 target_include_directories(constant PRIVATE ${PROJECT_SOURCE_DIR})
+add_library_install(constant)
+
 
 if(ENABLE_DPCPP)
     set(dpcpp_sources
@@ -24,6 +29,7 @@ if(ENABLE_DPCPP)
     target_include_directories(dpcpp_constant PRIVATE ${PROJECT_SOURCE_DIR})
     target_compile_options(dpcpp_constant PRIVATE -fsycl)
     target_link_options(dpcpp_constant PRIVATE -fsycl)
+    add_library_install(dpcpp_constant)
 
     if(ENABLE_CUDA)
         set(dpcpp_cuda_sources
@@ -35,5 +41,9 @@ if(ENABLE_DPCPP)
         target_include_directories(dpcpp_constant_cuda PRIVATE ${PROJECT_SOURCE_DIR})
         target_compile_options(dpcpp_constant_cuda PRIVATE -fsycl -fsycl-targets=nvptx64-nvidia-cuda-sycldevice)
         target_link_options(dpcpp_constant_cuda PRIVATE -fsycl -fsycl-targets=nvptx64-nvidia-cuda-sycldevice)
+        add_library_install(dpcpp_constant_cuda)
     endif()
 endif()
+
+install(FILES constant.cl DESTINATION kernel)
+add_header_install(constant.hpp ${CONSTANT_SUBDIR})
