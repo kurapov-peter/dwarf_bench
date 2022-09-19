@@ -4,6 +4,7 @@ set(common_headers
     dwarf.hpp
     registry.hpp
     result.hpp
+    options.hpp
 )
 
 set(common_sources
