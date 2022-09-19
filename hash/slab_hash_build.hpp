@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/common.hpp"
+#include "../common/common.hpp"
 
 class SlabHashBuild : public Dwarf {
 public:

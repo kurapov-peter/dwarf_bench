@@ -1,5 +1,5 @@
 #pragma once
-#include "common/common.hpp"
+#include "../common/common.hpp"
 
 class HashBuildNonBitmask : public Dwarf {
 public:

@@ -1,5 +1,5 @@
 #pragma once
-#include "common/options.hpp"
+#include "../options.hpp"
 #include <CL/sycl.hpp>
 
 std::unique_ptr<cl::sycl::device_selector>
