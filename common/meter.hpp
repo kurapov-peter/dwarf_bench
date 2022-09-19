@@ -1,6 +1,6 @@
 #pragma once
-#include "common/options.hpp"
-#include "common/result.hpp"
+#include "options.hpp"
+#include "result.hpp"
 
 class Meter {
 public:

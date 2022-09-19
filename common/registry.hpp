@@ -2,7 +2,7 @@
 #include <map>
 #include <memory>
 
-#include "common/dwarf.hpp"
+#include "dwarf.hpp"
 
 class Registry {
 public:
