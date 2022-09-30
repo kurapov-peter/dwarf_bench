@@ -24,7 +24,7 @@ void TBBSort::_run(const size_t buf_size, Meter &meter) {
     auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
                              host_end - host_start)
                              .count();
-#if NDEBUG
+#ifndef NDEBUG
     {
       std::cout << "Output:    ";
       dump_collection(host_src);
