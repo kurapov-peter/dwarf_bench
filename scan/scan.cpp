@@ -65,11 +65,11 @@ void TwoPassScan::run_two_pass_scan(const size_t buf_size, Meter &meter) {
   constexpr int GPU_MAX_THREADS = 256;
   constexpr int CPU_MAX_THREADS = 8;
 
-  const int buffer_size = buf_size;
+  const size_t buffer_size = buf_size;
   const int threadnum =
       (opts.device_ty == RunOptions::CPU) ? CPU_MAX_THREADS : GPU_MAX_THREADS;
-  const int buffer_size_bytes = sizeof(int) * buffer_size;
-  const int prefix_size_bytes = sizeof(int) * (threadnum + 1);
+  const size_t buffer_size_bytes = sizeof(int) * buffer_size;
+  const size_t prefix_size_bytes = sizeof(int) * (threadnum + 1);
   const int filter_value = 5;
 
   std::vector<int> host_out_size = {-1};

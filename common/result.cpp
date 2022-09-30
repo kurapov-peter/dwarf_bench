@@ -64,8 +64,9 @@ void MeasureResults::write_csv(const std::string &filename) const {
       of << "device_type,buf_size_bytes," << header_ << "\n";
     }
     for (const auto &res : results_) {
+      size_t buf_size_bytes =std::stoll(res.params.at("buf_size")) * sizeof(int);
       of << res.params.at("device_type") << ","
-         << std::stoi(res.params.at("buf_size")) * 4 << ",";
+         << buf_size_bytes << ",";
       auto measurements = res.result->get_reported_timings_list();
       // todo: refactor me
       auto transformer = [](const Duration &d) {

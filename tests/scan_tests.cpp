@@ -9,11 +9,11 @@
 #include <oclhelpers.hpp>
 
 namespace {
-static int buffer_size;
+static size_t buffer_size;
 
 std::vector<int> prefix_sum_scalar(const std::vector<int> &v) {
   std::vector<int> out(v.size() + 1, 0);
-  for (int i = 0; i < v.size(); ++i) {
+  for (size_t i = 0; i < v.size(); ++i) {
     out[i + 1] = out[i] + v[i];
   }
   out.resize(out.size() - 1);
@@ -22,7 +22,7 @@ std::vector<int> prefix_sum_scalar(const std::vector<int> &v) {
 } // namespace
 
 // todo: extend with a device type
-template <int BUF_SIZE> class ScanTest : public ::testing::Test {
+template <size_t BUF_SIZE> class ScanTest : public ::testing::Test {
 public:
   void SetUp() override {
     buffer_size = BUF_SIZE;
@@ -60,7 +60,7 @@ TEST_F(ScanTest32, PrefixSumLocal) {
   cl::CommandQueue queue(ctx, device);
   cl::Kernel kernel = cl::Kernel(program, "prefix_local_test");
 
-  auto buffer_size_bytes = buffer_size * sizeof(int);
+  size_t buffer_size_bytes = buffer_size * sizeof(int);
   cl::Buffer src(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
   cl::Buffer out(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);
   cl::Buffer prefix(ctx, CL_MEM_READ_WRITE, buffer_size_bytes);

@@ -45,7 +45,7 @@ int main() {
     return 1;
   }
 
-  constexpr int buffer_size = 10;
+  constexpr size_t buffer_size = 10;
 
   cl::Buffer src1(ctx, CL_MEM_READ_WRITE, sizeof(int) * buffer_size);
   cl::Buffer src2(ctx, CL_MEM_READ_WRITE, sizeof(int) * buffer_size);
