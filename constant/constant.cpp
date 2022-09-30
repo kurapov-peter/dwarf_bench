@@ -38,7 +38,7 @@ void ConstantExample::run_constant(const size_t buf_size, Meter &meter) {
             << std::endl
             << "Device: " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
 
-  const int buffer_size = buf_size;
+  const size_t buffer_size = buf_size;
   cl::Buffer src(ctx, CL_MEM_READ_WRITE, sizeof(int) * buffer_size);
   cl::Buffer dst(ctx, CL_MEM_READ_WRITE, sizeof(int) * buffer_size);
   std::vector<int> src_data(buffer_size, 11);

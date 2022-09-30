@@ -36,7 +36,7 @@ void ConstantExampleCAPI::run_constant(const size_t buf_size, Meter &meter) {
   //             << std::endl
   //             << "Device: " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
 
-  const int buffer_size = buf_size;
+  const size_t buffer_size = buf_size;
   cl_mem src = clCreateBuffer(context, CL_MEM_READ_WRITE,
                               sizeof(int) * buffer_size, nullptr, &error);
   cl_mem dst = clCreateBuffer(context, CL_MEM_READ_WRITE,
