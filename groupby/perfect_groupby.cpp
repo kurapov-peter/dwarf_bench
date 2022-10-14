@@ -1,15 +1,17 @@
-#include "groupby_local.hpp"
-#include "common/dpcpp/hashtable.hpp"
+#include "perfect_groupby.hpp"
+#include "common/dpcpp/dpcpp_common.hpp"
+#include "common/dpcpp/perfect_hashtable.hpp"
 #include <limits>
 
-GroupByLocal::GroupByLocal() : GroupBy("Local") {}
+PerfectGroupBy::PerfectGroupBy() : GroupBy("Perfect") {}
 
-void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
+void PerfectGroupBy::_run(const size_t buf_size, Meter &meter) {
   uint32_t empty_element = _empty_element;
   auto opts = static_cast<const GroupByRunOptions &>(meter.opts());
 
   const int groups_count = opts.groups_count;
-  const int threads_count = opts.threads_count;
+  size_t threads_count = opts.threads_count;
+  size_t work_group_size = opts.work_group_size;
   generate_vals(buf_size);
   generate_keys(buf_size, groups_count);
   generate_expected(groups_count, add);
@@ -18,16 +20,11 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
   sycl::queue q{*sel};
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
-
-  size_t hash_size = groups_count * 2;
-  SimpleHasher<uint32_t> hasher(hash_size);
-
-  std::vector<uint32_t> ht_vals(hash_size * threads_count, 0);
-  std::vector<uint32_t> ht_keys(hash_size * threads_count, empty_element);
+  const size_t min_key = 0;
+  std::vector<uint32_t> ht_vals(groups_count * threads_count, 0);
   std::vector<uint32_t> output(groups_count, 0);
 
   sycl::buffer<uint32_t> ht_vals_buf(ht_vals);
-  sycl::buffer<uint32_t> ht_keys_buf(ht_keys);
   sycl::buffer<uint32_t> src_vals_buf(src_vals);
   sycl::buffer<uint32_t> src_keys_buf(src_keys);
   sycl::buffer<uint32_t> out_buf(output);
@@ -39,21 +36,16 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
        auto sk = src_keys_buf.get_access(h);
 
        auto ht_v = ht_vals_buf.get_access(h);
-       auto ht_k = ht_keys_buf.get_access(h);
 
        h.parallel_for<class groupby_local_hash_build>(
-           threads_count, [=](auto &idx) {
-             size_t hash_table_ptr_offset = (idx * hash_size);
-             auto executor_keys_ptr =
-                 ht_k.get_pointer() + hash_table_ptr_offset;
-             auto executor_vals_ptr =
-                 ht_v.get_pointer() + hash_table_ptr_offset;
+           sycl::nd_range{{threads_count}, {work_group_size}}, [=](auto &idx) {
+             PerfectHashTable<uint32_t, uint32_t> ht(
+                 groups_count,
+                 ht_v.get_pointer() + idx.get_global_id() * groups_count,
+                 min_key);
 
-             LinearHashtable<uint32_t, uint32_t, SimpleHasher<uint32_t>> ht(
-                 hash_size, executor_keys_ptr, executor_vals_ptr, hasher,
-                 empty_element);
-
-             for (size_t i = idx; i < buf_size; i += threads_count)
+             for (size_t i = idx.get_global_id(); i < buf_size;
+                  i += threads_count)
                ht.add(sk[i], sv[i]);
            });
      }).wait();
@@ -65,22 +57,16 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
        auto sk = src_keys_buf.get_access(h);
 
        auto ht_v = ht_vals_buf.get_access(h);
-       auto ht_k = ht_keys_buf.get_access(h);
 
        auto o = out_buf.get_access(h);
 
        h.single_task<class groupby_local_collect>([=]() {
-         for (int idx = 0; idx < threads_count; idx++) {
-           size_t hash_table_ptr_offset = (idx * hash_size);
-           auto executor_keys_ptr = ht_k.get_pointer() + hash_table_ptr_offset;
-           auto executor_vals_ptr = ht_v.get_pointer() + hash_table_ptr_offset;
-
-           LinearHashtable<uint32_t, uint32_t, SimpleHasher<uint32_t>> ht(
-               hash_size, executor_keys_ptr, executor_vals_ptr, hasher,
-               empty_element);
+         for (size_t idx = 0; idx < threads_count; idx++) {
+           PerfectHashTable<uint32_t, uint32_t> ht(
+               groups_count, ht_v.get_pointer() + idx * groups_count, min_key);
 
            for (int j = 0; j < groups_count; j++)
-             o[j] += ht.at(j).first;
+             o[j] += ht.at(j);
          }
        });
      }).wait();
@@ -101,12 +87,10 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
     q.submit([&](sycl::handler &h) {
        auto o = out_buf.get_access(h);
        auto ht_v = ht_vals_buf.get_access(h);
-       auto ht_k = ht_keys_buf.get_access(h);
 
        h.single_task<class clean>([=]() {
-         for (size_t i = 0; i < hash_size * threads_count; i++) {
+         for (size_t i = 0; i < groups_count * threads_count; i++) {
            ht_v[i] = 0;
-           ht_k[i] = empty_element;
            if (i < groups_count)
              o[i] = 0;
          }
@@ -114,3 +98,5 @@ void GroupByLocal::_run(const size_t buf_size, Meter &meter) {
      }).wait();
   }
 }
+
+size_t PerfectGroupBy::get_size(size_t buf_size) { return buf_size; }
