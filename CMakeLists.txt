@@ -101,7 +101,7 @@ endif()
 
 set(${CMAKE_CXX_FLAGS_DEBUG} "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
-set(bench_sources bench.cpp register_dwarfs.cpp register_dwarfs.hpp)
+set(bench_sources main.cpp register_dwarfs.cpp register_dwarfs.hpp bench.cpp bench.hpp)
 add_executable(dwarf_bench ${bench_sources})
 target_link_libraries(dwarf_bench PRIVATE Boost::program_options ${bench_libs})
 target_include_directories(dwarf_bench PRIVATE ${PROJECT_SOURCE_DIR})

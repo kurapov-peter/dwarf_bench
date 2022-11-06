@@ -10,6 +10,10 @@ Registry *Registry::instance() {
   return instance_.get();
 }
 
+void Registry::clear() {
+  dwarfs_.clear();
+}
+
 void Registry::registerd(Dwarf *dw) { dwarfs_.emplace(dw->name(), dw); }
 
 void Registry::set_root(const std::string &root) { root_path_ = root; }
