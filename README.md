@@ -21,3 +21,12 @@
 * CXX=dpcpp cmake /dwarf_bench/ -DENABLE_DPCPP=on -DENABLE_TESTS=on
 * cmake --build . --parallel 4
 * cd tests && ctest
+
+## Usage
+Check the lists of benchmarks available using `dwarf list`
+
+Launch one of the kernel using for example Radix kernel:
+
+`./dwarf_bench Radix --device=cpu --input_size=25600 262144 524288 --report_path="report_radix_CPU.csv" --iterations=9`
+
+Change to GPU device using `--device=gpu`
