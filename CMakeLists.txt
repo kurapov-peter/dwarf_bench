@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
-project(dwarf_bench)
+set(dwarf_bench_version 0.1)
+project(dwarf_bench VERSION ${dwarf_bench_version})
 
 find_package(TBB REQUIRED)
 find_package(OpenCL REQUIRED)
@@ -101,9 +102,9 @@ endif()
 set(${CMAKE_CXX_FLAGS_DEBUG} "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
 set(bench_sources bench.cpp register_dwarfs.cpp register_dwarfs.hpp)
-add_executable(${PROJECT_NAME} ${bench_sources})
-target_link_libraries(${PROJECT_NAME} PRIVATE Boost::program_options ${bench_libs})
-target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR})
+add_executable(dwarf_bench ${bench_sources})
+target_link_libraries(dwarf_bench PRIVATE Boost::program_options ${bench_libs})
+target_include_directories(dwarf_bench PRIVATE ${PROJECT_SOURCE_DIR})
 
 add_kernel(vadd)
 add_executable(simple simple.cpp)
@@ -122,3 +123,57 @@ if(ENABLE_TESTS)
 
   add_subdirectory(tests)
 endif()
+
+add_library(dbench ${bench_sources})
+target_link_libraries(dbench PRIVATE Boost::program_options ${bench_libs})
+target_include_directories(dbench PRIVATE ${PROJECT_SOURCE_DIR})
+
+include(GNUInstallDirs)
+
+install(TARGETS ${bench_libs} dbench dwarf_bench
+  EXPORT dbench
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} 
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(EXPORT dbench 
+  FILE dbench.cmake
+  NAMESPACE dbench::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/
+)
+
+# Just for convenience
+export(EXPORT dbench 
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/dbench.cmake"
+  NAMESPACE dbench::
+)
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/dbenchConfig.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/dbench
+)
+
+install(FILES
+  "${CMAKE_CURRENT_BINARY_DIR}/dbenchConfig.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/dbenchConfigVersion.cmake"
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/dbench
+)
+
+set_property(TARGET dbench PROPERTY VERSION ${dwarf_bench_version})
+set_property(TARGET dbench PROPERTY SOVERSION 0)
+set_property(TARGET dbench PROPERTY
+  INTERFACE_dbench_MAJOR_VERSION 0)
+set_property(TARGET dbench APPEND PROPERTY
+  COMPATIBLE_INTERFACE_STRING dbench_MAJOR_VERSION
+)
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/dbenchConfigVersion.cmake"
+  VERSION "${dwarf_bench_version}"
+  COMPATIBILITY AnyNewerVersion
+)
