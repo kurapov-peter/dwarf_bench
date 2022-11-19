@@ -17,8 +17,6 @@ public:
   const_iterator begin() const;
   const_iterator end() const;
 
-  void clear();
-
 private:
   Registry();
   std::map<std::string, std::unique_ptr<Dwarf>> dwarfs_;

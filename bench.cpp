@@ -3,10 +3,8 @@
 DwarfBench::DwarfBench() { reg = Registry::instance(); }
 
 std::vector<Measurement> DwarfBench::makeMeasurements(const RunConfig &conf) {
-  reg->clear();
-  populate_registry();
-
   auto dwarf = reg->find(conf.dwarf);
+  dwarf->clear_results();
   dwarf->init(*conf.opts);
   dwarf->run(*conf.opts);
 
