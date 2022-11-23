@@ -1,5 +1,5 @@
-#include "groupby.hpp"
 #include "common/dpcpp/hashtable.hpp"
+#include "groupby.hpp"
 #include <limits>
 
 namespace {
