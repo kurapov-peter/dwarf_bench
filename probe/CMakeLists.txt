@@ -1,3 +1,5 @@
 if(ENABLE_DPCPP)
-    add_dpcpp_lib(slab_probe slab_probe.cpp)
+	if(ENABLE_EXPERIMENTAL)
+		add_dpcpp_lib(slab_probe slab_probe.cpp)
+	endif()
 endif()
