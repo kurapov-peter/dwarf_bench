@@ -8,7 +8,10 @@
 namespace DwarfBench {
 
 std::vector<Measurement> DwarfBench::makeMeasurements(const RunConfig &conf) {
-  static Registry *reg = Registry::instance();
+  static Registry *reg = []() {
+    populate_registry();
+    return Registry::instance();
+  }();
 
   RunOptions _opts = RunOptions {
     .device_ty = conf.device == DeviceType::CPU ? RunOptions::DeviceType::CPU : RunOptions::DeviceType::GPU,
