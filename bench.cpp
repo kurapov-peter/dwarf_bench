@@ -1,12 +1,28 @@
 #include "bench.hpp"
 
-DwarfBench::DwarfBench() { reg = Registry::instance(); }
+#include "common/registry.hpp"
+#include "register_dwarfs.hpp"
+
+#include "common/common.hpp"
+
+namespace DwarfBench {
 
 std::vector<Measurement> DwarfBench::makeMeasurements(const RunConfig &conf) {
+  static Registry *reg = Registry::instance();
+
+  RunOptions _opts = RunOptions {
+    .device_ty = conf.device == DeviceType::CPU ? RunOptions::DeviceType::CPU : RunOptions::DeviceType::GPU,
+    .input_size = { conf.inputSize },
+    .iterations = conf.iterations,
+    .report_path = ""
+  };
+
+  GroupByRunOptions opts = GroupByRunOptions(_opts, 20, 1024);   // TODO
+
   auto dwarf = reg->find(conf.dwarf);
   dwarf->clear_results();
-  dwarf->init(*conf.opts);
-  dwarf->run(*conf.opts);
+  dwarf->init(opts);
+  dwarf->run(opts);
 
   std::vector<Measurement> ms;
 
@@ -23,4 +39,6 @@ std::vector<Measurement> DwarfBench::makeMeasurements(const RunConfig &conf) {
       });
 
   return ms;
+}
+
 }

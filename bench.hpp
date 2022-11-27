@@ -1,11 +1,14 @@
 #pragma once
 
-#include "common/registry.hpp"
-#include "register_dwarfs.hpp"
-
-#include "common/common.hpp"
-
 #include <vector>
+#include <string>
+
+namespace DwarfBench {
+
+enum DeviceType {
+  CPU,
+  GPU
+};
 
 struct Measurement {
   size_t dataSize;
@@ -13,16 +16,17 @@ struct Measurement {
 };
 
 struct RunConfig {
-  std::unique_ptr<RunOptions> opts;
+  DeviceType device;
+  size_t inputSize;
+  size_t iterations;
   std::string dwarf;
 };
 
 class DwarfBench {
 public:
-  DwarfBench();
+  DwarfBench() = default;
 
   std::vector<Measurement> makeMeasurements(const RunConfig &conf);
-
-private:
-  Registry *reg;
 };
+
+}
