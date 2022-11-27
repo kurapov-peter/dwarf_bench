@@ -1,3 +1,2 @@
-if(ENABLE_DPCPP)
-    add_example(lock_add lock_add.cpp)
-endif()
+add_subdirectory(bench_usage)
+add_subdirectory(lock_add)
