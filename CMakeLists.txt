@@ -29,7 +29,7 @@ if(CUDA_FOUND AND ENABLE_CUDA)
   add_definitions(-DCUDA_ENABLED)
 endif()
 
-find_package(Boost 1.61 COMPONENTS program_options filesystem REQUIRED)
+find_package(Boost COMPONENTS program_options filesystem REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH
   ${PROJECT_SOURCE_DIR}/cmake
@@ -144,12 +144,12 @@ install(TARGETS ${bench_libs} dbench dwarf_bench
 install(EXPORT dbench 
   FILE dbench.cmake
   NAMESPACE dbench::
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/dbench
 )
 
 # Just for convenience
 export(EXPORT dbench 
-  FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/dbench.cmake"
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/dbench/dbench.cmake"
   NAMESPACE dbench::
 )
 
