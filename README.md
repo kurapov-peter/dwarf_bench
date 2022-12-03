@@ -25,7 +25,7 @@
 # Using DwarfBench
 
 ```c++
-#include "bench.hpp"
+#include <bench.hpp>
 #include <iostream>
 
 int main() {
@@ -35,7 +35,7 @@ int main() {
         .device = DwarfBench::DeviceType::CPU,
         .inputSize = 1024,
         .iterations = 10,
-        .dwarf = "Radix",
+        .dwarf = DwarfBench::Dwarf::TBB_SORT,
     };
 
     auto results = db.makeMeasurements(rc);
