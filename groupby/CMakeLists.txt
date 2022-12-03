@@ -1,4 +1,7 @@
 if(ENABLE_DPCPP)
     add_dpcpp_lib(groupby groupby.cpp)
     add_dpcpp_lib(groupby_local groupby_local.cpp)
+    if(ENABLE_CUDA)
+    	add_dpcpp_cuda_lib(groupby groupby_cuda.cpp)
+    endif()
 endif()

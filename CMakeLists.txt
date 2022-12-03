@@ -60,7 +60,6 @@ endif()
 
 set(bench_libs
   common
-  standalone_scan
   constant
   tbbsort
 )
@@ -72,11 +71,9 @@ if(ENABLE_DPCPP)
     dpcpp_constant
     scan
     radix
-    reduce
     hash_build
     nested_loop_join
     join_helpers_lib
-    cuckoo_hash_build
     join
     groupby
     groupby_local
@@ -84,7 +81,10 @@ if(ENABLE_DPCPP)
   )
   if(ENABLE_EXPERIMENTAL)
     list(APPEND bench_libs
+      reduce
+      standalone_scan
       slab_hash_build
+      cuckoo_hash_build
       slab_join
       slab_probe
       omnisci_join

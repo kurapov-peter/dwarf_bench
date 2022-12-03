@@ -1,12 +1,15 @@
 add_kernel(scan)
 
 set(scan_sources
-    scan.cpp
+	scan.cpp
     scan.hpp
-)
-add_library(standalone_scan ${scan_sources})
-target_link_libraries(standalone_scan PRIVATE common OpenCL::OpenCL oclhelpers::oclhelpers)
-target_include_directories(standalone_scan PRIVATE ${PROJECT_SOURCE_DIR})
+    )
+
+if(ENABLE_EXPERIMENTAL)
+    add_library(standalone_scan ${scan_sources})
+    target_link_libraries(standalone_scan PRIVATE common OpenCL::OpenCL oclhelpers::oclhelpers)
+    target_include_directories(standalone_scan PRIVATE ${PROJECT_SOURCE_DIR})
+endif()
 
 if(ENABLE_DPCPP)
     add_dpcpp_lib(scan dplscan.cpp)

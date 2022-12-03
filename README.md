@@ -22,7 +22,8 @@
 * cmake --build . --parallel 4
 * cd tests && ctest
 
-# Using DwarfBench
+# Usage
+## Using DwarfBench library
 
 ```c++
 #include <bench.hpp>
@@ -45,3 +46,12 @@ int main() {
     }
 }
 ```
+
+## Using DwarfBench utility
+Check the lists of benchmarks available using `dwarf list`
+
+Launch one of the kernel using for example Radix kernel:
+
+`./dwarf_bench Radix --device=cpu --input_size=25600 262144 524288 --report_path="report_radix_CPU.csv" --iterations=9`
+
+Change to GPU device using `--device=gpu`
