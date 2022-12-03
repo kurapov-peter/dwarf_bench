@@ -1,14 +1,14 @@
 #pragma once
 
-#include <vector>
-#include <string>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace DwarfBench {
 
 /**
  * @brief Dwarfs list enum
- * 
+ *
  */
 enum Dwarf {
   CONSTANT_EXAMPLE,
@@ -30,16 +30,13 @@ enum Dwarf {
 
 /**
  * @brief Device type for execution settings
- * 
+ *
  */
-enum DeviceType {
-  CPU,
-  GPU
-};
+enum DeviceType { CPU, GPU };
 
 /**
  * @brief Measurements got from execution
- * 
+ *
  * @var Measurement::dataSize how many bytes were used during execution
  * @var Measurement::microseconds how many microseconds did the execution last
  */
@@ -50,7 +47,7 @@ struct Measurement {
 
 /**
  * @brief Execution configuration
- * 
+ *
  * @var RunConfig::device on which device to be executed
  * @var RunConfig::inputSize data array size, ususally a column size in elements
  * @var RunConfig::iterations number of iterations to run a bmark
@@ -65,7 +62,7 @@ struct RunConfig {
 
 /**
  * @brief main class for execution
- * 
+ *
  */
 class DwarfBench {
 public:
@@ -73,19 +70,20 @@ public:
 
   /**
    * @brief make measurements based on configuration
-   * 
+   *
    * @param conf execution configuration
    * @return std::vector<Measurement> measurements
    */
   std::vector<Measurement> makeMeasurements(const RunConfig &conf);
 };
 
-class DwarfBenchException: public std::exception {
+class DwarfBenchException : public std::exception {
 private:
-    std::string message_;
+  std::string message_;
+
 public:
-    explicit DwarfBenchException(const std::string& message);
-    const char* what() const noexcept override;
+  explicit DwarfBenchException(const std::string &message);
+  const char *what() const noexcept override;
 };
 
-}
+} // namespace DwarfBench

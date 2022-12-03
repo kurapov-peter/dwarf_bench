@@ -90,6 +90,4 @@ void MeasureResults::write_csv(const std::string &filename) const {
   }
 }
 
-void MeasureResults::clear() {
-  results_.clear();
-}
+void MeasureResults::clear() { results_.clear(); }

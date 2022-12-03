@@ -2,18 +2,19 @@
 #include <iostream>
 
 int main() {
-    DwarfBench::DwarfBench db;
+  DwarfBench::DwarfBench db;
 
-    DwarfBench::RunConfig rc = {
-        .device = DwarfBench::DeviceType::CPU,
-        .inputSize = 1024,
-        .iterations = 10,
-        .dwarf = DwarfBench::Dwarf::TBB_SORT,
-    };
+  DwarfBench::RunConfig rc = {
+      .device = DwarfBench::DeviceType::CPU,
+      .inputSize = 1024,
+      .iterations = 10,
+      .dwarf = DwarfBench::Dwarf::TBB_SORT,
+  };
 
-    auto results = db.makeMeasurements(rc);
+  auto results = db.makeMeasurements(rc);
 
-    for (auto &result: results) {
-        std::cout << "RESULT: " << result.dataSize << ' ' << result.microseconds << std::endl;
-    }
+  for (auto &result : results) {
+    std::cout << "RESULT: " << result.dataSize << ' ' << result.microseconds
+              << std::endl;
+  }
 }
