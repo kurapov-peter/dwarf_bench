@@ -11,21 +11,21 @@ namespace DwarfBench {
  *
  */
 enum Dwarf {
-  CONSTANT_EXAMPLE,
-  CONSTANT_EXAMPLE_C_API,
-  CONSTANT_EXAMPLE_DPCPP,
-  CUCKOO_HASH_BUILD,
-  DPL_SCAN,
-  GROUP_BY,
-  GROUP_BY_LOCAL,
-  HASH_BUILD,
-  HASH_BUILD_NON_BITMASK,
-  JOIN,
-  NESTED_LOOP_JOIN,
-  RADIX,
-  REDUCE_DPCPP,
-  TBB_SORT,
-  TWO_PASS_SCAN,
+  ConstantExample,
+  ConstantExampleCAPI,
+  ConstantExampleDPCPP,
+  CuckooHashBuild,
+  DPLScan,
+  GroupBy,
+  GroupByLocal,
+  HashBuild,
+  HashBuildNonBitmask,
+  Join,
+  NestedLoopJoin,
+  Radix,
+  ReduceDPCPP,
+  TBBSort,
+  TwoPassScan,
 };
 
 /**

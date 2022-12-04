@@ -9,54 +9,54 @@ namespace DwarfBench {
 
 std::string dwarfToString(Dwarf dwarf) {
   switch (dwarf) {
-  case CONSTANT_EXAMPLE: {
+  case ConstantExample: {
     return "ConstantExample";
-  } break;
-  case CONSTANT_EXAMPLE_C_API: {
+  }
+  case ConstantExampleCAPI: {
     return "ConstantExampleCAPI";
-  } break;
-  case CONSTANT_EXAMPLE_DPCPP: {
+  }
+  case ConstantExampleDPCPP: {
     return "ConstantExampleDPCPP";
-  } break;
-  case CUCKOO_HASH_BUILD: {
+  }
+  case CuckooHashBuild: {
     return "CuckooHashBuild";
-  } break;
-  case DPL_SCAN: {
+  }
+  case DPLScan: {
     return "DPLScan";
-  } break;
-  case GROUP_BY: {
+  }
+  case GroupBy: {
     return "GroupBy";
-  } break;
-  case GROUP_BY_LOCAL: {
+  }
+  case GroupByLocal: {
     return "GroupByLocal";
-  } break;
-  case HASH_BUILD: {
+  }
+  case HashBuild: {
     return "HashBuild";
-  } break;
-  case HASH_BUILD_NON_BITMASK: {
+  }
+  case HashBuildNonBitmask: {
     return "HashBuildNonBitmask";
-  } break;
-  case JOIN: {
+  }
+  case Join: {
     return "Join";
-  } break;
-  case NESTED_LOOP_JOIN: {
+  }
+  case NestedLoopJoin: {
     return "NestedLoopJoin";
-  } break;
-  case RADIX: {
+  }
+  case Radix: {
     return "Radix";
-  } break;
-  case REDUCE_DPCPP: {
+  }
+  case ReduceDPCPP: {
     return "ReduceDPCPP";
-  } break;
-  case TBB_SORT: {
+  }
+  case TBBSort: {
     return "TBBSort";
-  } break;
-  case TWO_PASS_SCAN: {
+  }
+  case TwoPassScan: {
     return "TwoPassScan";
-  } break;
+  }
 
   default: {
-    return "";
+    return "Unknown Dwarf";
   }
   }
 }
