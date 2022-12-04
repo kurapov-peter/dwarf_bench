@@ -19,10 +19,10 @@
 
 void populate_registry() {
   auto registry = Registry::instance();
-  #ifdef EXPERIMENTAL
+#ifdef EXPERIMENTAL
   registry->registerd(new TwoPassScan());
-  #endif
-  
+#endif
+
   registry->registerd(new ConstantExample());
   registry->registerd(new ConstantExampleCAPI());
   registry->registerd(new TBBSort());
