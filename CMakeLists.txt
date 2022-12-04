@@ -29,7 +29,7 @@ if(CUDA_FOUND AND ENABLE_CUDA)
   add_definitions(-DCUDA_ENABLED)
 endif()
 
-find_package(Boost COMPONENTS program_options filesystem REQUIRED)
+find_package(Boost 1.61 COMPONENTS program_options filesystem REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH
   ${PROJECT_SOURCE_DIR}/cmake
