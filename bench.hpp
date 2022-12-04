@@ -69,10 +69,10 @@ public:
   DwarfBench() = default;
 
   /**
-   * @brief make measurements based on configuration
+   * @brief make measurements of a Dwarf based on configuration
    *
-   * @param conf execution configuration
-   * @return std::vector<Measurement> measurements
+   * @param conf sets the generated data size, the number of iterations, the device and the Dwarf to run
+   * @return std::vector<Measurement> measurements made by dwarfs. Each element corresponds to a single run.
    */
   std::vector<Measurement> makeMeasurements(const RunConfig &conf);
 };
