@@ -14,7 +14,6 @@ enum Dwarf {
   ConstantExample,
   ConstantExampleCAPI,
   ConstantExampleDPCPP,
-  CuckooHashBuild,
   DPLScan,
   GroupBy,
   GroupByLocal,
@@ -23,9 +22,7 @@ enum Dwarf {
   Join,
   NestedLoopJoin,
   Radix,
-  ReduceDPCPP,
   TBBSort,
-  TwoPassScan,
 };
 
 /**

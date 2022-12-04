@@ -18,9 +18,6 @@ std::string dwarfToString(Dwarf dwarf) {
   case ConstantExampleDPCPP: {
     return "ConstantExampleDPCPP";
   }
-  case CuckooHashBuild: {
-    return "CuckooHashBuild";
-  }
   case DPLScan: {
     return "DPLScan";
   }
@@ -45,16 +42,9 @@ std::string dwarfToString(Dwarf dwarf) {
   case Radix: {
     return "Radix";
   }
-  case ReduceDPCPP: {
-    return "ReduceDPCPP";
-  }
   case TBBSort: {
     return "TBBSort";
   }
-  case TwoPassScan: {
-    return "TwoPassScan";
-  }
-
   default: {
     return "Unknown Dwarf";
   }
