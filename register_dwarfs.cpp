@@ -19,7 +19,10 @@
 
 void populate_registry() {
   auto registry = Registry::instance();
+  #ifdef EXPERIMENTAL
   registry->registerd(new TwoPassScan());
+  #endif
+  
   registry->registerd(new ConstantExample());
   registry->registerd(new ConstantExampleCAPI());
   registry->registerd(new TBBSort());
@@ -28,15 +31,15 @@ void populate_registry() {
   registry->registerd(new ConstantExampleDPCPP());
   registry->registerd(new DPLScan());
   registry->registerd(new Radix());
-  registry->registerd(new ReduceDPCPP());
   registry->registerd(new HashBuild());
   registry->registerd(new NestedLoopJoin());
-  registry->registerd(new CuckooHashBuild());
   registry->registerd(new GroupBy());
   registry->registerd(new GroupByLocal());
   registry->registerd(new Join());
   registry->registerd(new HashBuildNonBitmask());
 #ifdef EXPERIMENTAL
+  registry->registerd(new ReduceDPCPP());
+  registry->registerd(new CuckooHashBuild());
   registry->registerd(new JoinOmnisci());
   registry->registerd(new SlabHashBuild());
   registry->registerd(new SlabJoin());
