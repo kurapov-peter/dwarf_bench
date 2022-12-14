@@ -11,8 +11,6 @@ namespace DwarfBench {
  *
  */
 enum Dwarf {
-  ConstantExample,
-  ConstantExampleCAPI,
   ConstantExampleDPCPP,
   DPLScan,
   GroupBy,

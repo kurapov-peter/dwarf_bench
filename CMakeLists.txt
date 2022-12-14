@@ -3,8 +3,6 @@ set(dwarf_bench_version 0.1)
 project(dwarf_bench VERSION ${dwarf_bench_version})
 
 find_package(TBB REQUIRED)
-find_package(OpenCL REQUIRED)
-find_package(oclhelpers 0.1.3 REQUIRED)
 find_package(CUDA)
 
 option(ENABLE_DPCPP ON)
@@ -12,6 +10,11 @@ option(ENABLE_CUDA OFF)
 option(ENABLE_EXAMPLES ON)
 
 option(ENABLE_EXPERIMENTAL OFF)
+
+if(ENABLE_EXPERIMENTAL)
+  find_package(OpenCL REQUIRED)
+  find_package(oclhelpers 0.1.3 REQUIRED)
+endif()
 
 if(ENABLE_DPCPP)
   find_package(oneDPL REQUIRED)
@@ -60,9 +63,12 @@ endif()
 
 set(bench_libs
   common
-  constant
   tbbsort
 )
+
+if(ENABLE_EXPERIMENTAL)
+  list(APPEND bench_libs constant)
+endif()
 
 if(ENABLE_DPCPP)
   add_subdirectory(common/dpcpp)
@@ -106,10 +112,12 @@ add_executable(dwarf_bench ${bench_sources})
 target_link_libraries(dwarf_bench PRIVATE Boost::program_options ${bench_libs})
 target_include_directories(dwarf_bench PRIVATE ${PROJECT_SOURCE_DIR})
 
-add_kernel(vadd)
-add_executable(simple simple.cpp)
-target_link_libraries(simple PRIVATE common OpenCL::OpenCL oclhelpers::oclhelpers)
-target_include_directories(simple PRIVATE ${PROJECT_SOURCE_DIR})
+if(ENABLE_EXPERIMENTAL)
+  add_kernel(vadd)
+  add_executable(simple simple.cpp)
+  target_link_libraries(simple PRIVATE common OpenCL::OpenCL oclhelpers::oclhelpers)
+  target_include_directories(simple PRIVATE ${PROJECT_SOURCE_DIR})
+endif()
 
 option(ENABLE_TESTS ON)
 if(ENABLE_TESTS)

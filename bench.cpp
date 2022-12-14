@@ -9,12 +9,6 @@ namespace DwarfBench {
 
 std::string dwarfToString(Dwarf dwarf) {
   switch (dwarf) {
-  case ConstantExample: {
-    return "ConstantExample";
-  }
-  case ConstantExampleCAPI: {
-    return "ConstantExampleCAPI";
-  }
   case ConstantExampleDPCPP: {
     return "ConstantExampleDPCPP";
   }

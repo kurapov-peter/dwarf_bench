@@ -21,10 +21,10 @@ void populate_registry() {
   auto registry = Registry::instance();
 #ifdef EXPERIMENTAL
   registry->registerd(new TwoPassScan());
-#endif
-
   registry->registerd(new ConstantExample());
   registry->registerd(new ConstantExampleCAPI());
+#endif
+
   registry->registerd(new TBBSort());
 
 #ifdef DPCPP_ENABLED
