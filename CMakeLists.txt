@@ -125,7 +125,7 @@ if(ENABLE_TESTS)
 endif()
 
 add_library(dbench ${bench_sources})
-target_link_libraries(dbench PRIVATE Boost::program_options ${bench_libs})
+target_link_libraries(dbench PRIVATE ${bench_libs})
 target_include_directories(dbench PRIVATE ${PROJECT_SOURCE_DIR})
 set_target_properties(dbench PROPERTIES PUBLIC_HEADER "bench.hpp")
 
