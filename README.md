@@ -36,7 +36,7 @@ int main() {
         .device = DwarfBench::DeviceType::CPU,
         .inputSize = 1024,
         .iterations = 10,
-        .dwarf = DwarfBench::Dwarf::TBB_SORT,
+        .dwarf = DwarfBench::Dwarf::TBBSort,
     };
 
     auto results = db.makeMeasurements(rc);
