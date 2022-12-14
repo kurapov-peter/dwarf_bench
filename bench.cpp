@@ -5,6 +5,8 @@
 
 #include "common/common.hpp"
 
+#include <cassert>
+
 namespace DwarfBench {
 
 std::string dwarfToString(Dwarf dwarf) {
@@ -62,10 +64,8 @@ std::vector<Measurement> DwarfBench::makeMeasurements(const RunConfig &conf) {
 
   std::string dwarfName = dwarfToString(conf.dwarf);
   auto dwarf = reg->find(dwarfName);
-  if (dwarf == nullptr) {
-    throw DwarfBenchException("Internal error: Wrong dwarf name: `" +
-                              dwarfName + "`");
-  }
+  assert(dwarf != nullptr);
+
   dwarf->clear_results();
   dwarf->init(opts);
   dwarf->run(opts);
