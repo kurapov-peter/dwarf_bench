@@ -2,7 +2,11 @@ enable_testing()
 
 add_executable(dwarf_tests dwarf_tests.cpp utils.cpp)
 
-target_link_libraries(dwarf_tests gtest ${bench_libs} oclhelpers::oclhelpers)
+if(ENABLE_EXPERIMENTAL)
+  set(helpers oclhelpers::oclhelpers)
+endif()
+
+target_link_libraries(dwarf_tests gtest ${bench_libs} ${helpers})
 
 target_include_directories(dwarf_tests PRIVATE ${PROJECT_SOURCE_DIR})
 
