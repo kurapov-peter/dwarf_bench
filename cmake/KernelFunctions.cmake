@@ -2,8 +2,12 @@ function(add_kernel name)
   configure_file(${name}.cl ${CMAKE_CURRENT_BINARY_DIR}/${name}.cl COPYONLY)
 endfunction()
 
-set(common_dpcpp_libs common dpcpp_common sycl oclhelpers::oclhelpers)
+set(common_dpcpp_libs common dpcpp_common sycl)
 set(common_tbb_libs common TBB::tbb)
+
+if(ENABLE_EXPERIMENTAL)
+  list(APPEND common_dpcpp_libs oclhelpers::oclhelpers)
+endif()
 
 if(EXPLICIT_DPL)
   list(APPEND common_dpcpp_libs oneDPL)

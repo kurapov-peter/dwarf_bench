@@ -28,6 +28,8 @@ public:
   Meter &meter() { return meter_; }
   const MeasureResults &get_results() const { return results_; }
 
+  void clear_results() { results_.clear(); }
+
 protected:
   std::string reporting_header_;
 

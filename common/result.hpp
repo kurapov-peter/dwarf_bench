@@ -62,6 +62,8 @@ public:
   void set_report_header(const std::string &header);
   void write_csv(const std::string &filename) const;
 
+  void clear();
+
 private:
   SingleRunResults results_;
   const std::string name_;

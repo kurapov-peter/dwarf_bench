@@ -89,3 +89,5 @@ void MeasureResults::write_csv(const std::string &filename) const {
     throw std::runtime_error("Could not open the file at " + filename);
   }
 }
+
+void MeasureResults::clear() { results_.clear(); }

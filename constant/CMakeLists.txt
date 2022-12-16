@@ -1,14 +1,16 @@
-add_kernel(constant)
+if(ENABLE_EXPERIMENTAL)
+    add_kernel(constant)
 
-set(sources
-    constant.cpp
-    constant_capi.cpp
-    constant.hpp
-)
+    set(sources
+        constant.cpp
+        constant_capi.cpp
+        constant.hpp
+    )
 
-add_library(constant ${sources})
-target_link_libraries(constant PRIVATE common OpenCL::OpenCL oclhelpers::oclhelpers)
-target_include_directories(constant PRIVATE ${PROJECT_SOURCE_DIR})
+    add_library(constant ${sources})
+    target_link_libraries(constant PRIVATE common OpenCL::OpenCL oclhelpers::oclhelpers)
+    target_include_directories(constant PRIVATE ${PROJECT_SOURCE_DIR})
+endif()
 
 if(ENABLE_DPCPP)
     set(dpcpp_sources

@@ -3,8 +3,6 @@ set(dwarf_bench_version 0.1)
 project(dwarf_bench VERSION ${dwarf_bench_version})
 
 find_package(TBB REQUIRED)
-find_package(OpenCL REQUIRED)
-find_package(oclhelpers 0.1.3 REQUIRED)
 find_package(CUDA)
 
 option(ENABLE_DPCPP ON)
@@ -12,6 +10,11 @@ option(ENABLE_CUDA OFF)
 option(ENABLE_EXAMPLES ON)
 
 option(ENABLE_EXPERIMENTAL OFF)
+
+if(ENABLE_EXPERIMENTAL)
+  find_package(OpenCL REQUIRED)
+  find_package(oclhelpers 0.1.3 REQUIRED)
+endif()
 
 if(ENABLE_DPCPP)
   find_package(oneDPL REQUIRED)
@@ -60,9 +63,12 @@ endif()
 
 set(bench_libs
   common
-  constant
   tbbsort
 )
+
+if(ENABLE_EXPERIMENTAL)
+  list(APPEND bench_libs constant)
+endif()
 
 if(ENABLE_DPCPP)
   add_subdirectory(common/dpcpp)
@@ -101,15 +107,17 @@ endif()
 
 set(${CMAKE_CXX_FLAGS_DEBUG} "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
-set(bench_sources bench.cpp register_dwarfs.cpp register_dwarfs.hpp)
+set(bench_sources main.cpp register_dwarfs.cpp register_dwarfs.hpp bench.cpp bench.hpp)
 add_executable(dwarf_bench ${bench_sources})
 target_link_libraries(dwarf_bench PRIVATE Boost::program_options ${bench_libs})
 target_include_directories(dwarf_bench PRIVATE ${PROJECT_SOURCE_DIR})
 
-add_kernel(vadd)
-add_executable(simple simple.cpp)
-target_link_libraries(simple PRIVATE common OpenCL::OpenCL oclhelpers::oclhelpers)
-target_include_directories(simple PRIVATE ${PROJECT_SOURCE_DIR})
+if(ENABLE_EXPERIMENTAL)
+  add_kernel(vadd)
+  add_executable(simple simple.cpp)
+  target_link_libraries(simple PRIVATE common OpenCL::OpenCL oclhelpers::oclhelpers)
+  target_include_directories(simple PRIVATE ${PROJECT_SOURCE_DIR})
+endif()
 
 option(ENABLE_TESTS ON)
 if(ENABLE_TESTS)
@@ -125,8 +133,9 @@ if(ENABLE_TESTS)
 endif()
 
 add_library(dbench ${bench_sources})
-target_link_libraries(dbench PRIVATE Boost::program_options ${bench_libs})
+target_link_libraries(dbench PRIVATE ${bench_libs})
 target_include_directories(dbench PRIVATE ${PROJECT_SOURCE_DIR})
+set_target_properties(dbench PROPERTIES PUBLIC_HEADER "bench.hpp")
 
 include(GNUInstallDirs)
 
@@ -143,12 +152,12 @@ install(TARGETS ${bench_libs} dbench dwarf_bench
 install(EXPORT dbench 
   FILE dbench.cmake
   NAMESPACE dbench::
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/dbench
 )
 
 # Just for convenience
 export(EXPORT dbench 
-  FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/dbench.cmake"
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/dbench/dbench.cmake"
   NAMESPACE dbench::
 )
 

@@ -1,99 +1,97 @@
-#include "common/common.hpp"
+#include "bench.hpp"
+
 #include "common/registry.hpp"
 #include "register_dwarfs.hpp"
-#include <boost/program_options.hpp>
-#include <iostream>
 
-bool isGroupBy(const std::string &dwarfName) {
-  return (dwarfName.find("GroupBy") != std::string::npos);
-}
+#include "common/common.hpp"
 
-int main(int argc, char *argv[]) {
-  populate_registry();
+#include <cassert>
 
-  auto registry = Registry::instance();
-  namespace po = boost::program_options;
+namespace DwarfBench {
 
-  std::unique_ptr<RunOptions> opts = std::make_unique<RunOptions>();
-  size_t groups_count = 1;
-  size_t executors = 1;
-
-  opts->root_path = helpers::get_kernels_root_env(argv[0]);
-  std::cout
-      << "DWARF_BENCH_ROOT is set to " << opts->root_path << std::endl
-      << "You can change that with 'export DWARF_BENCH_ROOT=/your/path'\n";
-
-  Dwarf *dwarf;
-  std::string dwarf_name, device_type;
-  po::options_description desc("Dwarf bench");
-  desc.add_options()("help", "Show help message");
-  desc.add_options()("dwarf", po::value<std::string>(&dwarf_name),
-                     "Dwarf to run. List all with 'list' option.");
-  desc.add_options()(
-      "input_size",
-      po::value<std::vector<size_t>>(&opts->input_size)->multitoken(),
-      "Data array size, ususally a column size in elements");
-  desc.add_options()("iterations", po::value<size_t>(&opts->iterations),
-                     "Number of iterations to run a bmark.");
-  desc.add_options()("device",
-                     po::value<RunOptions::DeviceType>(&opts->device_ty),
-                     "Device to run on.");
-  desc.add_options()("report_path", po::value<std::string>(&opts->report_path),
-                     "Full/Relative path to a report file.");
-  desc.add_options()(
-      "groups_count", po::value<size_t>(&groups_count),
-      "Number of unique keys for dwarfs with keys (groupby, hash build etc.).");
-  desc.add_options()("executors", po::value<size_t>(&executors),
-                     "Number of executors for GroupByLocal.");
-  po::positional_options_description pos_opts;
-  pos_opts.add("dwarf", 1);
-
-  po::variables_map vm;
-
-  try {
-    po::store(po::command_line_parser(argc, argv)
-                  .options(desc)
-                  .positional(pos_opts)
-                  .run(),
-              vm);
-    vm.notify();
-
-    if (dwarf_name == "list") {
-      std::cout << "Supported dwarfs:\n";
-      for (const auto &dw : *registry) {
-        std::cout << "\t" << dw.first << std::endl;
-      }
-      return 0;
-    } else {
-      dwarf = registry->find(dwarf_name);
-    }
-    if (vm.count("help")) {
-      std::cout << desc;
-      return 0;
-    } else if (!dwarf) {
-      std::cerr << "List supported dwarfs to run with '" << argv[0] << " list'"
-                << std::endl;
-      return 1;
-    }
-
-    if (opts->input_size.empty()) {
-      opts->input_size.push_back(1);
-    }
-
-    helpers::set_dpcpp_filter_env(*opts);
-
-    if (isGroupBy(dwarf_name)) {
-      std::unique_ptr<GroupByRunOptions> tmpPtr =
-          std::make_unique<GroupByRunOptions>(*opts, groups_count, executors);
-      opts.reset();
-      opts = std::move(tmpPtr);
-    }
-
-    dwarf->init(*opts);
-    dwarf->run(*opts);
-    dwarf->report(*opts);
-  } catch (std::exception &e) {
-    std::cerr << "Caught exception: " << e.what() << std::endl;
+std::string dwarfToString(Dwarf dwarf) {
+  switch (dwarf) {
+  case ConstantExampleDPCPP: {
+    return "ConstantExampleDPCPP";
   }
-  return 0;
+  case DPLScan: {
+    return "DPLScan";
+  }
+  case GroupBy: {
+    return "GroupBy";
+  }
+  case GroupByLocal: {
+    return "GroupByLocal";
+  }
+  case HashBuild: {
+    return "HashBuild";
+  }
+  case HashBuildNonBitmask: {
+    return "HashBuildNonBitmask";
+  }
+  case Join: {
+    return "Join";
+  }
+  case NestedLoopJoin: {
+    return "NestedLoopJoin";
+  }
+  case Radix: {
+    return "Radix";
+  }
+  case TBBSort: {
+    return "TBBSort";
+  }
+  default: {
+    return "Unknown Dwarf";
+  }
+  }
 }
+
+std::vector<Measurement> DwarfBench::makeMeasurements(const RunConfig &conf) {
+  static Registry *reg = []() {
+    populate_registry();
+    return Registry::instance();
+  }();
+
+  RunOptions _opts = RunOptions{.device_ty = conf.device == DeviceType::CPU
+                                                 ? RunOptions::DeviceType::CPU
+                                                 : RunOptions::DeviceType::GPU,
+                                .input_size = {conf.inputSize},
+                                .iterations = conf.iterations,
+                                .report_path = ""};
+
+  GroupByRunOptions opts = GroupByRunOptions(_opts, 20, 1024); // TODO
+
+  std::string dwarfName = dwarfToString(conf.dwarf);
+  auto dwarf = reg->find(dwarfName);
+  assert(dwarf != nullptr);
+
+  dwarf->clear_results();
+  dwarf->init(opts);
+  dwarf->run(opts);
+
+  std::vector<Measurement> ms;
+
+  std::for_each(
+      dwarf->get_results().begin(), dwarf->get_results().end(),
+      [&ms](const DwarfRunResult &res) {
+        Measurement m = {
+            .dataSize = (size_t)std::stoi(
+                res.params.at("buf_size")), // todo make bytes counting
+            .microseconds = (size_t)res.result->host_time.count() // todo
+        };
+
+        ms.push_back(m);
+      });
+
+  return ms;
+}
+
+DwarfBenchException::DwarfBenchException(const std::string &message)
+    : message_(message) {}
+
+const char *DwarfBenchException::what() const noexcept {
+  return message_.c_str();
+}
+
+} // namespace DwarfBench

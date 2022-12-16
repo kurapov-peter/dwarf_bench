@@ -22,7 +22,32 @@
 * cmake --build . --parallel 4
 * cd tests && ctest
 
-## Usage
+# Usage
+## Using DwarfBench library
+
+```c++
+#include <bench.hpp>
+#include <iostream>
+
+int main() {
+    DwarfBench::DwarfBench db;
+
+    DwarfBench::RunConfig rc = {
+        .device = DwarfBench::DeviceType::CPU,
+        .inputSize = 1024,
+        .iterations = 10,
+        .dwarf = DwarfBench::Dwarf::TBBSort,
+    };
+
+    auto results = db.makeMeasurements(rc);
+
+    for (auto &result: results) {
+        std::cout << "RESULT: " << result.dataSize << ' ' << result.microseconds << std::endl;
+    }
+}
+```
+
+## Using DwarfBench utility
 Check the lists of benchmarks available using `dwarf list`
 
 Launch one of the kernel using for example Radix kernel:
