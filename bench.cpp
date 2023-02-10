@@ -9,7 +9,7 @@
 
 namespace DwarfBench {
 
-std::string dwarfToString(Dwarf dwarf) {
+std::string DwarfBench::dwarfToString(DwarfBench::DwarfImpl dwarf) {
   switch (dwarf) {
   case ConstantExampleDPCPP: {
     return "ConstantExampleDPCPP";
@@ -62,7 +62,7 @@ std::vector<Measurement> DwarfBench::makeMeasurements(const RunConfig &conf) {
 
   GroupByRunOptions opts = GroupByRunOptions(_opts, 20, 1024); // TODO
 
-  std::string dwarfName = dwarfToString(conf.dwarf);
+  std::string dwarfName = dwarfToString(dwarfToImpl(conf.dwarf));
   auto dwarf = reg->find(dwarfName);
   assert(dwarf != nullptr);
 
@@ -85,6 +85,24 @@ std::vector<Measurement> DwarfBench::makeMeasurements(const RunConfig &conf) {
       });
 
   return ms;
+}
+
+DwarfBench::DwarfImpl DwarfBench::dwarfToImpl(Dwarf dwarf) {
+  switch (dwarf) {
+  case Dwarf::Sort:
+    return DwarfImpl::Radix;
+
+  case Dwarf::Join:
+    return DwarfImpl::Join;
+
+  case Dwarf::GroupBy:
+    return DwarfImpl::GroupBy;
+
+  case Dwarf::Scan:
+    return DwarfImpl::DPLScan;
+  }
+
+  assert(false);  // unreachable
 }
 
 DwarfBenchException::DwarfBenchException(const std::string &message)

@@ -11,16 +11,10 @@ namespace DwarfBench {
  *
  */
 enum Dwarf {
-  ConstantExampleDPCPP,
-  DPLScan,
-  GroupBy,
-  GroupByLocal,
-  HashBuild,
-  HashBuildNonBitmask,
+  Scan,
   Join,
-  NestedLoopJoin,
-  Radix,
-  TBBSort,
+  GroupBy,
+  Sort,
 };
 
 /**
@@ -72,6 +66,23 @@ public:
    * corresponds to a single run.
    */
   std::vector<Measurement> makeMeasurements(const RunConfig &conf);
+
+private:
+  enum DwarfImpl {
+    ConstantExampleDPCPP,
+    DPLScan,
+    GroupBy,
+    GroupByLocal,
+    HashBuild,
+    HashBuildNonBitmask,
+    Join,
+    NestedLoopJoin,
+    Radix,
+    TBBSort,
+  };
+
+  DwarfImpl dwarfToImpl(Dwarf dwarf);
+  std::string dwarfToString(DwarfImpl dwarf);
 };
 
 class DwarfBenchException : public std::exception {
