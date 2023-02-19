@@ -79,6 +79,7 @@ private:
     NestedLoopJoin,
     Radix,
     TBBSort,
+    JoinOmnisci
   };
 
   DwarfImpl dwarfToImpl(Dwarf dwarf);

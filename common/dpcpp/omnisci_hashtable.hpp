@@ -1,12 +1,13 @@
 #pragma once
+#include <oneapi/dpl/execution>
+#include <oneapi/dpl/iterator>
+#include <oneapi/dpl/numeric>
+
 #include "dpcpp_common.hpp"
 #include "hashfunctions.hpp"
 #include <iostream>
 #include <memory>
 #include <numeric>
-#include <oneapi/dpl/execution>
-#include <oneapi/dpl/iterator>
-#include <oneapi/dpl/numeric>
 
 template <typename T> struct JoinOneToMany {
   T vals;
