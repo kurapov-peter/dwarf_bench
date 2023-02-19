@@ -1,7 +1,8 @@
 
 #include "common/dpcpp/omnisci_hashtable.hpp"
-#include "join_omnisci.hpp"
+
 #include "join_helpers/join_helpers.hpp"
+#include "join_omnisci.hpp"
 #include <unordered_set>
 
 using JoinOneToManySet = JoinOneToMany<std::unordered_set<size_t>>;
