@@ -64,7 +64,7 @@ std::vector<Measurement> DwarfBench::makeMeasurements(const RunConfig &conf) {
                                 .report_path = ""};
 
   GroupByRunOptions opts = GroupByRunOptions(_opts, 20, 1024); // TODO
-  
+
   std::string dwarfName = dwarfToString(dwarfToImpl(conf.dwarf));
   auto dwarf = reg->find(dwarfName);
   assert(dwarf != nullptr);
@@ -105,7 +105,7 @@ DwarfBench::DwarfImpl DwarfBench::dwarfToImpl(Dwarf dwarf) {
     return DwarfImpl::DPLScan;
   }
 
-  assert(false);  // unreachable
+  assert(false); // unreachable
 }
 
 DwarfBenchException::DwarfBenchException(const std::string &message)
