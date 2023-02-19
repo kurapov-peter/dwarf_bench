@@ -30,7 +30,7 @@ std::string DwarfBench::dwarfToString(DwarfBench::DwarfImpl dwarf) {
     return "HashBuildNonBitmask";
   }
   case Join: {
-    return "Join";
+    return "JoinOmnisci";
   }
   case NestedLoopJoin: {
     return "NestedLoopJoin";
@@ -93,7 +93,7 @@ DwarfBench::DwarfImpl DwarfBench::dwarfToImpl(Dwarf dwarf) {
     return DwarfImpl::Radix;
 
   case Dwarf::Join:
-    return DwarfImpl::Join;
+    return DwarfImpl::JoinOmnisci;
 
   case Dwarf::GroupBy:
     return DwarfImpl::GroupBy;

@@ -37,10 +37,10 @@ void populate_registry() {
   registry->registerd(new GroupByLocal());
   registry->registerd(new Join());
   registry->registerd(new HashBuildNonBitmask());
+  registry->registerd(new JoinOmnisci());
 #ifdef EXPERIMENTAL
   registry->registerd(new ReduceDPCPP());
   registry->registerd(new CuckooHashBuild());
-  registry->registerd(new JoinOmnisci());
   registry->registerd(new SlabHashBuild());
   registry->registerd(new SlabJoin());
   registry->registerd(new SlabProbe());
