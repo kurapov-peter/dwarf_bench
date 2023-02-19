@@ -30,6 +30,9 @@ std::string DwarfBench::dwarfToString(DwarfBench::DwarfImpl dwarf) {
     return "HashBuildNonBitmask";
   }
   case Join: {
+    return "Join";
+  }
+  case JoinOmnisci: {
     return "JoinOmnisci";
   }
   case NestedLoopJoin: {
@@ -61,7 +64,7 @@ std::vector<Measurement> DwarfBench::makeMeasurements(const RunConfig &conf) {
                                 .report_path = ""};
 
   GroupByRunOptions opts = GroupByRunOptions(_opts, 20, 1024); // TODO
-
+  
   std::string dwarfName = dwarfToString(dwarfToImpl(conf.dwarf));
   auto dwarf = reg->find(dwarfName);
   assert(dwarf != nullptr);
