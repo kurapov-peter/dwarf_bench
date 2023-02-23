@@ -74,7 +74,8 @@ void DPLScanCuda::run_scan(const size_t buf_size, Meter &meter) {
       }
     }
 #endif
-    
+
+    meter.add_result(std::move(params), std::move(result));
   }
 }
 
