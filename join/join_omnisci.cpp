@@ -61,7 +61,10 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
   sycl::queue q{*sel};
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
+
+#ifndef NDEBUG
   auto expected = build_join_id_buffer(table_a_keys, table_b_keys);
+#endif
 
   const size_t ht_size = unique_keys * 2;
   SimpleHasher<uint32_t> hasher(ht_size);
@@ -91,10 +94,12 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
     result->build_time = build_end - host_start;
     result->probe_time = host_end - build_end;
 
+#ifndef NDEBUG
     if (!(are_equal(expected, res, q))) {
       std::cerr << "Incorrect results" << std::endl;
       result->valid = false;
     }
+#endif
 
     DwarfParams params{{"buf_size", std::to_string(buf_size)}};
     meter.add_result(std::move(params), std::move(result));

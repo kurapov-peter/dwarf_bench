@@ -31,9 +31,11 @@ void GroupBy::_run(const size_t buf_size, Meter &meter) {
   const std::vector<uint32_t> host_src_keys =
       helpers::make_random<uint32_t>(buf_size, 0, groups_count - 1);
 
+#ifndef NDEBUG
   std::vector<uint32_t> expected =
       expected_GroupBy(host_src_keys, host_src_vals, groups_count,
                        [](uint32_t x, uint32_t y) { return x + y; });
+#endif
 
   auto sel = get_device_selector(opts);
   sycl::queue q{*sel};
@@ -97,10 +99,12 @@ void GroupBy::_run(const size_t buf_size, Meter &meter) {
     result->host_time = host_end - host_start;
     out_buf.get_access<sycl::access::mode::read>();
 
+#ifndef NDEBUG
     if (output != expected) {
       std::cerr << "Incorrect results" << std::endl;
       result->valid = false;
     }
+#endif
 
     DwarfParams params{{"buf_size", std::to_string(buf_size)}};
     meter.add_result(std::move(params), std::move(result));

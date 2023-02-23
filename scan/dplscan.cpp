@@ -24,8 +24,10 @@ void DPLScan::run_scan(const size_t buf_size, Meter &meter) {
   const size_t buffer_size = buf_size;
   const std::vector<int> host_src = helpers::make_random<int>(buffer_size);
 
+#ifndef NDEBUG
   std::vector<int> expected =
       expected_out<int>(host_src, [](int x) { return x < 5; });
+#endif
 
   auto sel = get_device_selector(opts);
   sycl::queue q{*sel};
@@ -63,6 +65,7 @@ void DPLScan::run_scan(const size_t buf_size, Meter &meter) {
     result->host_time = host_end - host_start;
     DwarfParams params{{"buf_size", std::to_string(buffer_size)}};
 
+#ifndef NDEBUG
     {
       sycl::host_accessor res(out_buf, sycl::read_only);
       if (!helpers::check_first(res, expected, expected.size())) {
@@ -70,6 +73,8 @@ void DPLScan::run_scan(const size_t buf_size, Meter &meter) {
         result->valid = false;
       }
     }
+#endif  
+
     meter.add_result(std::move(params), std::move(result));
   }
 }
