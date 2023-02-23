@@ -50,7 +50,7 @@ void populate_registry() {
   registry->registerd(new DPLScanCuda());
   registry->registerd(new RadixCuda());
   registry->registerd(new JoinOmnisciCuda());
-  registry->registerd(new GroupByCuda()); 
+  registry->registerd(new GroupByCuda());
 #endif
 #endif
 }
