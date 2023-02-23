@@ -64,6 +64,7 @@ void RadixCuda::_run(const size_t buf_size, Meter &meter) {
     }
 #endif
 
+    meter.add_result(std::move(params), std::move(result));
   }
 }
 
