@@ -38,7 +38,8 @@ std::vector<size_t> get_from_device(sycl::global_ptr<size_t> p, size_t size,
 }
 
 namespace OmniSci {
-template <typename K, typename V, typename H, class ConstructorKernel> class HashTable {
+template <typename K, typename V, typename H, class ConstructorKernel>
+class HashTable {
 public:
   HashTable(const std::vector<K> &keys_vec, K empty_key, H hasher,
             size_t ht_size, size_t distinct_size, sycl::queue &q)
@@ -61,22 +62,22 @@ public:
        auto pos = position_buffer.get_access(cgh);
        auto id = id_buffer.get_access(cgh);
 
-       cgh.parallel_for<ConstructorKernel>(std::max(ht_size, keys_vec.size()), [=](auto i) {
-         if (i < loc_f.ht_size) {
-           ht[i] = loc_f.empty_key;
-           cnt[i] = 0;
-           pos[i] = 0;
-         }
+       cgh.parallel_for<ConstructorKernel>(std::max(ht_size, keys_vec.size()),
+                                           [=](auto i) {
+                                             if (i < loc_f.ht_size) {
+                                               ht[i] = loc_f.empty_key;
+                                               cnt[i] = 0;
+                                               pos[i] = 0;
+                                             }
 
-         if (i < loc_f.keys_size) {
-           id[i] = 0;
-         }
-       });
+                                             if (i < loc_f.keys_size) {
+                                               id[i] = 0;
+                                             }
+                                           });
      }).wait();
   }
 
-  template <class Kernel>
-  void build_table() {
+  template <class Kernel> void build_table() {
     q.submit([&](sycl::handler &cgh) {
        hash_table_pimpl loc_f = *f;
        auto ht = hash_table.get_access(cgh);
@@ -219,8 +220,7 @@ public:
   size_t get_buffer_size() { return f->ht_size * 3 + f->keys_size; }
 
 private:
-  template <class Kernel>
-  void build_count_buffer() {
+  template <class Kernel> void build_count_buffer() {
     q.submit([&](sycl::handler &cgh) {
        hash_table_pimpl loc_f = *f;
        auto ht = hash_table.get_access(cgh);
@@ -247,8 +247,7 @@ private:
      }).wait();
   }
 
-  template <class Kernel>
-  void build_pos_buffer() {
+  template <class Kernel> void build_pos_buffer() {
     auto policy = oneapi::dpl::execution::make_device_policy<Kernel>(q);
     oneapi::dpl::exclusive_scan(policy, oneapi::dpl::begin(count_buffer),
                                 oneapi::dpl::end(count_buffer),

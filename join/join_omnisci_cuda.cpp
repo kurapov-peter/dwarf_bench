@@ -1,7 +1,7 @@
 #include "common/dpcpp/omnisci_hashtable.hpp"
 
-#include "join_omnisci.hpp"
 #include "join_helpers/join_helpers.hpp"
+#include "join_omnisci.hpp"
 #include <unordered_set>
 
 using JoinOneToManySet = JoinOneToMany<std::unordered_set<size_t>>;
@@ -46,7 +46,7 @@ bool are_equal(const std::vector<JoinOneToManySet> &expected,
 JoinOmnisciCuda::JoinOmnisciCuda() : Dwarf("JoinOmnisciCuda") {}
 using namespace join_helpers;
 void JoinOmnisciCuda::_run(const size_t buf_size, Meter &meter) {
-    std::cout << "CUDA" << std::endl;
+  std::cout << "CUDA" << std::endl;
   auto opts = meter.opts();
 
   constexpr uint32_t empty_element = std::numeric_limits<uint32_t>::max();
@@ -58,7 +58,7 @@ void JoinOmnisciCuda::_run(const size_t buf_size, Meter &meter) {
       helpers::make_random<uint32_t>(buf_size);
 
   auto sel = get_device_selector(opts);
-  sycl::queue q{ *sel };
+  sycl::queue q{*sel};
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
   auto expected = build_join_id_buffer(table_a_keys, table_b_keys);
@@ -68,14 +68,17 @@ void JoinOmnisciCuda::_run(const size_t buf_size, Meter &meter) {
 
   for (unsigned it = 0; it < opts.iterations; ++it) {
     std::unique_ptr<HashJoinResult> result = std::make_unique<HashJoinResult>();
-    OmniSci::HashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>, class JoinOmnisciCudaTable> ht(
-        table_a_keys, std::numeric_limits<uint32_t>::max(), hasher, ht_size,
-        unique_keys, q);
+    OmniSci::HashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>,
+                       class JoinOmnisciCudaTable>
+        ht(table_a_keys, std::numeric_limits<uint32_t>::max(), hasher, ht_size,
+           unique_keys, q);
     auto host_start = std::chrono::steady_clock::now();
 
     ht.build_table<class JoinOmnisciCudaBuildTable>();
     std::cout << "built" << std::endl;
-    ht.build_id_buffer<class JoinOmnisciCudaBuildID, class JoinOmnisciCudaBuildCnt, class JoinOmnisciCudaBuildPos>();
+    ht.build_id_buffer<class JoinOmnisciCudaBuildID,
+                       class JoinOmnisciCudaBuildCnt,
+                       class JoinOmnisciCudaBuildPos>();
     std::cout << "id" << std::endl;
     auto build_end = std::chrono::steady_clock::now();
 
