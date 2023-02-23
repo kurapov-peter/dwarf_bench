@@ -28,7 +28,7 @@ void Radix::_run(const size_t buf_size, Meter &meter) {
     sycl::buffer<int> src(host_src.data(), sycl::range<1>{buf_size});
 
     auto host_start = std::chrono::steady_clock::now();
-    DPLWrapper::sort<DPLWrapper::Device::CPU, class RadixKernel>(*sel, src);
+    DPLWrapper::sort<class RadixKernel>(*sel, src);
     auto host_end = std::chrono::steady_clock::now();
     auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
                              host_end - host_start)
