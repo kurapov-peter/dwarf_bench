@@ -1,6 +1,4 @@
-#include <oneapi/dpl/algorithm>
-#include <oneapi/dpl/execution>
-#include <oneapi/dpl/iterator>
+#include "common/dpcpp/dpl_wrapper/dpl_wrapper.hpp"
 
 #include "sort/radix.hpp"
 
@@ -26,13 +24,11 @@ void Radix::_run(const size_t buf_size, Meter &meter) {
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
 
-  auto dev_policy = oneapi::dpl::execution::device_policy{*sel};
-
   for (auto it = 0; it < opts.iterations; ++it) {
     sycl::buffer<int> src(host_src.data(), sycl::range<1>{buf_size});
 
     auto host_start = std::chrono::steady_clock::now();
-    std::sort(dev_policy, oneapi::dpl::begin(src), oneapi::dpl::end(src));
+    DPLWrapper::sort<DPLWrapper::Device::CPU, class RadixKernel>(*sel, src);
     auto host_end = std::chrono::steady_clock::now();
     auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
                              host_end - host_start)

@@ -49,6 +49,7 @@ void populate_registry() {
   registry->registerd(new ConstantExampleDPCPPCuda());
   registry->registerd(new DPLScanCuda());
   registry->registerd(new RadixCuda());
+  registry->registerd(new JoinOmnisciCuda());
 #endif
 #endif
 }
