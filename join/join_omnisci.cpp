@@ -68,13 +68,15 @@ void JoinOmnisci::_run(const size_t buf_size, Meter &meter) {
 
   for (unsigned it = 0; it < opts.iterations; ++it) {
     std::unique_ptr<HashJoinResult> result = std::make_unique<HashJoinResult>();
-    OmniSci::HashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>, class JoinOmnisciTable> ht(
-        table_a_keys, std::numeric_limits<uint32_t>::max(), hasher, ht_size,
-        unique_keys, q);
+    OmniSci::HashTable<uint32_t, uint32_t, SimpleHasher<uint32_t>,
+                       class JoinOmnisciTable>
+        ht(table_a_keys, std::numeric_limits<uint32_t>::max(), hasher, ht_size,
+           unique_keys, q);
     auto host_start = std::chrono::steady_clock::now();
 
     ht.build_table<class JoinOmnisciBuildTable>();
-    ht.build_id_buffer<class JoinOmnisciBuildID, class JoinOmnisciBuildCnt, class JoinOmnisciBuildPos>();
+    ht.build_id_buffer<class JoinOmnisciBuildID, class JoinOmnisciBuildCnt,
+                       class JoinOmnisciBuildPos>();
 
     auto build_end = std::chrono::steady_clock::now();
 

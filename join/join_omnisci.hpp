@@ -20,4 +20,3 @@ public:
 private:
   void _run(const size_t buffer_size, Meter &meter);
 };
-

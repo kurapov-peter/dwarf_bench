@@ -38,7 +38,8 @@ void DPLScan::run_scan(const size_t buf_size, Meter &meter) {
 
     auto host_start = std::chrono::steady_clock::now();
 
-    DPLWrapper::copy_if<class DPLScanKernel>(*sel, src_buf, out_buf, [](auto &x) { return x < 5; });
+    DPLWrapper::copy_if<class DPLScanKernel>(*sel, src_buf, out_buf,
+                                             [](auto &x) { return x < 5; });
 
     auto host_end = std::chrono::steady_clock::now();
     auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
