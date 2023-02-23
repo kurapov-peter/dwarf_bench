@@ -46,7 +46,6 @@ bool are_equal(const std::vector<JoinOneToManySet> &expected,
 JoinOmnisciCuda::JoinOmnisciCuda() : Dwarf("JoinOmnisciCuda") {}
 using namespace join_helpers;
 void JoinOmnisciCuda::_run(const size_t buf_size, Meter &meter) {
-  std::cout << "CUDA" << std::endl;
   auto opts = meter.opts();
 
   constexpr uint32_t empty_element = std::numeric_limits<uint32_t>::max();
@@ -61,8 +60,11 @@ void JoinOmnisciCuda::_run(const size_t buf_size, Meter &meter) {
   sycl::queue q{*sel};
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
+
+#ifndef NDEBUG
   auto expected = build_join_id_buffer(table_a_keys, table_b_keys);
-  std::cout << "Expected" << std::endl;
+#endif
+
   const size_t ht_size = unique_keys * 2;
   SimpleHasher<uint32_t> hasher(ht_size);
 
@@ -75,15 +77,12 @@ void JoinOmnisciCuda::_run(const size_t buf_size, Meter &meter) {
     auto host_start = std::chrono::steady_clock::now();
 
     ht.build_table<class JoinOmnisciCudaBuildTable>();
-    std::cout << "built" << std::endl;
     ht.build_id_buffer<class JoinOmnisciCudaBuildID,
                        class JoinOmnisciCudaBuildCnt,
                        class JoinOmnisciCudaBuildPos>();
-    std::cout << "id" << std::endl;
     auto build_end = std::chrono::steady_clock::now();
 
     auto res = ht.lookup<class JoinOmnisciCudaLookup>(table_b_keys);
-    std::cout << "lookup" << std::endl;
     auto host_end = std::chrono::steady_clock::now();
     auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
                              host_end - host_start)
@@ -93,10 +92,12 @@ void JoinOmnisciCuda::_run(const size_t buf_size, Meter &meter) {
     result->build_time = build_end - host_start;
     result->probe_time = host_end - build_end;
 
-    // if (!(are_equal(expected, res, q))) {
-    //   std::cerr << "Incorrect results" << std::endl;
-    //   result->valid = false;
-    // }
+#ifndef NDEBUG
+    if (!(are_equal(expected, res, q))) {
+      std::cerr << "Incorrect results" << std::endl;
+      result->valid = false;
+    }
+#endif
 
     DwarfParams params{{"buf_size", std::to_string(buf_size)}};
     meter.add_result(std::move(params), std::move(result));

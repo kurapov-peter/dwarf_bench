@@ -17,7 +17,10 @@ RadixCuda::RadixCuda() : Dwarf("RadixCuda") {}
 void RadixCuda::_run(const size_t buf_size, Meter &meter) {
   auto opts = meter.opts();
   const std::vector<int> host_src = helpers::make_random<int>(buf_size);
+
+#ifndef NDEBUG
   const std::vector<int> expected = expected_out(host_src);
+#endif
 
   auto sel = get_device_selector(opts);
   sycl::queue q{*sel};
@@ -51,6 +54,7 @@ void RadixCuda::_run(const size_t buf_size, Meter &meter) {
     result->host_time = host_end - host_start;
     DwarfParams params{{"buf_size", std::to_string(buf_size)}};
 
+#ifndef NDEBUG
     {
       sycl::host_accessor res(src, sycl::read_only);
       if (!helpers::check_first(res, expected, expected.size())) {
@@ -58,6 +62,8 @@ void RadixCuda::_run(const size_t buf_size, Meter &meter) {
         result->valid = false;
       }
     }
+#endif
+
   }
 }
 
