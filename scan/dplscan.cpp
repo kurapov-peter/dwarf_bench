@@ -73,7 +73,7 @@ void DPLScan::run_scan(const size_t buf_size, Meter &meter) {
         result->valid = false;
       }
     }
-#endif  
+#endif
 
     meter.add_result(std::move(params), std::move(result));
   }

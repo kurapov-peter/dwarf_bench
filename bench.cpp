@@ -9,10 +9,12 @@
 
 namespace DwarfBench {
 
-std::string DwarfBench::dwarfToString(DwarfBench::DwarfImpl dwarf, DeviceType device) {
+std::string DwarfBench::dwarfToString(DwarfBench::DwarfImpl dwarf,
+                                      DeviceType device) {
   switch (dwarf) {
   case ConstantExampleDPCPP: {
-    return device == DeviceType::CPU ? "ConstantExampleDPCPP" : "ConstantExampleDPCPPCuda";
+    return device == DeviceType::CPU ? "ConstantExampleDPCPP"
+                                     : "ConstantExampleDPCPPCuda";
   }
   case DPLScan: {
     return device == DeviceType::CPU ? "DPLScan" : "DPLScanCuda";
@@ -21,33 +23,39 @@ std::string DwarfBench::dwarfToString(DwarfBench::DwarfImpl dwarf, DeviceType de
     return device == DeviceType::CPU ? "GroupBy" : "GroupByCuda";
   }
   case GroupByLocal: {
-    assert(device != DeviceType::GPU && "Calling unsupported GroupByLocal for GPU execution dwarf");
+    assert(device != DeviceType::GPU &&
+           "Calling unsupported GroupByLocal for GPU execution dwarf");
     return "GroupByLocal";
   }
   case HashBuild: {
-    assert(device != DeviceType::GPU && "Calling unsupported HashBuild for GPU execution dwarf");
+    assert(device != DeviceType::GPU &&
+           "Calling unsupported HashBuild for GPU execution dwarf");
     return "HashBuild";
   }
   case HashBuildNonBitmask: {
-    assert(device != DeviceType::GPU && "Calling unsupported HashBuildNonBitmask for GPU execution dwarf");
+    assert(device != DeviceType::GPU &&
+           "Calling unsupported HashBuildNonBitmask for GPU execution dwarf");
     return "HashBuildNonBitmask";
   }
   case Join: {
-    assert(device != DeviceType::GPU && "Calling unsupported Join for GPU execution dwarf");
+    assert(device != DeviceType::GPU &&
+           "Calling unsupported Join for GPU execution dwarf");
     return "Join";
   }
   case JoinOmnisci: {
     return device == DeviceType::CPU ? "JoinOmnisci" : "JoinOmnisciCuda";
   }
   case NestedLoopJoin: {
-    assert(device != DeviceType::GPU && "Calling unsupported NestedLoopJoin for GPU execution dwarf");
+    assert(device != DeviceType::GPU &&
+           "Calling unsupported NestedLoopJoin for GPU execution dwarf");
     return "NestedLoopJoin";
   }
   case Radix: {
     return device == DeviceType::CPU ? "Radix" : "RadixCuda";
   }
   case TBBSort: {
-    assert(device != DeviceType::GPU && "Calling unsupported TBBSort for GPU execution dwarf");
+    assert(device != DeviceType::GPU &&
+           "Calling unsupported TBBSort for GPU execution dwarf");
     return "TBBSort";
   }
   default: {
