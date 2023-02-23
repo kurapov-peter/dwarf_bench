@@ -38,7 +38,7 @@ std::vector<size_t> get_from_device(sycl::global_ptr<size_t> p, size_t size,
 }
 
 namespace OmniSci {
-template <typename K, typename V, typename H> class HashTable {
+template <typename K, typename V, typename H, class ConstructorKernel> class HashTable {
 public:
   HashTable(const std::vector<K> &keys_vec, K empty_key, H hasher,
             size_t ht_size, size_t distinct_size, sycl::queue &q)
@@ -61,7 +61,7 @@ public:
        auto pos = position_buffer.get_access(cgh);
        auto id = id_buffer.get_access(cgh);
 
-       cgh.parallel_for(std::max(ht_size, keys_vec.size()), [=](auto i) {
+       cgh.parallel_for<ConstructorKernel>(std::max(ht_size, keys_vec.size()), [=](auto i) {
          if (i < loc_f.ht_size) {
            ht[i] = loc_f.empty_key;
            cnt[i] = 0;
@@ -75,13 +75,14 @@ public:
      }).wait();
   }
 
+  template <class Kernel>
   void build_table() {
     q.submit([&](sycl::handler &cgh) {
        hash_table_pimpl loc_f = *f;
        auto ht = hash_table.get_access(cgh);
        auto ks = keys.get_access(cgh);
 
-       cgh.parallel_for(loc_f.keys_size, [=](auto i) {
+       cgh.parallel_for<Kernel>(loc_f.keys_size, [=](auto i) {
          auto h = loc_f.hasher(ks[i]);
 
          K expected_key = loc_f.empty_key;
@@ -105,9 +106,10 @@ public:
      }).wait();
   }
 
+  template <class Kernel, class CntKernel, class PosKernel>
   void build_id_buffer() {
-    build_count_buffer();
-    build_pos_buffer();
+    build_count_buffer<CntKernel>();
+    build_pos_buffer<PosKernel>();
 
     q.submit([&](sycl::handler &cgh) {
        hash_table_pimpl loc_f = *f;
@@ -117,7 +119,7 @@ public:
        auto pos = position_buffer.get_access(cgh);
        auto id = id_buffer.get_access(cgh);
 
-       cgh.parallel_for(loc_f.keys_size, [=](auto i) {
+       cgh.parallel_for<Kernel>(loc_f.keys_size, [=](auto i) {
          auto h = loc_f.hasher(ks[i]);
 
          if (ht[h] == ks[i]) {
@@ -143,6 +145,7 @@ public:
      }).wait();
   }
 
+  template <class Kernel>
   std::vector<JoinOneToManyPtrs> lookup(const std::vector<K> &other_keys) {
     std::vector<JoinOneToManyPtrs> answer(other_keys.size());
 
@@ -160,7 +163,7 @@ public:
          auto ks = keys.get_access(cgh);
          auto j = join.get_access(cgh);
 
-         cgh.parallel_for(other_keys.size(), [=](auto i) {
+         cgh.parallel_for<Kernel>(other_keys.size(), [=](auto i) {
            auto h = loc_f.hasher(ks[i]);
            auto ht_id = h;
 
@@ -216,6 +219,7 @@ public:
   size_t get_buffer_size() { return f->ht_size * 3 + f->keys_size; }
 
 private:
+  template <class Kernel>
   void build_count_buffer() {
     q.submit([&](sycl::handler &cgh) {
        hash_table_pimpl loc_f = *f;
@@ -223,7 +227,7 @@ private:
        auto ks = keys.get_access(cgh);
        auto cnt = count_buffer.get_access(cgh);
 
-       cgh.parallel_for(loc_f.keys_size, [=](auto i) {
+       cgh.parallel_for<Kernel>(loc_f.keys_size, [=](auto i) {
          auto h = loc_f.hasher(ks[i]);
 
          if (ht[h] == ks[i]) {
@@ -243,8 +247,9 @@ private:
      }).wait();
   }
 
+  template <class Kernel>
   void build_pos_buffer() {
-    auto policy = oneapi::dpl::execution::make_device_policy<class mypolicy>(q);
+    auto policy = oneapi::dpl::execution::make_device_policy<Kernel>(q);
     oneapi::dpl::exclusive_scan(policy, oneapi::dpl::begin(count_buffer),
                                 oneapi::dpl::end(count_buffer),
                                 oneapi::dpl::begin(position_buffer), 0);

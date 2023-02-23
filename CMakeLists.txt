@@ -103,6 +103,7 @@ if(ENABLE_DPCPP)
       dpcpp_constant_cuda
       scan_cuda
       radix_cuda
+      omnisci_join_cuda
   )
   endif()
 endif()

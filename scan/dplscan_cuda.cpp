@@ -1,6 +1,4 @@
-#include <oneapi/dpl/algorithm>
-#include <oneapi/dpl/execution>
-#include <oneapi/dpl/iterator>
+#include "common/dpcpp/dpl_wrapper/dpl_wrapper.hpp"
 
 #include "common/dpcpp/dpcpp_common.hpp"
 #include "scan/scan.hpp"
@@ -33,7 +31,6 @@ void DPLScanCuda::run_scan(const size_t buf_size, Meter &meter) {
   sycl::queue q{*sel.get()};
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << "\n";
-  auto dev_policy = oneapi::dpl::execution::device_policy{*sel};
 
   for (auto it = 0; it < opts.iterations; ++it) {
     sycl::buffer<int> src_buf(host_src.data(), sycl::range<1>{buf_size});
@@ -41,9 +38,7 @@ void DPLScanCuda::run_scan(const size_t buf_size, Meter &meter) {
 
     auto host_start = std::chrono::steady_clock::now();
 
-    auto end_it = std::copy_if(
-        dev_policy, oneapi::dpl::begin(src_buf), oneapi::dpl::end(src_buf),
-        oneapi::dpl::begin(out_buf), [](auto &x) { return x < 5; });
+    DPLWrapper::copy_if<DPLWrapper::Device::CUDA, class DPLScanCudaKernel>(*sel, src_buf, out_buf, [](auto &x) { return x < 5; });
 
     auto host_end = std::chrono::steady_clock::now();
     auto host_exe_time = std::chrono::duration_cast<std::chrono::microseconds>(
