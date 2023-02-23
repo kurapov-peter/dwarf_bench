@@ -104,6 +104,7 @@ if(ENABLE_DPCPP)
       scan_cuda
       radix_cuda
       omnisci_join_cuda
+      groupby_cuda
   )
   endif()
 endif()
