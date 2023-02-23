@@ -83,7 +83,7 @@ private:
   };
 
   DwarfImpl dwarfToImpl(Dwarf dwarf);
-  std::string dwarfToString(DwarfImpl dwarf);
+  std::string dwarfToString(DwarfImpl dwarf, DeviceType device);
 };
 
 class DwarfBenchException : public std::exception {

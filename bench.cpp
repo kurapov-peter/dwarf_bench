@@ -9,39 +9,45 @@
 
 namespace DwarfBench {
 
-std::string DwarfBench::dwarfToString(DwarfBench::DwarfImpl dwarf) {
+std::string DwarfBench::dwarfToString(DwarfBench::DwarfImpl dwarf, DeviceType device) {
   switch (dwarf) {
   case ConstantExampleDPCPP: {
-    return "ConstantExampleDPCPP";
+    return device == DeviceType::CPU ? "ConstantExampleDPCPP" : "ConstantExampleDPCPPCuda";
   }
   case DPLScan: {
-    return "DPLScan";
+    return device == DeviceType::CPU ? "DPLScan" : "DPLScanCuda";
   }
   case GroupBy: {
-    return "GroupBy";
+    return device == DeviceType::CPU ? "GroupBy" : "GroupByCuda";
   }
   case GroupByLocal: {
+    assert(device != DeviceType::GPU && "Calling unsupported GroupByLocal for GPU execution dwarf");
     return "GroupByLocal";
   }
   case HashBuild: {
+    assert(device != DeviceType::GPU && "Calling unsupported HashBuild for GPU execution dwarf");
     return "HashBuild";
   }
   case HashBuildNonBitmask: {
+    assert(device != DeviceType::GPU && "Calling unsupported HashBuildNonBitmask for GPU execution dwarf");
     return "HashBuildNonBitmask";
   }
   case Join: {
+    assert(device != DeviceType::GPU && "Calling unsupported Join for GPU execution dwarf");
     return "Join";
   }
   case JoinOmnisci: {
-    return "JoinOmnisci";
+    return device == DeviceType::CPU ? "JoinOmnisci" : "JoinOmnisciCuda";
   }
   case NestedLoopJoin: {
+    assert(device != DeviceType::GPU && "Calling unsupported NestedLoopJoin for GPU execution dwarf");
     return "NestedLoopJoin";
   }
   case Radix: {
-    return "Radix";
+    return device == DeviceType::CPU ? "Radix" : "RadixCuda";
   }
   case TBBSort: {
+    assert(device != DeviceType::GPU && "Calling unsupported TBBSort for GPU execution dwarf");
     return "TBBSort";
   }
   default: {
@@ -65,7 +71,7 @@ std::vector<Measurement> DwarfBench::makeMeasurements(const RunConfig &conf) {
 
   GroupByRunOptions opts = GroupByRunOptions(_opts, 20, 1024); // TODO
 
-  std::string dwarfName = dwarfToString(dwarfToImpl(conf.dwarf));
+  std::string dwarfName = dwarfToString(dwarfToImpl(conf.dwarf), conf.device);
   auto dwarf = reg->find(dwarfName);
   assert(dwarf != nullptr);
 
