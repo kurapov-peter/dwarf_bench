@@ -43,7 +43,7 @@ ENV DPCPP_HOME="/dpcpp"
 RUN mkdir ${DPCPP_HOME} && cd ${DPCPP_HOME} 
 
 ARG GIT_SSL_NO_VERIFY=1
-ARG sycl_llvm_sha="6977f1a"
+ARG sycl_llvm_sha="f292b05de679b952e4188d0ce20c1ffad2c584ba"
 RUN cd ${DPCPP_HOME} && git clone https://github.com/intel/llvm -b sycl
 RUN cd ${DPCPP_HOME}/llvm && git checkout ${sycl_llvm_sha}
 RUN CC=gcc CXX=g++ python3 ${DPCPP_HOME}/llvm/buildbot/configure.py --cuda
@@ -53,3 +53,7 @@ ENV PATH="${DPCPP_HOME}/llvm/build/bin:${PATH}"
 ENV LD_LIBRARY_PATH="${DPCPP_HOME}/llvm/build/lib:${LD_LIBRARY_PATH}"
 
 RUN apt-get install -y ocl-icd-* opencl-headers intel-opencl-icd
+
+RUN wget https://github.com/oneapi-src/oneDPL/archive/refs/tags/oneDPL-2021.7.1-release.tar.gz
+RUN tar xf oneDPL-2021.7.1-release.tar.gz
+RUN cd oneDPL-oneDPL-2021.7.1-release && mkdir build && cd build && cmake .. && cmake --build . --target install
