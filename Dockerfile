@@ -54,6 +54,7 @@ ENV LD_LIBRARY_PATH="${DPCPP_HOME}/llvm/build/lib:${LD_LIBRARY_PATH}"
 
 RUN apt-get install -y ocl-icd-* opencl-headers intel-opencl-icd
 
-RUN wget https://github.com/oneapi-src/oneDPL/archive/refs/tags/oneDPL-2022.0.0-release.tar.gz
-RUN tar xf oneDPL-2021.7.1-release.tar.gz
-RUN cd oneDPL-oneDPL-2021.7.1-release && mkdir build && cd build && cmake .. && cmake --build . --target install
+ARG onedpl_version="oneDPL-2022.0.0-release"
+RUN wget https://github.com/oneapi-src/oneDPL/archive/refs/tags/${onedpl_version}.tar.gz
+RUN tar xf ${onedpl_version}.tar.gz
+RUN cd oneDPL-${onedpl_version} && mkdir build && cd build && cmake .. && cmake --build . --target install
