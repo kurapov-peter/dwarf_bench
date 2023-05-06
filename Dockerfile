@@ -58,3 +58,11 @@ ARG onedpl_version="oneDPL-2022.0.0-release"
 RUN wget https://github.com/oneapi-src/oneDPL/archive/refs/tags/${onedpl_version}.tar.gz
 RUN tar xf ${onedpl_version}.tar.gz
 RUN cd oneDPL-${onedpl_version} && mkdir build && cd build && cmake .. && cmake --build . --target install
+
+RUN mkdir -p /opt/intel/oclcpuexp_x64 \
+	&& cd /opt/intel/oclcpuexp_x64 \
+	&& wget https://github.com/intel/llvm/releases/download/2023-WW13/oclcpuexp-2023.15.3.0.20_rel.tar.gz \
+	&& tar zxvf oclcpuexp-2023.15.3.0.20_rel.tar.gz \
+	&& echo /opt/intel/oclcpuexp_x64/x64/libintelocl.so > /etc/OpenCL/vendors/intel_expcpu.icd \
+	&& rm -rf oclcpuexp-2023.15.3.0.20_rel.tar.gz
+
