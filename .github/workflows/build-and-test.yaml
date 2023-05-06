@@ -1,0 +1,25 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/${{ github.repository }}:main
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Build for all platforms
+        run: |
+          CXX=clang++ cmake -B build -S . -DENABLE_DPCPP=on -DENABLE_TESTS=on -DENABLE_CUDA=on
+          CXX=clang++ cmake --build build --parallel
+      
+      - name: Test
+        run: |
+          ./build/tests/join_tests
