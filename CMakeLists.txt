@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-set(dwarf_bench_version 0.1)
+set(dwarf_bench_version 0.2)
 project(dwarf_bench VERSION ${dwarf_bench_version})
 
 find_package(TBB REQUIRED)
