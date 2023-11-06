@@ -11,7 +11,7 @@ wget https://github.com/kurapov-peter/dwarf_bench/releases/download/v0.2.0/dbenc
 + Boost (optional, needed only for `dwarf_bench` utility)
 + TBB
 
-3. You also need to install OpenCL (for CPU) and CUDA (for GPU)
+3. You also need to install OpenCL (for CPU) and CUDA/L0 (for GPU)
 
 4. Add `dbench` to environment to make it visible for cmake:
 ```console
